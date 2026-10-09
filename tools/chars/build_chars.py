@@ -176,6 +176,33 @@ def skin(ob, body, allowed, default, k=16, rule=None):
             vg.add([i], x, 'REPLACE')
 
 
+# 옷 아래 몸을 속옷 색으로 칠할 부분 (주로 따르는 뼈 기준). 옷 사이로 몸이 비쳐도 살이 아니라 천으로 보이게
+UNDER = [('under_chest', ('spine_03', 'clavicle')), ('under_body', ('pelvis', 'spine_01', 'spine_02')),
+         ('under_arm', ('upperarm',)), ('under_thigh', ('thigh',)), ('under_calf', ('calf',))]
+
+
+def paint_under(obj, body):
+    me = obj.data
+    idx = {}
+    for name, _ in UNDER:
+        me.materials.append(material(name)); idx[name] = len(me.materials) - 1
+    for p in me.polygons:
+        doms = [body.dom[v] for v in p.vertices]
+        d = max(set(doms), key=doms.count)
+        for name, pre in UNDER:
+            if d.startswith(pre): p.material_index = idx[name]; break
+
+
+def role_colors(spec):
+    """재질별 색: 기본색 + 속옷색(under) + 살색으로 둘 곳(bare) + 개별 색(colors). 엔진도 같은 규칙"""
+    d = OUTFITS['default_colors']
+    col = dict(d)
+    for name, _ in UNDER: col[name] = spec.get('under', d['tunic'])
+    for name in spec.get('bare', []): col[name] = d['M_Main']
+    col.update(spec.get('colors', {}))
+    return col
+
+
 def attach(ob, arm):
     ob.parent = arm
     md = ob.modifiers.new('Armature', 'ARMATURE'); md.object = arm
@@ -217,8 +244,8 @@ def dress(body, arm, sex):
             w[f'thigh_{side}'] = th * f + 1e-6; w[f'calf_{side}'] = ca * f + 1e-6
         return w, sstep(z_hip + 0.10, z_hip - 0.02, p.z)
 
-    def robe(name, hem, off0, flare, mat, open_front=0.0, back_only=0.0, sleeve=None, top=None):
-        """몸통+치마 한 벌. top: 윗선 높이(없으면 목선까지 덮개)"""
+    def robe(name, hem, off0, flare, mat, open_front=0.0, back_only=0.0, sleeve=None, top=None, trim=None, neck=0.0, ease=0.0):
+        """몸통+치마 한 벌. top: 윗선 높이(없으면 목선까지 덮개). trim=(밑단 폭, 앞섶 폭): 그 테두리만 남긴다. neck: 앞 목선을 둥글게 판다"""
         zt = top or z_sh
         ts = list(np.arange(hem, zt, 0.04)) + [zt]
         Pm = P[torso_m | body.mask(is_leg)]
@@ -235,7 +262,12 @@ def dress(body, arm, sex):
         cut = None
         if open_front: cut = lambda t, th: ang(th, FRONT) < open_front and t < z_neck - 0.02
         if back_only: cut = lambda t, th: ang(th, FRONT) < back_only
-        off = lambda t, th: off0 + (flare * (z_hip - t) / (z_hip - hem) if t < z_hip else 0)
+        if neck: cut = lambda t, th: ang(th, FRONT) < neck and t > zt - 0.07
+        if trim:
+            base = cut or (lambda t, th: False)
+            edge = lambda t, th: t < hem + trim[0] or (open_front <= ang(th, FRONT) < open_front + trim[1] and t < z_neck - 0.02)
+            cut = lambda t, th: base(t, th) or not edge(t, th)
+        off = lambda t, th: off0 + ease * sstep(z_waist, z_hip, t) + (flare * (z_hip - t) / (z_hip - hem) if t < z_hip else 0)
         ob = build(name, up, ts, rings, off, cut=cut, mat=mat)
         push_out(ob, body, torso_m | body.mask(is_leg), off0 * 0.8, 'torso', zmin=zt - 0.02)
         skin(ob, body, TORSO, 'spine_02', rule=skirt_rule)
@@ -250,7 +282,7 @@ def dress(body, arm, sex):
                 made.append(join(ob, so))
         return ob
 
-    def head_wrap(name, z_end, off0, opening, mat, back_len=0.0):
+    def head_wrap(name, z_end, off0, opening, mat, back_len=0.0, brow=0.09):
         """두건·너울: 머리를 감싸고 어깨로 흘러내린다"""
         top = P[head_m][:, 2].max()
         zs = list(np.arange(z_end, top - 0.04, 0.03)) + list(np.arange(top - 0.04, top - 0.002, 0.012))
@@ -263,7 +295,11 @@ def dress(body, arm, sex):
         for z, rh, rl in zip(zs, ring_head, ring_low):
             rings.append(rh if z > z_chin + 0.03 else (rl[0], rl[1], np.maximum(rl[2], hc[2])))
         rings = smooth(rings, 2)
-        brow = z_head + 0.09
+        for i, z in enumerate(zs):  # 정수리를 둥글게 (튀어나온 곳은 아래 push_out이 다시 민다)
+            if z > top - 0.06:
+                k = max(0.3, math.sqrt(max(0.0, 1 - ((z - (top - 0.06)) / 0.075) ** 2)))
+                rings[i] = (rings[i][0], rings[i][1], rings[i][2] * k)
+        brow = z_head + brow
         cut = lambda t, th: ang(th, FRONT) < opening and t < brow
         off = lambda t, th: off0 + (back_len * sstep(z_chin, z_end, t) if ang(th, FRONT) > 2.2 else 0)
         ob = build(name, up, zs, rings, off, cut=cut, cap=top + off0 + 0.01, mat=mat)
@@ -279,6 +315,17 @@ def dress(body, arm, sex):
         rings = smooth(hull_rings(P[head_m], up, zs, dt=0.02), 2)
         ob = build(name, up, zs, rings, lambda t, th: off0, cut=extra_cut, cap=top + off0, mat=mat)
         skin(ob, body, {'Head'}, 'Head', rule=lambda p: {'Head': 1})
+        made.append(ob)
+        return ob
+
+    def collar(name, reach, width, mat, gap=0.05):
+        """목둘레에서 어깨 쪽으로 펼쳐진 고리 (금 목걸이, 가슴 장식)"""
+        rn = hull_rings(P[neck_m], up, [z_neck + 0.01])[0]
+        zs = [z_neck - 0.01 - width * 0.6, z_neck - 0.01]
+        rings = [(rn[0], rn[1], rn[2] + reach), (rn[0], rn[1], rn[2] + reach - width)]
+        ob = build(name, up, zs, rings, lambda t, th: 0.0, mat=mat)
+        push_out(ob, body, torso_m | neck_m, gap, 'collar', iters=3)
+        skin(ob, body, TORSO, 'spine_03')
         made.append(ob)
         return ob
 
@@ -318,11 +365,57 @@ def dress(body, arm, sex):
         skin(crest, body, {'Head'}, 'Head', rule=lambda p: {'Head': 1}); made.append(crest)
         robe('armor', z_waist - 0.08, 0.03, 0.0, 'metal', top=z_sh - 0.05)
         robe('cloak', z_knee - 0.02, 0.05, 0.06, 'cloak', back_only=1.2)
-        # 면류관 (삼하 12:30)
-        cr = band('crown', z_head + 0.10, z_head + 0.14, 0.035, 'gold', zig=0.025)
-        skin(cr, body, {'Head'}, 'Head', rule=lambda p: {'Head': 1})
+        # 왕: 면류관(삼하 12:30)과 보석, 금 테두리 겉옷, 속옷 금띠, 넓은 금띠, 금 목걸이
+        cr = band('crown', z_head + 0.085, z_head + 0.135, 0.034, 'gold')
+        for j, v in enumerate(cr.data.vertices[N:2 * N]):  # 꼭지 12개
+            if j % 2 == 0: v.co.z += 0.055; v.co.x *= 0.97; v.co.y = B['Head'].y + (v.co.y - B['Head'].y) * 0.97
+        gems = None
+        for j in range(0, N, 4):
+            a0, a1 = cr.data.vertices[j].co, cr.data.vertices[N + j].co
+            c = (a0 + Vector((a1.x, a1.y, a0.z + 0.05))) / 2
+            out = Vector((c.x, c.y - B['Head'].y, 0)).normalized() * 0.006
+            g = mesh_obj('gem', *box(tuple(c + out), (0.011, 0.011, 0.011)), 'gem')
+            g.rotation_euler.z = math.atan2(out.y, out.x); bpy.context.view_layer.update()
+            with bpy.context.temp_override(active_object=g, selected_editable_objects=[g]):
+                bpy.ops.object.transform_apply(rotation=True)
+            gems = join(gems, g) if gems else g
+        gems.name = gems.data.name = 'crown_gems'
+        for o in (cr, gems): skin(o, body, {'Head'}, 'Head', rule=lambda p: {'Head': 1})
+        robe('royal_mantle', z_ankle + 0.03, 0.035, 0.10, 'royal', open_front=0.35)
+        robe('royal_trim', z_ankle + 0.03, 0.039, 0.10, 'gold', open_front=0.35, trim=(0.05, 0.2))
+        robe('tunic_trim', z_ankle + 0.02, 0.016, 0.05, 'gold', trim=(0.05, 0.0))
+        bw = band('belt_wide', z_waist - 0.045, z_waist + 0.045, 0.032, 'gold')
+        skin(bw, body, {'pelvis', 'spine_01', 'spine_02'}, 'spine_01')
+        collar('collar', 0.075, 0.045, 'gold', gap=0.075)
     else:
         head_wrap('veil', B['spine_02'].z, 0.016, 0.70, 'veil', back_len=0.03)
+        # 홍색 드레스와 금 장신구 (삼하 1:24): 몸에 붙는 윗몸, 높은 허리, 넓게 퍼지는 치마, 민소매
+        robe('dress', z_ankle + 0.01, 0.009, 0.14, 'dress', neck=0.85, ease=0.03)
+        z_sash = (B['spine_01'].z + B['spine_02'].z) / 2
+        sa = band('sash', z_sash - 0.03, z_sash + 0.03, 0.022, 'sash')
+        fv = min(sa.data.vertices[:N], key=lambda v: v.co.y).co  # 허리띠 앞쪽
+        for dx, ln in ((0.035, 0.30), (0.065, 0.24)):  # 늘어진 끈 두 가닥
+            sa = join(sa, mesh_obj('tail', *box((fv.x + dx, fv.y - 0.008, z_sash - 0.03 - ln / 2), (0.014, 0.004, ln / 2)), 'sash'))
+        skin(sa, body, {'pelvis', 'spine_01', 'spine_02'}, 'spine_01')
+        z_chin = P[head_m][:, 2].min() + 0.02
+        hr = head_wrap('hair', B['spine_02'].z + 0.06, 0.012, 1.35, 'hair', back_len=0.03, brow=0.15)
+        drop = [p for p in hr.data.polygons if all(ang(math.atan2(hr.data.vertices[i].co.y - B['Head'].y, hr.data.vertices[i].co.x) % (2 * math.pi), FRONT) < 1.5
+                and hr.data.vertices[i].co.z < z_chin for i in p.vertices)]
+        import bmesh  # 턱 아래 앞쪽은 머리카락을 걷어 낸다 (등 뒤로 넘긴 머리)
+        bm = bmesh.new(); bm.from_mesh(hr.data); bm.faces.ensure_lookup_table()
+        bmesh.ops.delete(bm, geom=[bm.faces[p.index] for p in drop], context='FACES'); bm.to_mesh(hr.data); bm.free()
+        ci = band('circlet', z_head + 0.135, z_head + 0.15, 0.022, 'gold')
+        skin(ci, body, {'Head'}, 'Head', rule=lambda p: {'Head': 1})
+        collar('necklace', 0.05, 0.012, 'gold', gap=0.018)
+        br = None
+        for sd, sg in (('l', 1), ('r', -1)):
+            xh = abs(B[f'hand_{sd}'].x)
+            fr = frame((0, B[f'hand_{sd}'].y, B[f'hand_{sd}'].z), (sg, 0, 0), (0, 1, 0))
+            xs = [xh - 0.07, xh - 0.045]
+            o = build(f'bracelet_{sd}', fr, xs, smooth(hull_rings(P[arm_m], fr, xs, dt=0.02), 1), lambda t, th: 0.008, mat='gold')
+            skin(o, body, {f'lowerarm_{sd}', f'hand_{sd}'}, f'lowerarm_{sd}')
+            br = join(br, o) if br else o
+        br.name = br.data.name = 'bracelets'
 
     # 샌들: 바닥창 + 발등 끈 두 줄
     for sd in ('l', 'r'):
@@ -389,7 +482,7 @@ def props():
 
 # ───────────────────────── 미리보기 ─────────────────────────
 
-def preview(arm, roles, tag, pose_list):
+def preview(arm, roles, tag, pose_list, close=False):
     sc = bpy.context.scene
     sc.render.engine = 'CYCLES'; sc.cycles.samples = 12; sc.cycles.use_denoising = False; sc.cycles.device = 'CPU'
     sc.render.resolution_x, sc.render.resolution_y = 300, 520
@@ -405,7 +498,8 @@ def preview(arm, roles, tag, pose_list):
     for role in roles:
         spec = OUTFITS['roles'][role]
         for o in arm.children: o.hide_render = o.name not in spec['wear'] + ['Mannequin', 'Mannequin_F']
-        for mname, col in {**OUTFITS['default_colors'], **spec.get('colors', {})}.items():
+        sc.view_layers[0].update()
+        for mname, col in role_colors(spec).items():
             m = bpy.data.materials.get(mname)
             if m: m.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (*[(int(col[i:i + 2], 16) / 255) ** 2.2 for i in (1, 3, 5)], 1)
         for act, fr in pose_list:
@@ -414,8 +508,9 @@ def preview(arm, roles, tag, pose_list):
             if hasattr(arm.animation_data, 'action_slot') and a.slots: arm.animation_data.action_slot = a.slots[0]
             sc.frame_set(fr)
             hip = arm.matrix_world @ arm.pose.bones['pelvis'].head
-            cam.location = (hip.x + 1.6, hip.y - 3.6, 1.15); look(cam, Vector((hip.x, hip.y, 0.9)))
-            p = f'{OUT}/../preview/_{tag}_{role}_{act}.png'
+            if close: cam.location = (hip.x + 0.55, hip.y - 1.35, 1.55); look(cam, Vector((hip.x, hip.y, 1.38)))
+            else: cam.location = (hip.x + 1.6, hip.y - 3.6, 1.15); look(cam, Vector((hip.x, hip.y, 0.9)))
+            p = f'{OUT}/../preview/_{tag}_{role}_{act}_{fr}.png'
             sc.render.filepath = p; bpy.ops.render.render(write_still=True)
             tiles.append(p)
     return tiles
@@ -455,11 +550,13 @@ def main():
     tiles = []
     # 남자
     reset(); arm, body = import_ual1()
-    dress(Body(body, arm), arm, 'm')
+    bd = Body(body, arm); paint_under(body, bd); dress(bd, arm, 'm')
     export(f'{OUT}/char_m.glb', [arm] + list(arm.children))
     if pv:
         tiles += preview(arm, ['man', 'shepherd', 'fisherman', 'king', 'roman'], 'm', [('Idle_Loop', 20)])
         walk = preview(arm, ['shepherd'], 'mw', [('Walk_Loop', 8), ('Sitting_Idle_Loop', 10), ('Fixing_Kneeling', 30)])
+        walk += preview(arm, ['fisherman'], 'md', [('Death01', 30), ('Death01', 60)]) + preview(arm, ['man'], 'mx', [('Death01', 60)])
+        near = preview(arm, ['king'], 'mc', [('Idle_Loop', 20)], close=True) + preview(arm, ['king'], 'mk', [('Walk_Loop', 8)])
     # 여자: UAL1 뼈대의 팔 위치만 여성 마네킹에 맞춘다
     reset(); arm, male = import_ual1(); bpy.data.objects.remove(male)
     with bpy.data.libraries.load(f'{RAW}/Mannequin_F.blend') as (src, dst):
@@ -485,12 +582,14 @@ def main():
     fem.data.name = 'Mannequin_F'
     bpy.data.objects.remove(rig)
     for o in [o for o in bpy.data.objects if o.name.startswith('WGT') or o.name == 'metarig']: bpy.data.objects.remove(o)
-    dress(Body(fem, arm), arm, 'f')
+    bd = Body(fem, arm); paint_under(fem, bd); dress(bd, arm, 'f')
     export(f'{OUT}/char_f.glb', [arm] + list(arm.children))
     if pv:
-        tiles += preview(arm, ['woman'], 'f', [('Idle_Loop', 20)])
+        tiles += preview(arm, ['woman', 'woman_veil'], 'f', [('Idle_Loop', 20)])
         walk += preview(arm, ['woman'], 'fw', [('Walk_Loop', 8), ('Sitting_Idle_Loop', 10), ('Fixing_Kneeling', 30)])
-        sheet(tiles, 6, f'{OUT}/../preview/roles.png')
+        near += preview(arm, ['woman'], 'fc', [('Idle_Loop', 20)], close=True) + preview(arm, ['woman'], 'fk', [('Idle_Talking_Loop', 30)])
+        sheet(tiles, 7, f'{OUT}/../preview/roles.png')
+        sheet(near, 4, f'{OUT}/../preview/close.png')
         sheet(walk, 3, f'{OUT}/../preview/poses.png')
     # 소품
     reset(); export(f'{OUT}/props.glb', props())

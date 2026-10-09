@@ -31,7 +31,9 @@ const sc = new THREE.Scene(); sc.background = new THREE.Color(0x9a9aa2);
 sc.add(new THREE.HemisphereLight(0xffffff, 0x665544, 1.6)); const sun = new THREE.DirectionalLight(0xffffff, 2); sun.position.set(2, 4, 3); sc.add(sun);
 const cam = new THREE.PerspectiveCamera(30, 960 / 540, 0.1, 50); cam.position.set(0, 1.3, 7.5); cam.lookAt(0, 0.9, 0);
 function dress(src, role) {
-  const g = SkeletonUtils.clone(src.scene), spec = O.roles[role], col = { ...O.default_colors, ...(spec.colors || {}) };
+  const g = SkeletonUtils.clone(src.scene), spec = O.roles[role], d = O.default_colors, col = { ...d };
+  for (const u of ['under_chest', 'under_body', 'under_arm', 'under_thigh', 'under_calf']) col[u] = spec.under || d.tunic;
+  for (const u of spec.bare || []) col[u] = d.M_Main; Object.assign(col, spec.colors || {});
   g.traverse(o => { if (!o.isMesh) return;
     if (!o.name.startsWith('Mannequin')) o.visible = spec.wear.includes(o.name);
     o.material = o.material.clone(); const c = col[o.material.name]; if (c) o.material.color.set(c); });

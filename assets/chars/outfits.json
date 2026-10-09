@@ -1,5 +1,5 @@
 {
-  "_note": "신분별 옷차림. wear = char_m.glb / char_f.glb 안의 메시 이름, colors = 재질 이름별 색. 엔진에서 재질을 복제해 색을 입힌다. 색은 PLAN.md 6장: 염색하지 않은 양모색, 갈색, 쪽빛이 기본이고 자색은 귀한 사람에게만.",
+  "_note": "신분별 옷차림. wear = char_m.glb / char_f.glb 안의 메시 이름, colors = 재질 이름별 색. under = 옷 아래 몸(under_chest·under_body·under_arm·under_thigh·under_calf)을 칠할 속옷 색, bare = 그중 살색(M_Main)으로 둘 곳. 색은 기본색 → under → bare → colors 순서로 덮어쓴다. 엔진에서 재질을 복제해 색을 입힌다. 색은 PLAN.md 6장: 염색하지 않은 양모색, 갈색, 쪽빛이 기본이고 자색은 귀한 사람에게만.",
   "default_colors": {
     "M_Main": "#a97d5d",
     "M_Joints": "#a97d5d",
@@ -15,50 +15,160 @@
     "cloak": "#9b2a22",
     "gold": "#c9a23a",
     "wood": "#6e4f30",
-    "cloth_dark": "#3a3028"
+    "cloth_dark": "#3a3028",
+    "royal": "#5b2a5e",
+    "gem": "#b0182c",
+    "dress": "#9e2430",
+    "sash": "#c9a23a",
+    "hair": "#2a1c14"
   },
   "roles": {
     "man": {
       "name": "기본 남자",
       "body": "m",
-      "wear": ["tunic_long", "mantle", "belt", "headcloth", "sandals", "beard"]
+      "wear": [
+        "tunic_long",
+        "mantle",
+        "belt",
+        "headcloth",
+        "sandals",
+        "beard"
+      ],
+      "under": "#d9ceb2"
     },
     "elder": {
       "name": "나이 든 남자",
       "body": "m",
-      "wear": ["tunic_long", "mantle", "belt", "headcloth", "sandals", "beard"],
-      "colors": { "beard": "#cfc8bc" }
+      "wear": [
+        "tunic_long",
+        "mantle",
+        "belt",
+        "headcloth",
+        "sandals",
+        "beard"
+      ],
+      "colors": {
+        "beard": "#cfc8bc"
+      },
+      "under": "#d9ceb2"
     },
     "shepherd": {
       "name": "목자 — 거친 양모와 지팡이",
       "body": "m",
-      "wear": ["tunic_short", "mantle", "belt", "headcloth", "sandals", "beard"],
-      "colors": { "tunic": "#c4b591", "mantle": "#6b4f35" },
-      "props": ["prop_staff"]
+      "wear": [
+        "tunic_short",
+        "mantle",
+        "belt",
+        "headcloth",
+        "sandals",
+        "beard"
+      ],
+      "colors": {
+        "tunic": "#c4b591",
+        "mantle": "#6b4f35"
+      },
+      "props": [
+        "prop_staff"
+      ],
+      "under": "#c4b591",
+      "bare": [
+        "under_calf"
+      ]
     },
     "fisherman": {
       "name": "어부 — 짧은 튜닉",
       "body": "m",
-      "wear": ["tunic_short", "belt", "headcloth", "sandals", "beard"],
-      "colors": { "tunic": "#e6dfcf", "headcloth": "#33507e" }
+      "wear": [
+        "tunic_short",
+        "belt",
+        "headcloth",
+        "sandals",
+        "beard"
+      ],
+      "colors": {
+        "tunic": "#e6dfcf",
+        "headcloth": "#33507e"
+      },
+      "under": "#e6dfcf",
+      "bare": [
+        "under_calf"
+      ]
     },
     "king": {
-      "name": "왕 — 자색과 고운 베",
+      "name": "왕 — 자색과 고운 베, 금관",
       "body": "m",
-      "wear": ["tunic_long", "mantle", "belt", "headcloth", "crown", "sandals", "beard"],
-      "colors": { "tunic": "#f1ece0", "mantle": "#5b2a5e", "belt": "#c9a23a", "headcloth": "#f1ece0" }
+      "wear": [
+        "tunic_long",
+        "tunic_trim",
+        "royal_mantle",
+        "royal_trim",
+        "belt_wide",
+        "collar",
+        "headcloth",
+        "crown",
+        "crown_gems",
+        "sandals",
+        "beard"
+      ],
+      "colors": {
+        "tunic": "#f1ece0",
+        "headcloth": "#f1ece0"
+      },
+      "under": "#f1ece0"
     },
     "roman": {
       "name": "로마 군인 — 투구, 갑옷, 붉은 망토",
       "body": "m",
-      "wear": ["tunic_short", "armor", "helmet", "helmet_crest", "cloak", "belt", "sandals"],
-      "colors": { "belt": "#4a3220" }
+      "wear": [
+        "tunic_short",
+        "armor",
+        "helmet",
+        "helmet_crest",
+        "cloak",
+        "belt",
+        "sandals"
+      ],
+      "colors": {
+        "belt": "#4a3220"
+      },
+      "under": "#d9ceb2",
+      "bare": [
+        "under_calf"
+      ]
     },
     "woman": {
-      "name": "기본 여자 — 너울",
+      "name": "기본 여자 — 홍색 옷과 금 장신구 (삼하 1:24)",
       "body": "f",
-      "wear": ["tunic_long", "mantle", "belt", "veil", "sandals"],
-      "colors": { "tunic": "#33507e", "mantle": "#8a6a48", "veil": "#e3dac4" }
+      "wear": [
+        "dress",
+        "sash",
+        "hair",
+        "circlet",
+        "necklace",
+        "bracelets",
+        "sandals"
+      ],
+      "under": "#9e2430",
+      "bare": [
+        "under_arm"
+      ]
+    },
+    "woman_veil": {
+      "name": "너울 쓴 여자 — 수수한 차림",
+      "body": "f",
+      "wear": [
+        "tunic_long",
+        "mantle",
+        "belt",
+        "veil",
+        "sandals"
+      ],
+      "colors": {
+        "tunic": "#33507e",
+        "mantle": "#8a6a48",
+        "veil": "#e3dac4"
+      },
+      "under": "#33507e"
     }
   }
 }

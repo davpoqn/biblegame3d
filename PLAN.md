@@ -16,8 +16,9 @@
   - 사람의 대사는 요즘 말투로 바뀌어 있고, 엔딩은 "들은 말 → 실제 구절 → 내 대답 → 인물의 대답" 4칸이다.
   - 앞으로 이 링크는 다섯 인물을 고르는 **허브(시작 화면)** 로 쓰고, 인물마다 아티팩트를 따로 둔다.
 - **이 저장소**: 데모의 원본(`src/`), 빌드 도구(`tools/`), 개역한글 데이터(`data/`), 캐릭터 원본 파일(`assets/raw/`).
-- **캐릭터 준비 완료** (6장 1번): `assets/chars/`에 남녀 캐릭터, 애니메이션 28개, 소품, 신분별 옷차림이 있다. 합계 약 1.7MB. 아직 게임 엔진(`kit.js`)에는 붙이지 않았다. 미리보기는 `assets/chars/preview/`.
-- **캐릭터 보기 페이지**: https://claude.ai/artifact/CVDFMGjTuY5hQ5EY1gfaN9 (인물 의상실). 인물 7명 × 동작 28개를 골라 돌려 보고 옷을 하나씩 벗겨 볼 수 있다. `tools/chars/viewer.py`로 묶는다(`single/chars.html`, 2.3MB).
+- **캐릭터 준비 완료** (6장 1번): `assets/chars/`에 남녀 캐릭터, 애니메이션 28개, 소품, 신분별 옷차림이 있다. 합계 약 1.9MB. 아직 게임 엔진(`kit.js`)에는 붙이지 않았다. 미리보기는 `assets/chars/preview/`.
+- **캐릭터 보기 페이지**: https://claude.ai/artifact/CVDFMGjTuY5hQ5EY1gfaN9 (인물 의상실). 인물 7명 × 동작 28개를 골라 돌려 보고 옷을 하나씩 벗겨 볼 수 있다. `tools/chars/viewer.py`로 묶는다(`single/chars.html`, 2.5MB).
+- 2026-10-09 사용자 의견 반영: 왕은 큰 금관·보석·금 테두리 겉옷·금 가슴 장식으로 화려하게, 기본 여자는 몸에 붙는 홍색 드레스·금 장신구·긴 머리(삼하 1:24), 옛 너울 차림은 `woman_veil`로 남김. 옷 아래 몸은 속옷 색으로 칠해 움직이거나 넘어져도 맨살이 비치지 않게 함(사용자가 부담스럽다고 함).
 - 다음 작업: 사용자가 보기 페이지를 확인하고 "ㅇㅋ"하면 캐릭터를 게임에 넣는다.
 
 ## 3. 지켜야 할 원칙 (사용자가 확정한 것)
@@ -92,14 +93,15 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
 
      | 파일 | 크기 | 내용 |
      |---|---|---|
-     | `char_m.glb` | 533KB | 남자 마네킹 + 옷 전부. 메시 이름으로 켜고 끈다 |
-     | `char_f.glb` | 427KB | 여자 마네킹(UAL1 뼈대에 여성 팔 위치) + 옷 |
+     | `char_m.glb` | 616KB | 남자 마네킹 + 옷 전부. 메시 이름으로 켜고 끈다 |
+     | `char_f.glb` | 521KB | 여자 마네킹(UAL1 뼈대에 여성 팔 위치) + 옷 |
      | `anims.glb` | 719KB | 뼈대와 클립 28개. 골반 외 뼈의 위치값은 지웠다(여자 팔 길이 유지) |
      | `props.glb` | 8KB | 지팡이, 칼, 횃불 자루. 원점이 쥐는 자리라 엔진에서 손뼈에 붙인다 |
-     | `outfits.json` | | 신분별 옷차림(`wear`)과 색(`colors`). 엔진에서 재질을 복제해 색을 입힌다 |
+     | `outfits.json` | | 신분별 옷차림(`wear`), 속옷 색(`under`), 살색으로 둘 곳(`bare`), 색(`colors`). 색은 기본색 → under → bare → colors 순서로 덮어쓴다 |
 
-   - 옷 메시: `tunic_long`, `tunic_short`(남), `mantle`(앞이 트인 겉옷), `belt`, `headcloth`(남), `veil`(여), `sandals`, `beard`(남), `crown`(삼하 12:30), `helmet`, `helmet_crest`, `armor`, `cloak`(로마 군인)
-   - 신분: `man`, `elder`(흰 수염), `shepherd`, `fisherman`, `king`, `roman`, `woman`
+   - 옷 메시: `tunic_long`, `tunic_short`(남), `mantle`(앞이 트인 겉옷), `belt`, `headcloth`(남), `veil`(여), `sandals`, `beard`(남), 왕 `crown`(삼하 12:30)·`crown_gems`·`royal_mantle`·`royal_trim`·`tunic_trim`·`belt_wide`·`collar`, 로마 군인 `helmet`·`helmet_crest`·`armor`·`cloak`, 여자 `dress`·`sash`·`hair`·`circlet`·`necklace`·`bracelets`
+   - 몸 재질: 얼굴·목·손·발은 `M_Main`(살색), 옷 아래는 `under_chest`·`under_body`·`under_arm`·`under_thigh`·`under_calf`
+   - 신분: `man`, `elder`(흰 수염), `shepherd`, `fisherman`, `king`, `roman`, `woman`(홍색 드레스), `woman_veil`(너울)
    - 옷은 몸 단면을 감싸는 고리를 쌓아 만든다. 마네킹이 28조각이라 표면을 부풀리면 틈이 생긴다. 엉덩이 아래로는 곧게 떨어지고, 치마 가중치는 양다리에 나눠서 걸을 때 찢어지지 않는다.
    - 쓰는 애니메이션: UAL1 20개 + UAL2 8개
 
