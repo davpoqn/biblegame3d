@@ -1,0 +1,64 @@
+{
+  "_note": "신분별 옷차림. wear = char_m.glb / char_f.glb 안의 메시 이름, colors = 재질 이름별 색. 엔진에서 재질을 복제해 색을 입힌다. 색은 PLAN.md 6장: 염색하지 않은 양모색, 갈색, 쪽빛이 기본이고 자색은 귀한 사람에게만.",
+  "default_colors": {
+    "M_Main": "#a97d5d",
+    "M_Joints": "#a97d5d",
+    "tunic": "#d9ceb2",
+    "mantle": "#7a5a3c",
+    "belt": "#5a3d25",
+    "headcloth": "#e3dac4",
+    "veil": "#d9ceb2",
+    "sandal": "#6b4a2e",
+    "beard": "#3b2a1e",
+    "metal": "#8c8a84",
+    "crest": "#9b2a22",
+    "cloak": "#9b2a22",
+    "gold": "#c9a23a",
+    "wood": "#6e4f30",
+    "cloth_dark": "#3a3028"
+  },
+  "roles": {
+    "man": {
+      "name": "기본 남자",
+      "body": "m",
+      "wear": ["tunic_long", "mantle", "belt", "headcloth", "sandals", "beard"]
+    },
+    "elder": {
+      "name": "나이 든 남자",
+      "body": "m",
+      "wear": ["tunic_long", "mantle", "belt", "headcloth", "sandals", "beard"],
+      "colors": { "beard": "#cfc8bc" }
+    },
+    "shepherd": {
+      "name": "목자 — 거친 양모와 지팡이",
+      "body": "m",
+      "wear": ["tunic_short", "mantle", "belt", "headcloth", "sandals", "beard"],
+      "colors": { "tunic": "#c4b591", "mantle": "#6b4f35" },
+      "props": ["prop_staff"]
+    },
+    "fisherman": {
+      "name": "어부 — 짧은 튜닉",
+      "body": "m",
+      "wear": ["tunic_short", "belt", "headcloth", "sandals", "beard"],
+      "colors": { "tunic": "#e6dfcf", "headcloth": "#33507e" }
+    },
+    "king": {
+      "name": "왕 — 자색과 고운 베",
+      "body": "m",
+      "wear": ["tunic_long", "mantle", "belt", "headcloth", "crown", "sandals", "beard"],
+      "colors": { "tunic": "#f1ece0", "mantle": "#5b2a5e", "belt": "#c9a23a", "headcloth": "#f1ece0" }
+    },
+    "roman": {
+      "name": "로마 군인 — 투구, 갑옷, 붉은 망토",
+      "body": "m",
+      "wear": ["tunic_short", "armor", "helmet", "helmet_crest", "cloak", "belt", "sandals"],
+      "colors": { "belt": "#4a3220" }
+    },
+    "woman": {
+      "name": "기본 여자 — 너울",
+      "body": "f",
+      "wear": ["tunic_long", "mantle", "belt", "veil", "sandals"],
+      "colors": { "tunic": "#33507e", "mantle": "#8a6a48", "veil": "#e3dac4" }
+    }
+  }
+}

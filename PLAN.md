@@ -16,6 +16,7 @@
   - 사람의 대사는 요즘 말투로 바뀌어 있고, 엔딩은 "들은 말 → 실제 구절 → 내 대답 → 인물의 대답" 4칸이다.
   - 앞으로 이 링크는 다섯 인물을 고르는 **허브(시작 화면)** 로 쓰고, 인물마다 아티팩트를 따로 둔다.
 - **이 저장소**: 데모의 원본(`src/`), 빌드 도구(`tools/`), 개역한글 데이터(`data/`), 캐릭터 원본 파일(`assets/raw/`).
+- **캐릭터 준비 완료** (6장 1번): `assets/chars/`에 남녀 캐릭터, 애니메이션 28개, 소품, 신분별 옷차림이 있다. 합계 약 1.0MB. 아직 게임 엔진(`kit.js`)에는 붙이지 않았다. 미리보기는 `assets/chars/preview/`.
 
 ## 3. 지켜야 할 원칙 (사용자가 확정한 것)
 
@@ -35,7 +36,11 @@
 - 아티팩트의 외부 리소스: 스크립트만 `cdn.jsdelivr.net` 등에서 불러올 수 있다. 3D 모델이나 음성 같은 바이너리는 **data URI로 HTML 안에 넣어야** 한다. 한 페이지에 16MB 한도가 있어서 인물별 아티팩트로 나눈다.
 - three.js `0.160.0`을 importmap으로 쓴다. 동적 import가 실패하면 글과 소리만으로 진행하는 대체 모드로 넘어간다.
 - 작업 공간 셸에서는 GitHub, npm, PyPI만 접근된다. 다른 사이트에서 다운로드는 안 된다.
-- Blender는 `pip install bpy --break-system-packages`로 작업 공간에 설치할 수 있다(5.x, Python 3.13). 설치 가능한 것까지만 확인했고, 실제로 돌려 보지는 않았다.
+- Blender는 `pip install bpy --break-system-packages`로 설치해 실제로 돌려 봤다(5.2.2, Python 3.13). glTF를 불러올 때 `bone_heuristic`을 기본값(`BLENDER`)으로 두어야 원본과 같은 뼈대로 다시 내보내진다(회전 차이 0.04° 이하). 다른 값은 뼈 방향이 90°까지 바뀐다.
+- 파이썬 스크립트 이름을 `inspect.py`처럼 기본 모듈 이름으로 지으면 bpy가 두 번 초기화되어 죽는다.
+- Claude Code 클라우드 세션에서는 PyPI, npm, GitHub가 되고 opengameart.org, itch.io는 막혀 있다(403). 에셋은 사용자가 올려 준다.
+- 파이썬 playwright는 `1.56.0`을 쓴다. 작업 공간에 미리 깔린 Chromium(1194)과 맞는 버전이다.
+- 캐릭터 GLB는 meshopt로 압축되어 있다. 불러올 때 `GLTFLoader.setMeshoptDecoder()`에 `three/addons/libs/meshopt_decoder.module.js`를 넘겨야 한다.
 
 ## 5. 저장소 구조와 빌드
 
@@ -49,7 +54,9 @@ tools/check.sh        문법 검사
 tools/inlinecheck.py  휴대폰과 비슷한 조건(옆 파일 없이 본문만)에서 첫 장면 로딩 확인
 tools/kv.py           구절 출력: python3 tools/kv.py LUK 5 1-11
 data/                 개역한글 데이터 (출처: github.com/crizin/bible-db, holybible.or.kr 정본)
-assets/raw/           Quaternius 캐릭터 원본 (CC0)
+assets/raw/           Quaternius 캐릭터·애니메이션 원본 (CC0). UAL1, UAL2, 여성 마네킹
+assets/chars/         게시용 캐릭터: char_m.glb, char_f.glb, anims.glb, props.glb, outfits.json, preview/
+tools/chars/make.sh   캐릭터 전체 빌드: build_chars.py(옷, Blender) → anims.mjs(동작) → meshopt 압축 → charcheck.py(three.js 확인)
 ```
 
 순서는 이렇다.
@@ -75,23 +82,28 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
 
 ## 6. 다음 단계
 
-1. **캐릭터 (새 대화의 첫 작업)**
-   - 작업 공간에 Blender를 설치한다.
-   - `assets/raw/UAL1_Standard.glb`에서 쓸 애니메이션만 남긴다.
-   - `Mannequin_F.blend`(여성 마네킹, 같은 뼈대)를 GLB로 변환한다.
-   - gltf-transform(npm)으로 압축해서 1~2MB로 줄인다.
-   - **시대 의복**을 만들어 뼈대에 붙인다. 속옷 튜닉, 겉옷(망토형), 허리띠, 머리 두건, 샌들, 여성 너울을 기본으로 한다.
-     - 신분별: 목자는 거친 양모와 지팡이, 어부는 짧은 튜닉, 왕은 자색과 고운 베, 로마 군인은 투구·갑옷·붉은 망토.
-     - 색: 염색하지 않은 양모색, 갈색, 쪽빛이 기본. 자색은 귀한 사람에게만.
-   - 마네킹은 얼굴이 없으므로 두건과 수염으로 자연스럽게 가린다.
-   - 주요 인물만 이 모델을 쓰고, 군중은 지금의 단순한 인물을 개선해서 쓴다.
-   - UAL1에서 쓸 애니메이션:
+1. **캐릭터 — 준비 완료 (2026-10-09), 엔진 연결이 남음**
+   - 다시 만들 때: `pip install bpy 'playwright==1.56.0' --break-system-packages && npm install` 후 `tools/chars/make.sh --preview`. 15초쯤 걸린다.
+   - 결과물 (`assets/chars/`)
+
+     | 파일 | 크기 | 내용 |
+     |---|---|---|
+     | `char_m.glb` | 221KB | 남자 마네킹 + 옷 전부. 메시 이름으로 켜고 끈다 |
+     | `char_f.glb` | 164KB | 여자 마네킹(UAL1 뼈대에 여성 팔 위치) + 옷 |
+     | `anims.glb` | 634KB | 뼈대와 클립 28개. 골반 외 뼈의 위치값은 지웠다(여자 팔 길이 유지) |
+     | `props.glb` | 7KB | 지팡이, 칼, 횃불 자루. 원점이 쥐는 자리라 엔진에서 손뼈에 붙인다 |
+     | `outfits.json` | | 신분별 옷차림(`wear`)과 색(`colors`). 엔진에서 재질을 복제해 색을 입힌다 |
+
+   - 옷 메시: `tunic_long`, `tunic_short`(남), `mantle`(앞이 트인 겉옷), `belt`, `headcloth`(남), `veil`(여), `sandals`, `beard`(남), `crown`(삼하 12:30), `helmet`, `helmet_crest`, `armor`, `cloak`(로마 군인)
+   - 신분: `man`, `elder`(흰 수염), `shepherd`, `fisherman`, `king`, `roman`, `woman`
+   - 옷은 몸 단면을 감싸는 고리를 쌓아 만든다. 마네킹이 28조각이라 표면을 부풀리면 틈이 생긴다. 엉덩이 아래로는 곧게 떨어지고, 치마 가중치는 양다리에 나눠서 걸을 때 찢어지지 않는다.
+   - 쓰는 애니메이션: UAL1 20개 + UAL2 8개
 
      | 애니메이션 | 쓸 곳 |
      |---|---|
      | `Idle_Loop`, `Idle_Talking_Loop` | 서 있기, 서서 말하기 |
      | `Walk_Loop`, `Walk_Formal_Loop`, `Jog_Fwd_Loop`, `Sprint_Loop` | 걷기, 달리기 (빈 무덤으로 달려가는 장면) |
-     | `Sitting_Enter`, `Sitting_Idle_Loop`, `Sitting_Talking_Loop` | 앉기, 앉아서 말하기 |
+     | `Sitting_Enter`, `Sitting_Idle_Loop`, `Sitting_Talking_Loop`, `Sitting_Exit` | 앉기, 앉아서 말하기, 일어서기 |
      | `Fixing_Kneeling` | 무릎 꿇기 |
      | `Crouch_Idle_Loop` | 웅크리기 |
      | `Swim_Fwd_Loop`, `Swim_Idle_Loop` | 헤엄치기 (요 21:7) |
@@ -100,9 +112,19 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
      | `Idle_Torch_Loop` | 횃불 들고 서 있기 (겟세마네) |
      | `PickUp_Table`, `Interact` | 물건 집기, 건네기 |
      | `Push_Loop` | 씨름의 바탕 동작 |
+     | `OverhandThrow` (UAL2) | 물매 던지기 (삼상 17:49) |
+     | `Consume` (UAL2) | 먹기 (요 6:11, 요 21:13, 창 25:34) |
+     | `TreeChopping_Loop` (UAL2) | 번제 나무 쪼개기 (창 22:3) |
+     | `Walk_Carry_Loop` (UAL2) | 나무 지고 가기 (창 22:6) |
+     | `LayToIdle` (UAL2) | 누웠다 일어나기 (창 28:11–18) |
+     | `Yes`, `Idle_No_Loop` (UAL2) | 끄덕임, 고개 젓기 |
+     | `Idle_Lantern_Loop` (UAL2) | 등 들고 서 있기 (요 18:3) |
 
-   - 없는 동작(기도, 엎드려 절하기, 끌어안기, 우는 몸짓)은 코드로 뼈를 움직여 만든다.
-   - UAL2(`UAL2_Standard.glb`, `_RM` 없는 것)는 사용자가 줄 예정이다.
+   - **남은 일**
+     - `kit.js`에 캐릭터 불러오기를 붙인다. GLB를 data URI로 넣고, `outfits.json`대로 옷과 색을 고르고, 소품을 손뼈에 붙인다.
+     - 없는 동작(기도, 엎드려 절하기, 끌어안기, 우는 몸짓)은 코드로 뼈를 움직여 만든다.
+     - 주요 인물만 이 모델을 쓰고, 군중은 지금의 단순한 인물을 개선해서 쓴다.
+     - 앉은 자세에서 긴 옷자락이 둥글게 퍼진다. 엔진에 붙인 뒤 보고 고칠지 정한다.
 2. **공통 엔진 개선**
    - 모든 연출 문장, 자동으로 넘어가는 문장, 장면 카드를 스페이스바나 탭으로 넘길 수 있게 한다.
    - 어두운 장면 밝기를 조정한다(달빛, 횃불).

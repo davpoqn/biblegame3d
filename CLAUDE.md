@@ -28,4 +28,4 @@ python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
 
 ## 다음 할 일
 
-PLAN.md 6장. 첫 작업은 캐릭터 준비다: Blender 설치 → 애니메이션 정리 → 여성 마네킹 변환 → 압축 → 시대 의복. UAL2 파일은 사용자가 줄 예정이다.
+PLAN.md 6장. 캐릭터 준비(1번)는 끝났다(`assets/chars/`, `tools/chars/make.sh`). 다음은 캐릭터를 `kit.js`에 붙이는 일과 2번 공통 엔진 개선이다.

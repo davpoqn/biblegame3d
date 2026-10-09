@@ -2,5 +2,8 @@
   "name": "biblegame3d",
   "private": true,
   "description": "성경 인물 1인칭 3D 체험 — 로컬 확인용 의존성",
-  "devDependencies": { "three": "0.160.0" }
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
+    "three": "0.160.0"
+  }
 }
