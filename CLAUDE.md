@@ -29,4 +29,4 @@ python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
 
 ## 다음 할 일
 
-PLAN.md 6장. 캐릭터 준비(1번)는 끝났다(`assets/chars/`, `tools/chars/make.sh`). 다음은 캐릭터를 `kit.js`에 붙이는 일과 2번 공통 엔진 개선이다.
+**PLAN.md 11장 1단계부터.** 사용자가 게임을 해 보고 준 의견을 단계별로 정리해 두었다(생선 크기, 밝기, 다윗 전쟁, 예수님 모습, 내 손과 발, 장면 채우기). 캐릭터·동물은 `assets/chars/`, 다시 만들기는 `tools/chars/make.sh`.
