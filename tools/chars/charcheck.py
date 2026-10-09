@@ -9,18 +9,21 @@ T = S / 'node_modules/three'
 uri = lambda p: 'data:model/gltf-binary;base64,' + base64.b64encode((S / p).read_bytes()).decode()
 data = {k: uri(f'assets/chars/{k}.glb') for k in ('char_m', 'char_f', 'anims', 'props')}
 outfits = json.loads((S / 'assets/chars/outfits.json').read_text())
+# 아티팩트 뷰어와 비슷한 보안 정책: fetch 금지, WebAssembly 금지
+CSP = ('<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\' https://cdn.jsdelivr.net; '
+       'style-src \'unsafe-inline\'; img-src data: blob:; connect-src \'none\'">')
 
-html = '''<!doctype html><html><head><meta charset=utf8>
+html = '''<!doctype html><html><head><meta charset=utf8>CSP
 <script type=importmap>{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
 "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script></head>
 <body style="margin:0"><script type=module>
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 const D = DATA, O = OUTFITS, out = {};
-const ld = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-const [m, f, a] = await Promise.all([ld.loadAsync(D.char_m), ld.loadAsync(D.char_f), ld.loadAsync(D.anims)]);
+const buf = (u) => Uint8Array.from(atob(u.slice(u.indexOf(',') + 1)), (c) => c.charCodeAt(0)).buffer;
+const ld = new GLTFLoader();
+const [m, f, a] = await Promise.all([D.char_m, D.char_f, D.anims].map((u) => ld.parseAsync(buf(u), '')));
 const clips = Object.fromEntries(a.animations.map(c => [c.name, c]));
 out.clips = a.animations.length;
 const r = new THREE.WebGLRenderer({ antialias: true }); r.setSize(960, 540); document.body.appendChild(r.domElement);
@@ -50,7 +53,7 @@ out.handMoved = +P(g0, 'hand_l').distanceTo(h0).toFixed(3);
 mx0.setTime(0.4 * clips.Walk_Loop.duration);
 out.meshes = { m: [], f: [] }; m.scene.traverse(o => o.isMesh && out.meshes.m.push(o.name)); f.scene.traverse(o => o.isMesh && out.meshes.f.push(o.name));
 r.render(sc, cam); window.OUT = out;
-</script></body></html>'''.replace('DATA', json.dumps(data)).replace('OUTFITS', json.dumps(outfits))
+</script></body></html>'''.replace('CSP', CSP).replace('DATA', json.dumps(data)).replace('OUTFITS', json.dumps(outfits))
 
 with sync_playwright() as p:
     b = p.chromium.launch(args=['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])

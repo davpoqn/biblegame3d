@@ -16,8 +16,8 @@
   - 사람의 대사는 요즘 말투로 바뀌어 있고, 엔딩은 "들은 말 → 실제 구절 → 내 대답 → 인물의 대답" 4칸이다.
   - 앞으로 이 링크는 다섯 인물을 고르는 **허브(시작 화면)** 로 쓰고, 인물마다 아티팩트를 따로 둔다.
 - **이 저장소**: 데모의 원본(`src/`), 빌드 도구(`tools/`), 개역한글 데이터(`data/`), 캐릭터 원본 파일(`assets/raw/`).
-- **캐릭터 준비 완료** (6장 1번): `assets/chars/`에 남녀 캐릭터, 애니메이션 28개, 소품, 신분별 옷차림이 있다. 합계 약 1.0MB. 아직 게임 엔진(`kit.js`)에는 붙이지 않았다. 미리보기는 `assets/chars/preview/`.
-- **캐릭터 보기 페이지**: https://claude.ai/artifact/CVDFMGjTuY5hQ5EY1gfaN9 (인물 의상실). 인물 7명 × 동작 28개를 골라 돌려 보고 옷을 하나씩 벗겨 볼 수 있다. `tools/chars/viewer.py`로 묶는다(`single/chars.html`, 1.4MB).
+- **캐릭터 준비 완료** (6장 1번): `assets/chars/`에 남녀 캐릭터, 애니메이션 28개, 소품, 신분별 옷차림이 있다. 합계 약 1.7MB. 아직 게임 엔진(`kit.js`)에는 붙이지 않았다. 미리보기는 `assets/chars/preview/`.
+- **캐릭터 보기 페이지**: https://claude.ai/artifact/CVDFMGjTuY5hQ5EY1gfaN9 (인물 의상실). 인물 7명 × 동작 28개를 골라 돌려 보고 옷을 하나씩 벗겨 볼 수 있다. `tools/chars/viewer.py`로 묶는다(`single/chars.html`, 2.3MB).
 - 다음 작업: 사용자가 보기 페이지를 확인하고 "ㅇㅋ"하면 캐릭터를 게임에 넣는다.
 
 ## 3. 지켜야 할 원칙 (사용자가 확정한 것)
@@ -42,7 +42,9 @@
 - 파이썬 스크립트 이름을 `inspect.py`처럼 기본 모듈 이름으로 지으면 bpy가 두 번 초기화되어 죽는다.
 - Claude Code 클라우드 세션에서는 PyPI, npm, GitHub가 되고 opengameart.org, itch.io는 막혀 있다(403). 에셋은 사용자가 올려 준다.
 - 파이썬 playwright는 `1.56.0`을 쓴다. 작업 공간에 미리 깔린 Chromium(1194)과 맞는 버전이다.
-- 캐릭터 GLB는 meshopt로 압축되어 있다. 불러올 때 `GLTFLoader.setMeshoptDecoder()`에 `three/addons/libs/meshopt_decoder.module.js`를 넘겨야 한다.
+- **게시된 아티팩트에서는 `fetch()`로 data URI를 읽지 못한다** (`GLTFLoader.loadAsync(data:…)`가 "Failed to fetch"로 실패). base64를 직접 풀어 `loader.parseAsync(arrayBuffer, '')`로 읽는다.
+- WebAssembly도 막힐 수 있어서 meshopt·Draco 압축은 쓰지 않는다. 캐릭터 GLB는 `gltf-transform quantize`(KHR_mesh_quantization, GLTFLoader가 그냥 읽음)로만 줄인다.
+- 로컬 확인(`tools/chars/charcheck.py`)은 아티팩트와 비슷한 보안 정책(fetch·WebAssembly 금지)을 걸고 돌린다.
 
 ## 5. 저장소 구조와 빌드
 
@@ -58,7 +60,7 @@ tools/kv.py           구절 출력: python3 tools/kv.py LUK 5 1-11
 data/                 개역한글 데이터 (출처: github.com/crizin/bible-db, holybible.or.kr 정본)
 assets/raw/           Quaternius 캐릭터·애니메이션 원본 (CC0). UAL1, UAL2, 여성 마네킹
 assets/chars/         게시용 캐릭터: char_m.glb, char_f.glb, anims.glb, props.glb, outfits.json, preview/
-tools/chars/make.sh   캐릭터 전체 빌드: build_chars.py(옷, Blender) → anims.mjs(동작) → meshopt 압축 → charcheck.py(three.js 확인) → viewer.py(보기 페이지)
+tools/chars/make.sh   캐릭터 전체 빌드: build_chars.py(옷, Blender) → anims.mjs(동작) → quantize 압축 → charcheck.py(three.js 확인) → viewer.py(보기 페이지)
 ```
 
 순서는 이렇다.
@@ -90,10 +92,10 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
 
      | 파일 | 크기 | 내용 |
      |---|---|---|
-     | `char_m.glb` | 221KB | 남자 마네킹 + 옷 전부. 메시 이름으로 켜고 끈다 |
-     | `char_f.glb` | 164KB | 여자 마네킹(UAL1 뼈대에 여성 팔 위치) + 옷 |
-     | `anims.glb` | 634KB | 뼈대와 클립 28개. 골반 외 뼈의 위치값은 지웠다(여자 팔 길이 유지) |
-     | `props.glb` | 7KB | 지팡이, 칼, 횃불 자루. 원점이 쥐는 자리라 엔진에서 손뼈에 붙인다 |
+     | `char_m.glb` | 533KB | 남자 마네킹 + 옷 전부. 메시 이름으로 켜고 끈다 |
+     | `char_f.glb` | 427KB | 여자 마네킹(UAL1 뼈대에 여성 팔 위치) + 옷 |
+     | `anims.glb` | 719KB | 뼈대와 클립 28개. 골반 외 뼈의 위치값은 지웠다(여자 팔 길이 유지) |
+     | `props.glb` | 8KB | 지팡이, 칼, 횃불 자루. 원점이 쥐는 자리라 엔진에서 손뼈에 붙인다 |
      | `outfits.json` | | 신분별 옷차림(`wear`)과 색(`colors`). 엔진에서 재질을 복제해 색을 입힌다 |
 
    - 옷 메시: `tunic_long`, `tunic_short`(남), `mantle`(앞이 트인 겉옷), `belt`, `headcloth`(남), `veil`(여), `sandals`, `beard`(남), `crown`(삼하 12:30), `helmet`, `helmet_crest`, `armor`, `cloak`(로마 군인)

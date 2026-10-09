@@ -85,7 +85,7 @@ for (const a of root.listAnimations()) for (const ch of a.listChannels()) {
 }
 // 쓰이지 않는 accessor 정리 (prune이 놓치는 것)
 for (const acc of root.listAccessors()) if (acc.listParents().every((p) => p.propertyType === 'Root')) acc.dispose();
-if (!process.env.NOMESHOPT) doc.createExtension((await import('@gltf-transform/extensions')).EXTMeshoptCompression)
+if (process.env.MESHOPT) doc.createExtension((await import('@gltf-transform/extensions')).EXTMeshoptCompression)
   .setRequired(true).setEncoderOptions({ method: 'filter' });
 mkdirSync('assets/chars', { recursive: true });
 await io.write('assets/chars/anims.glb', doc);

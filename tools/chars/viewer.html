@@ -83,7 +83,6 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 const { GLB, OUTFITS } = window;
@@ -131,8 +130,10 @@ new ResizeObserver(resize).observe(stage); resize();
 
 let src, clips, fig, mixer, cur;
 try {
-  const ld = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  const [m, f, a] = await Promise.all([GLB.char_m, GLB.char_f, GLB.anims].map((u) => ld.loadAsync(u)));
+  // 게시된 페이지는 fetch로 data URI를 읽지 못한다 → base64를 직접 풀어 parse
+  const buf = (u) => Uint8Array.from(atob(u.slice(u.indexOf(',') + 1)), (c) => c.charCodeAt(0)).buffer;
+  const ld = new GLTFLoader();
+  const [m, f, a] = await Promise.all([GLB.char_m, GLB.char_f, GLB.anims].map((u) => ld.parseAsync(buf(u), '')));
   src = { m, f }; clips = Object.fromEntries(a.animations.map((c) => [c.name, c]));
   msg.hidden = true;
 } catch (e) {
