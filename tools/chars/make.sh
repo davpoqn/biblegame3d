@@ -5,6 +5,8 @@
 set -e
 cd "$(dirname "$0")/../.."
 python3 tools/chars/build_chars.py "$@"
+python3 tools/chars/build_animals.py
+for k in sheep ram goat ox donkey colt camel pig; do node tools/chars/slim.mjs assets/chars/build/an_$k.glb assets/chars/build/an_${k}_s.glb >/dev/null; npx gltf-transform quantize assets/chars/build/an_${k}_s.glb assets/chars/an_$k.glb >/dev/null; done
 node tools/chars/anims.mjs
 # quantize: WebAssembly 없이 읽히는 압축 (meshopt·Draco는 아티팩트에서 막힐 수 있음)
 for f in char_m char_f props; do npx gltf-transform quantize assets/chars/build/$f.glb assets/chars/$f.glb >/dev/null; done

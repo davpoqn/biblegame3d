@@ -225,7 +225,7 @@ async function world(kit, { audio, sleep }) {
   const woodPile = kit.box(1.2, .3, .7, '#5a4130', SUM.x, SUM.y + 1.15, SUM.z - 3); woodPile.visible = false;
   const thicket = new THREE.Group(); scene.add(thicket);
   for (let i = 0; i < 9; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(rnd(.5, .9), 8, 6), new THREE.MeshStandardMaterial({ color: '#4a5032', roughness: 1, flatShading: true })); b.position.set(SUM.x + rnd(-2.2, 2.2), SUM.y + rnd(.3, .8), SUM.z + 6 + rnd(-1, 1)); thicket.add(b); }
-  const ram = kit.herd('goat', { n: 1, center: [SUM.x + .4, SUM.z + 5.4], rx: .1, rz: .1, height: h4, placer: () => [0, 0], color: '#cfc4b0', scale: [1.25, 1.25] });
+  const ram = kit.herd('ram', { n: 1, center: [SUM.x + .4, SUM.z + 5.4], rx: .1, rz: .1, height: h4, placer: () => [0, 0], scale: [1, 1] })  // 숫양 (창 22:13). 동물 모델이 없으면 단순한 모양;
   ram.visible = false; thicket.visible = false;
 
   const C = o => kit.setEnv(o, 0);

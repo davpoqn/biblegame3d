@@ -213,7 +213,7 @@ async function world(kit, { audio, sleep }) {
   const jesusSeat = kit.figure('man', { tint: ROBE, pose: 'seat' }); jesusSeat.position.set(0, .25, -2.6); boatA.add(jesusSeat);
 
   // 고기 떼 (그물 안에서 퍼덕이는)
-  const FN = 170, fish = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: '#c9d1d4', roughness: .35, metalness: .6 }), FN);
+  const FN = 170, fishProp = kit.instancedProp('prop_fish', FN), fish = fishProp || new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: '#c9d1d4', roughness: .35, metalness: .6 }), FN);
   fish.frustumCulled = false; scene.add(fish); fish.visible = false;
   const fishSt = Array.from({ length: FN }, () => ({ a: rnd(0, 6.3), r: Math.sqrt(Math.random()), ph: rnd(0, 6.3), sp: rnd(1.2, 2.6) }));
   const fishAt = { c: v3(0, 0, 0), r: 2.2, on: 0 };
@@ -250,8 +250,8 @@ async function world(kit, { audio, sleep }) {
   // 숯불과 생선, 떡 (요 21:9)
   const coal = kit.fire([.8, heightAt(.8, -3.2) + .05, -3.2], { coals: true, ring: true, logs: false, level: 0, smoke: true, size: .9 });
   const meal = new THREE.Group(); coal.g.add(meal);
-  for (let i = 0; i < 4; i++) { const f = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: '#8a7a62', roughness: .8 })); f.scale.set(.05, .03, .16); f.position.set(-.15 + i * .1, .12, 0); meal.add(f); }
-  for (let i = 0; i < 3; i++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(.09, .1, .05, 10), new THREE.MeshStandardMaterial({ color: '#b08452', roughness: 1 })); b.position.set(.55, .03, -.2 + i * .2); meal.add(b); }
+  for (let i = 0; i < 4; i++) { const f = kit.prop('prop_fish', { colors: { fish: '#6e5034', fin: '#3e2c1e' } }); if (f) { f.rotation.set(0, 0, Math.PI / 2); f.position.set(-.15 + i * .1, .14, 0); meal.add(f); continue; } const s = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: '#8a7a62', roughness: .8 })); s.scale.set(.05, .03, .16); s.position.set(-.15 + i * .1, .12, 0); meal.add(s); }  // 숯불 위에 구운 생선
+  for (let i = 0; i < 3; i++) { const b = kit.prop('prop_bread') || new THREE.Mesh(new THREE.CylinderGeometry(.09, .1, .05, 10), new THREE.MeshStandardMaterial({ color: '#b08452', roughness: 1 })); b.position.set(.55, .03, -.2 + i * .2); b.rotation.y = i * 1.3; meal.add(b); }  // 떡 (요 21:9)
   coal.g.visible = false;
   const shoreDisciples = [[-.9, -2.2], [-1.2, -3.8], [.4, -1.7], [2.2, -2.4], [2.4, -3.9], [.9, -4.6]].map(([x, z]) => { const g = kit.person('#3f3329', { pose: 'seat' }); g.position.set(x, heightAt(x, z), z); g.rotation.y = Math.atan2(.8 - x, -3.2 - z); return g; });
 
@@ -263,7 +263,7 @@ async function world(kit, { audio, sleep }) {
       const a = f.a + t * .2, r = f.r * fishAt.r;
       const jump = Math.max(0, Math.sin(t * f.sp + f.ph)) * .5 * on;
       dm.position.set(fishAt.c.x + Math.cos(a) * r, fishAt.c.y + jump + kit.waveH(fishAt.c.x, fishAt.c.z) - .05, fishAt.c.z + Math.sin(a) * r);
-      dm.rotation.set(Math.sin(t * 9 + f.ph) * .6, a, Math.cos(t * 7 + f.ph) * .5); dm.scale.set(.06 * on, .05 * on, .2 * on); dm.updateMatrix(); fish.setMatrixAt(i, dm.matrix);
+      dm.rotation.set(Math.sin(t * 9 + f.ph) * .6, a, Math.cos(t * 7 + f.ph) * .5); fishProp ? dm.scale.setScalar(1.1 * on) : dm.scale.set(.06 * on, .05 * on, .2 * on); dm.updateMatrix(); fish.setMatrixAt(i, dm.matrix);
     });
     fish.instanceMatrix.needsUpdate = true;
   });

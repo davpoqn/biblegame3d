@@ -266,7 +266,10 @@ body:not(.playing) #text-toggle{visibility:hidden}
 
 <script type="module">
 const $ = s => document.querySelector(s);
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+// ESC로 처음 화면에 돌아가면 epoch가 늘어난다. 예전 이야기의 기다림(sleep, 계속, 고르기)은 다시 풀리지 않아 그 자리에서 멈춘다
+let epoch = 0;
+const sleep = ms => { const e = epoch; return new Promise(r => setTimeout(() => { if (e === epoch) r(); }, ms)); };
+const live = res => { const e = epoch; return v => { if (e === epoch) res(v); }; };
 const reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 /* ---------- 인물 목록 (시작 화면) ---------- */
@@ -457,7 +460,7 @@ function revealWords(node, text) {
 }
 let pendingContinue = null;
 function waitContinue(label = '계속') {
-  return new Promise(res => {
+  return new Promise(res => { res = live(res);
     const b = el('button', 'continue'); b.type = 'button';
     b.append(document.createTextNode(label + ' '), el('span', 'kbd', 'Space'));
     let fired = false;
@@ -499,7 +502,7 @@ async function direction(text, { auto = false, ms = 0 } = {}) {
   await waitContinue();
 }
 function choose(question, options, heard) {
-  return new Promise(res => {
+  return new Promise(res => { res = live(res);
     clearStage();
     if (heard && heard.line && !heard.quiet) stage.append(sayTag(heard.who), el('p', 'say-line', heard.line)); else stage.append(stageTag());
     if (question) stage.append(el('p', 'prompt', question));
@@ -515,7 +518,7 @@ function choose(question, options, heard) {
 }
 let speakCount = 0;
 function speak(prompt, { submit = '말하기', skip = '말하지 않기', heard = null } = {}) {
-  return new Promise(res => {
+  return new Promise(res => { res = live(res);
     clearStage();
     const form = el('form', 'speak'); form.noValidate = true;
     const ta = document.createElement('textarea'); ta.id = 'speak-input-' + (++speakCount); ta.rows = 3; ta.maxLength = 400;
@@ -719,6 +722,7 @@ async function runStory() {
 }
 async function begin(withSound) {
   if (running) return; running = true;
+  const ep = epoch;
   if (withSound) audio.enable();
   syncSound();
   const meta = CHARS.find(x => x.id === selected);
@@ -729,6 +733,7 @@ async function begin(withSound) {
   try {
     C = (await import(`./chars/${meta.id}.js`)).default;
     C.PARTIAL = new Set(C.PARTIAL_LIST || []);
+    if (ep !== epoch) return;
   } catch (e) {
     console.error(e);
     clearStage(); stage.append(el('p', 'notice', '이 인물의 장면을 불러오지 못했습니다. 페이지를 새로 고친 뒤 다시 시도해 주세요.'));
@@ -736,6 +741,7 @@ async function begin(withSound) {
   }
   try {
     world = await Promise.race([makeWorld(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 40000))]);
+    if (ep !== epoch) { world && world.dispose && world.dispose(); world = null; return; }  // 불러오는 사이에 ESC
     $('#gl').style.display = '';
   } catch (e) {
     console.warn('3D 화면을 띄우지 못해 글과 소리로 진행합니다:', e);
@@ -753,8 +759,8 @@ $('#restart').addEventListener('click', async () => {
   running = true;
   try { await runStory(); } finally { running = false; }
 });
-$('#pick-other').addEventListener('click', () => {
-  if (running) return;
+function toTitle() {
+  epoch++; running = false; pendingContinue = null;
   $('#summary').hidden = true;
   if (world && world.dispose) world.dispose();
   world = null;
@@ -766,5 +772,8 @@ $('#pick-other').addEventListener('click', () => {
   $('#title-screen').hidden = false;
   select(selected);
   const b = $(`#picker [data-id="${selected}"]`); b && b.focus();
-});
+}
+$('#pick-other').addEventListener('click', () => { if (!running) toTitle(); });
+// ESC: 이야기 중 어디서든 처음 화면으로 (다른 인물을 바로 시험해 보기)
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('playing')) { e.preventDefault(); toTitle(); } });
 </script>

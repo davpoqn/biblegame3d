@@ -22,7 +22,13 @@
 - **게임에 인물 모델 넣음** (2026-10-09): https://claude.ai/artifact/WVdUr7QHvSbZJi5v1Div2B (새 링크. 원래 데모 링크는 버전 4 그대로). 이름 있는 인물만 `kit.figure()`로 바꾸고 군중·무리는 예전 모양 그대로다.
   - 베드로: 예수(걷기·배·다락방·뜰), 여종 / 욥: 아내, 세 친구 / 다윗: 사무엘, 이새, 형 일곱, 골리앗(놋투구·갑옷·놋경갑), 사울(면류관), 나단 / 아브라함: 사래(홍색 옷, 창 12:11), 롯, 세 사람, 사라, 이삭, 하갈, 이스마엘 / 야곱: 이삭, 리브가, 에서, 라반, 레아, 가족 넷, 씨름한 사람(씨름 동작)
   - 다섯 인물 모두 휴대폰 조건(fetch 금지 보안 정책 포함)에서 첫 장면 로딩 확인. 게시용 HTML 2.8MB.
-- 다음 작업: 사용자가 게임에서 인물을 보고 의견을 주면 고친다. 그다음 6장 2번(공통 엔진 개선).
+- **동물·생선·떡, 욥 2:12, ESC** (2026-10-09, 같은 게임 링크 버전 2)
+  - 동물: Quaternius Farm Animals(CC0, `assets/raw/animals/`)로 양, 숫양(창 22:13, 둥글게 말린 뿔), 염소(뿔), 소(겨릿소, 젖을 떼고 뿔), 나귀, 어린 나귀(요 12:14·슥 9:9, 작고 머리가 큼), 약대(라마에 혹), 흑돼지(막 5:11–13)를 만들었다. 무리는 굳힌 자세 셋(서 있기, 고개 돌림, 걷는 중)을 한꺼번에 그리고, 한두 마리(모리아의 나귀, 숫양)는 뼈대와 동작으로 움직인다.
+  - 생선(지느러미, 눈)과 둥근 보리떡: 베드로의 고기 떼(170마리)와 숯불 위 생선·떡(요 21:9).
+  - 욥 2:12: 세 친구가 티끌을 하늘로 날려 머리에 뿌리고, 겉옷을 찢고, 얼굴을 감싸고 운다(`kit.gesture`, 코드로 만든 몸짓).
+  - ESC: 이야기 중 어디서든 처음 화면으로 돌아가 다른 인물을 고른다(사용자 시험용).
+  - 게시용 HTML 4.9MB.
+- 다음 작업: 사용자 의견 반영. 그다음 6장 2번(공통 엔진 개선).
 
 ## 3. 지켜야 할 원칙 (사용자가 확정한 것)
 
@@ -64,8 +70,8 @@ tools/inlinecheck.py  휴대폰과 비슷한 조건(옆 파일 없이 본문만)
 tools/kv.py           구절 출력: python3 tools/kv.py LUK 5 1-11
 data/                 개역한글 데이터 (출처: github.com/crizin/bible-db, holybible.or.kr 정본)
 assets/raw/           Quaternius 캐릭터·애니메이션 원본 (CC0). UAL1, UAL2, 여성 마네킹
-assets/chars/         게시용 캐릭터: char_m.glb, char_f.glb, anims.glb, props.glb, outfits.json, preview/
-tools/chars/make.sh   캐릭터 전체 빌드: build_chars.py(옷, Blender) → anims.mjs(동작) → quantize 압축 → charcheck.py(three.js 확인) → viewer.py(보기 페이지)
+assets/chars/         게시용 캐릭터: char_m.glb, char_f.glb, anims.glb, props.glb(지팡이·칼·횃불·생선·떡), an_<동물>.glb, outfits.json, preview/
+tools/chars/make.sh   캐릭터 전체 빌드: build_chars.py(옷, Blender) → build_animals.py·slim.mjs(동물) → anims.mjs(동작) → quantize 압축 → charcheck.py(three.js 확인) → viewer.py(보기 페이지)
 ```
 
 순서는 이렇다.
@@ -88,6 +94,9 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
 - **`direction(text)`**: '연출' 문장.
 - **`kit.figure(role, { tint, colors, pose, clip, scale, visible })`**: 이름 있는 인물. `role`은 `assets/chars/outfits.json`의 신분(`man`, `elder`, `shepherd`, `fisherman`, `king`, `roman`, `goliath`, `boy`, `woman`, `woman_veil`), `tint`는 겉옷 색, `pose`는 `stand`·`seat`·`kneel`. `g.userData.fig.play('Walk_Loop')`처럼 동작을 바꾼다. `kit.walker`에 넘기면 걸을 때 걷기·달리기 동작을 자동으로 튼다. 캐릭터를 못 읽으면 `person()`으로 대신한다.
 - **`kit.person(color, …)`**: 군중, 무리, 이름 없는 일꾼.
+- **`kit.herd(kind, …)`**: 가축 떼. `kind`는 `sheep`, `ram`, `goat`, `ox`, `donkey`, `colt`, `camel`, `pig`. 3마리 이하는 움직이는 모델.
+- **`kit.prop(name)`**, **`kit.instancedProp(name, n)`**: `prop_fish`, `prop_bread` 등 소품.
+- **`kit.gesture(g, [['dust', 3], ['tear', 2.6], ['weep', 7]])`**: 애니메이션이 없는 몸짓. 새 몸짓은 `kit.js`의 `GEST`에 뼈 방향으로 더한다.
 - **`CHOICES.cX.heard`** = `{who, line, ref, quiet}`: 선택 직전에 들은 말. `quiet`이면 화면에는 다시 띄우지 않고 엔딩에만 쓴다.
 - **`speakLoop` 항목** = `{who, line, ref, ask, situation, his, hisShort}`: 플레이어가 직접 말하는 순간과, 그에 대응하는 인물의 실제 대답(`his`).
 
@@ -208,3 +217,15 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
   - 여자 인물(룻, 에스더)은 `char_f.glb`와 여자 옷차림을 쓴다. 신분이나 시대에 맞는 옷이 없으면 `tools/chars/build_chars.py`에 옷을 더한다.
   - 인물이 늘면 한 장짜리 HTML이 16MB를 넘지 않도록 인물별 아티팩트로 나눈다(6장 2번).
 - 순서는 사용자와 정한다.
+
+## 10. 동물과 역동적인 장면 (계획)
+
+- **숫양 (창 22:13)**: 모델은 있다(`ram`). 장면에서는 수풀(덤불)에 뿔이 걸려 고개를 당기며 버둥대는 모습(코드 몸짓 + 덤불 흔들림)을 보여 준다. 번제는 본문대로 드리되 잡는 모습은 보이지 않고, 제단의 불과 연기로 넘긴다('연출' 표시).
+- **어린 나귀를 타고 예루살렘에 들어가심 (마 21:1–11, 요 12:12–15)**: 모델은 있다(`colt`). 타는 자세는 애니메이션이 없어 코드 몸짓으로 만든다. 겉옷과 종려 가지를 길에 펴는 무리(마 21:8, 요 12:13)는 가까운 사람만 캐릭터, 먼 사람은 단순한 모양.
+- **거라사의 돼지 떼 (막 5:11–13, 약 이천 마리)**: 모델은 있다(`pig`, 흑돼지). 달리기 동작 몇 장면을 굳혀 바꿔 보이는 방식으로 수천 마리를 휴대폰에서도 달리게 하고, 비탈을 내리달아 바다에 빠지는 길, 물보라(입자), 가라앉음을 만든다.
+- **성경에 나오는 다른 동물** (모델이 없는 것)
+  - 새: 닭(베드로, 눅 22:60), 비둘기(창 15:9, 마 3:16), 까마귀(욥 38:41), 솔개(창 15:11), 독수리·매(욥 39:26–27), 타조(욥 39:13)
+  - 들짐승: 사자와 곰(삼상 17:34–36, 욥 38:39), 산염소와 암사슴(욥 39:1), 들나귀(욥 39:5), 들소(욥 39:9), 말(욥 39:19)
+  - 욥 40–41장의 베헤못과 리워야단: 본문의 묘사만으로 만든다.
+  - 필요한 것: 새·들짐승은 Quaternius 등 CC0 동물 묶음을 사용자가 받아 주면 가장 사실적이다. 없으면 Blender로 단순하게 만든다. 말은 이미 있다(Horse).
+- 소리(돼지 떼, 물보라, 무리의 외침)는 일레븐랩스 효과음이나 무료 효과음 묶음으로, 사용자 PC에서 만든다.

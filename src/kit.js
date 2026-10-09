@@ -27,13 +27,38 @@ const BASE = { top: '#2a3150', horizon: '#c9875a', sun: '#ffb07a', fog: '#84604b
 
 /* 성경 인물 캐릭터 (assets/chars, PLAN 6장 1번). 게시본은 window.CHAR_GLB에 GLB가 base64로 들어 있다.
    게시된 페이지는 fetch로 data URI를 읽지 못하므로 직접 풀어 parse한다. 없거나 실패하면 figure()가 person()으로 대신한다 */
-let figSrc = null;
+let figSrc = null, T3 = null;  // T3: createKit이 넘겨주는 THREE (게시본에서는 createKit 안에서 불러온다)
 async function loadFigs(GLTFLoader) {
   const D = window.CHAR_GLB; if (!D) return null;
   const buf = u => Uint8Array.from(atob(u.slice(u.indexOf(',') + 1)), c => c.charCodeAt(0)).buffer;
   const ld = new GLTFLoader();
-  const [m, f, a] = await Promise.all([D.char_m, D.char_f, D.anims].map(u => ld.parseAsync(buf(u), '')));
-  return { m, f, clips: Object.fromEntries(a.animations.map(c => [c.name, c])), outfits: window.OUTFITS };
+  const keys = Object.keys(D), G = {};
+  (await Promise.all(keys.map(k => ld.parseAsync(buf(D[k]), '')))).forEach((g, i) => { G[keys[i]] = g; });
+  const animals = {};
+  for (const k of keys) if (k.startsWith('an_')) animals[k.slice(3)] = prepAnimal(G[k]);
+  return { m: G.char_m, f: G.char_f, clips: Object.fromEntries(G.anims.animations.map(c => [c.name, c])), outfits: window.OUTFITS, props: G.props, animals };
+}
+// 양자화된 위치·법선을 실수로 풀어 둔다 (변환 행렬을 굽기 위해)
+function floatGeo(geo) {
+  for (const k of ['position', 'normal']) {
+    const a = geo.getAttribute(k); if (!a || a.array instanceof Float32Array) continue;
+    const f = new Float32Array(a.count * 3);
+    for (let i = 0; i < a.count; i++) { f[i * 3] = a.getX(i); f[i * 3 + 1] = a.getY(i); f[i * 3 + 2] = a.getZ(i); }
+    geo.setAttribute(k, new T3.BufferAttribute(f, 3));
+  }
+  return geo;
+}
+// 메시 조각들을 기준 물체의 좌표로 모은다: [{ geo, mat }]
+function bakeParts(obj) {
+  obj.updateWorldMatrix(true, true);
+  const inv = obj.matrixWorld.clone().invert(), parts = [];
+  obj.traverse(m => { if (m.isMesh) parts.push({ geo: floatGeo(m.geometry.clone()).applyMatrix4(inv.clone().multiply(m.matrixWorld)), mat: m.material }); });
+  return parts;
+}
+function prepAnimal(g) {  // 뼈대(가까이 한두 마리), 굳힌 자세(무리)
+  const rig = g.scene.getObjectByName('Armature');
+  const poses = ['pose_a', 'pose_b', 'pose_c'].map(n => g.scene.getObjectByName(n)).filter(Boolean).map(o => { g.scene.updateWorldMatrix(true, true); const parts = []; o.traverse(m => { if (m.isMesh) parts.push({ geo: floatGeo(m.geometry.clone()).applyMatrix4(m.matrixWorld), mat: m.material }); }); return parts; });
+  return { rig, poses, clips: Object.fromEntries(g.animations.map(c => [c.name, c])) };
 }
 
 export async function createKit(canvas, { presets = {}, initial = 'start', audio } = {}) {
@@ -333,6 +358,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     return g;
   }
   // 이름 있는 인물: 옷 입은 마네킹 + 동작. person()과 같은 자리에 쓴다. role은 outfits.json의 신분, tint는 겉옷 색
+  T3 = THREE;
   if (!figSrc) figSrc = await loadFigs(GLTFLoader).catch(e => { console.warn('인물 캐릭터를 불러오지 못했습니다:', e); return null; });
   const POSE_CLIP = { stand: 'Idle_Loop', seat: 'Sitting_Idle_Loop', kneel: 'Fixing_Kneeling' };
   const UNDER = ['under_chest', 'under_body', 'under_arm', 'under_thigh', 'under_calf'];
@@ -367,11 +393,53 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
         F.cur = a;
       } };
     F.play(F.base, 0); mixer.update(Math.random() * 3);  // 여러 사람이 같은 박자로 움직이지 않게
+    const bones = {}; F.bone = n => bones[n] || (bones[n] = body.getObjectByName(n));
     g.userData.fig = F; g.userData.head = body.getObjectByName('Head');
     g.scale.setScalar(scale * .92); g.visible = visible; scene.add(g); figs.push(g);
     return g;
   }
-  const stepFigs = dt => { for (const g of figs) if (g.visible) g.userData.fig.mixer.update(dt); };
+  const stepFigs = dt => {
+    for (const g of figs) if (g.visible) { const F = g.userData.fig; F.mixer.update(dt); if (F.gest) applyGesture(g, F, dt); }
+    for (const o of herdMixers) if (o.on && o.obj.parent && o.obj.parent.visible) o.mixer.update(dt);
+  };
+  // 애니메이션이 없는 몸짓을 코드로 만든다: 뼈를 인물 기준 방향(+Z 앞, +Y 위, +X 왼쪽)으로 돌린다. 오른쪽은 x를 뒤집는다
+  // [몸짓 안의 위치 0~1, { 뼈: 방향 }]
+  const GEST = {
+    dust: [[0, { upperarm: [.3, .92, .25], lowerarm: [.1, 1, .15] }], [.55, { upperarm: [.55, .75, .35], lowerarm: [-.6, .45, .25] }]],  // 티끌을 하늘로 날려 머리에 (욥 2:12)
+    tear: [[0, { upperarm: [.25, -.5, .8], lowerarm: [-.8, .5, .2] }], [.45, { upperarm: [.75, -.35, .55], lowerarm: [.95, .1, .3] }]],  // 겉옷을 찢고
+    weep: [[0, { upperarm: [.2, -.45, .85], lowerarm: [-.3, .85, .4], neck: [0, .72, .7] }]]  // 얼굴을 감싸고 운다
+  };
+  const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _q3 = new THREE.Quaternion();
+  function aimBone(root, bone, child, dir, w) {
+    bone.getWorldPosition(_a); child.getWorldPosition(_b);
+    _b.sub(_a).normalize(); _d.copy(dir).transformDirection(root.matrixWorld);
+    _q.setFromUnitVectors(_b, _d); _q2.identity().slerp(_q, w);
+    bone.getWorldQuaternion(_q3); _q2.multiply(_q3);
+    bone.parent.getWorldQuaternion(_q3).invert(); bone.quaternion.copy(_q3.multiply(_q2));
+    bone.updateMatrixWorld(true);
+  }
+  function applyGesture(g, F, dt) {
+    const G = F.gest, t = clock - G.t0;
+    if (t >= G.total) { F.gest = null; return; }
+    let s = 0, name, k; for (const [nm, d] of G.seq) { if (t < s + d) { name = nm; k = (t - s) / d; break; } s += d; }
+    const keys = GEST[name]; let pose = keys[0][1], at = 0; for (const [a, p] of keys) if (k >= a) { pose = p; at = a; }
+    if (name === 'dust' && at > 0 && !G.thrown) { G.thrown = true; for (const sd of ['l', 'r']) { const h = F.bone('hand_' + sd).getWorldPosition(new THREE.Vector3()); for (let i = 0; i < 26; i++) dust.emit(h.x, h.y, h.z, { vx: rnd(-.5, .5), vy: rnd(1.4, 2.6), vz: rnd(-.5, .5), c: [.52, .46, .38], life: rnd(1.6, 2.6), size: rnd(.05, .11), g: 2.4, drag: .5, alpha: .75 }); } }
+    if (name !== 'dust') G.thrown = false;
+    const w = Math.min(1, t / .4, (G.total - t) / .6), lk = 1 - Math.exp(-dt * 7);
+    g.updateMatrixWorld(true);
+    for (const sd of ['l', 'r']) for (const b of ['upperarm', 'lowerarm']) {
+      const v = pose[b]; if (!v) continue;
+      const key = b + sd, cur = G.dir[key] || (G.dir[key] = new THREE.Vector3(...v)), sg = sd === 'l' ? 1 : -1;
+      cur.lerp(_d.set(v[0] * sg, v[1] + (name === 'weep' ? Math.sin(clock * 15 + (sd === 'l' ? 0 : 1)) * .06 : 0), v[2]), lk);
+      aimBone(g, F.bone(`${b}_${sd}`), F.bone(b === 'upperarm' ? `lowerarm_${sd}` : `hand_${sd}`), cur.clone(), w);
+    }
+    if (pose.neck) { const cur = G.dir.neck || (G.dir.neck = new THREE.Vector3(...pose.neck)); cur.lerp(_d.set(...pose.neck), lk); aimBone(g, F.bone('neck_01'), F.bone('Head'), cur.clone(), w); }
+  }
+  // 몸짓 순서대로 하기: kit.gesture(g, [['dust', 3], ['tear', 2.6], ['weep', 7]])
+  function gesture(g, seq) {
+    const F = g.userData.fig; if (!F) return;
+    F.gest = { seq, t0: clock, total: seq.reduce((a, [, d]) => a + d, 0), dir: {} };
+  }
   // 많은 사람을 한 번에 (무리, 군대)
   function throng({ n, place, height, colors = ['#3a3029', '#4a3c30', '#2e2925', '#5a4a3a'], scale = [.92, 1.06], pose = 'stand' }) {
     const g = new THREE.Group();
@@ -444,7 +512,68 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   };
   function legs(x, h, z, r, dark) { return [[x, z], [-x, z], [x, -z], [-x, -z]].map(([lx, lz]) => ['c', [lx, h / 2, lz], [r, h, r], dark]); }
   const animalGeo = { s: new THREE.SphereGeometry(1, 10, 8), c: new THREE.CylinderGeometry(1, 1, 1, 6), b: new THREE.BoxGeometry(1, 1, 1) };
-  function herd(kind, { n, center, rx = 15, rz = 12, height, scale = [.85, 1.15], placer, color } = {}) {
+  // 가축 떼: 동물 모델이 있으면 그것으로, 없으면 단순한 모양으로
+  const herdMixers = [];
+  function herd(kind, opts = {}) {
+    const A = figSrc && figSrc.animals && figSrc.animals[kind];
+    if (A && A.poses.length) return herdModel(A, opts);
+    const alt = { ram: ['goat', '#cfc4b0'], colt: ['donkey'], pig: ['ox', '#2b2523'] }[kind];  // 단순한 모양에 없는 종류
+    return alt && !ANIMALS[kind] ? herdSimple(alt[0], { color: alt[1], ...opts }) : herdSimple(kind, opts);
+  }
+  function herdModel(A, { n, center, rx = 15, rz = 12, height, scale = [.85, 1.15], placer, color } = {}) {
+    const g = new THREE.Group(); g.position.set(center[0], 0, center[1]);
+    const items = [];
+    for (let i = 0; i < n; i++) {
+      let x, z; if (placer) [x, z] = placer(i); else { const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()); x = Math.cos(a) * r * rx; z = Math.sin(a) * r * rz; }
+      items.push({ x, z, ry: rnd(0, 6.3), s: rnd(scale[0], scale[1]), tint: rnd(.82, 1.05), on: true, pose: Math.floor(Math.random() * A.poses.length) });
+    }
+    const body = color ? new THREE.Color(color) : null;
+    const mat = m => { const c = m.clone(); if (body && m.name === 'body') c.color.copy(body); return c; };
+    const ground = o => height ? height(center[0] + o.x, center[1] + o.z) : 0;
+    let draw;
+    if (n <= 3) {  // 한두 마리는 실제로 숨 쉬고 고개를 움직인다
+      items.forEach(o => {
+        o.obj = SkeletonUtils.clone(A.rig); o.obj.traverse(m => { if (m.isMesh) { m.material = mat(m.material); m.frustumCulled = false; } });
+        o.mixer = new THREE.AnimationMixer(o.obj); A.clips.Idle && o.mixer.clipAction(A.clips.Idle).play(); o.mixer.update(rnd(0, 5));
+        g.add(o.obj); herdMixers.push(o);
+      });
+      draw = () => items.forEach(o => { o.obj.position.set(o.x, ground(o), o.z); o.obj.rotation.set(0, o.ry, 0); o.obj.scale.setScalar(o.s); o.obj.visible = o.on; });
+    } else {  // 무리는 세 가지 굳힌 자세를 한꺼번에 그린다
+      const tmp = new THREE.Color(), base = new THREE.Object3D();
+      const buckets = A.poses.map((parts, p) => {
+        const idx = items.map((o, i) => o.pose === p ? i : -1).filter(i => i >= 0);
+        return { idx, meshes: parts.map(pt => { const m = new THREE.InstancedMesh(pt.geo, mat(pt.mat), Math.max(1, idx.length)); m.frustumCulled = false; if (!idx.length) m.count = 0; g.add(m); return m; }) };
+      });
+      draw = () => buckets.forEach(b => {
+        b.idx.forEach((i, k) => {
+          const o = items[i];
+          base.position.set(o.x, ground(o), o.z); base.rotation.set(0, o.ry, 0); base.scale.setScalar(o.on ? o.s : .0001); base.updateMatrix();
+          tmp.setScalar(o.tint); b.meshes.forEach(m => { m.setMatrixAt(k, base.matrix); m.setColorAt(k, tmp); });
+        });
+        b.meshes.forEach(m => { m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
+      });
+    }
+    draw(); scene.add(g);
+    g.userData.items = items; g.userData.draw = draw;
+    g.userData.keep = frac => { const k = Math.round(items.length * frac); items.forEach((o, i) => { o.on = i < k; }); draw(); };
+    return g;
+  }
+  // 생선, 떡 같은 소품 (assets/chars/props.glb). 없으면 null
+  function prop(name, { colors } = {}) {
+    const o = figSrc && figSrc.props && figSrc.props.scene.getObjectByName(name); if (!o) return null;
+    const g = new THREE.Group();
+    bakeParts(o).forEach(p => { const m = new THREE.Mesh(p.geo, p.mat.clone()); const c = colors && colors[p.mat.name]; if (c) m.material.color.set(c); g.add(m); });
+    return g;
+  }
+  function instancedProp(name, n, { colors } = {}) {  // 같은 소품 여럿 (고기 떼). setMatrixAt, instanceMatrix.needsUpdate를 InstancedMesh처럼 쓴다
+    const o = figSrc && figSrc.props && figSrc.props.scene.getObjectByName(name); if (!o) return null;
+    const g = new THREE.Group();
+    const ms = bakeParts(o).map(p => { const m = new THREE.InstancedMesh(p.geo, p.mat.clone(), n); const c = colors && colors[p.mat.name]; if (c) m.material.color.set(c); m.frustumCulled = false; g.add(m); return m; });
+    g.setMatrixAt = (i, mx) => ms.forEach(m => m.setMatrixAt(i, mx));
+    g.instanceMatrix = { set needsUpdate(v) { ms.forEach(m => { m.instanceMatrix.needsUpdate = v; }); } };
+    return g;
+  }
+  function herdSimple(kind, { n, center, rx = 15, rz = 12, height, scale = [.85, 1.15], placer, color } = {}) {
     const def = ANIMALS[kind], g = new THREE.Group(); g.position.set(center[0], 0, center[1]);
     const items = [];
     for (let i = 0; i < n; i++) {
@@ -673,7 +802,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     onReset(fn) { resetFns.push(fn); },
     camOnWater(on, k = 1) { camWater.on = on; camWater.k = k; },
     waveH: (x, z) => waveH(x, z, env.waves),
-    terrain, disc, rocks, box, glow, glowMat, person, figure, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
+    terrain, disc, rocks, box, glow, glowMat, person, figure, gesture, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
     reset() {
       for (const k in tw) delete tw[k];
       tweens.length = 0; cyc = null; camWater.on = false;

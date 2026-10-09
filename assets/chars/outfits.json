@@ -20,7 +20,12 @@
     "gem": "#b0182c",
     "dress": "#9e2430",
     "sash": "#c9a23a",
-    "hair": "#2a1c14"
+    "hair": "#2a1c14",
+    "fish": "#8f9a8e",
+    "fin": "#5a6458",
+    "eye": "#141414",
+    "bread": "#c2925a",
+    "bread_top": "#93602f"
   },
   "roles": {
     "man": {

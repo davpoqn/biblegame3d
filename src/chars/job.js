@@ -541,6 +541,8 @@ async function world(kit, { audio, sleep }) {
       if (step === 'house') { parts.forEach(p => { p.live = false; p.m.position.copy(p.p0); p.m.rotation.copy(p.r0); }); winMat.color.setRGB(3.2, 1.8, .8); houseLight.intensity = 60; }
     },
     // 말한 뒤의 주변 반응
+    // 욥 2:12: 일제히 소리 질러 울며 겉옷을 찢고 티끌을 하늘로 날려 머리에 뿌린다 (코드로 만든 몸짓)
+    griefFriends() { friends.forEach((g, i) => setTimeout(() => kit.gesture(g, [['dust', 3.2], ['tear', 2.8], ['weep', 8]]), i * 220)); },
     react(kind) {
       if (kind === 'gust') { audio.wind(.9, .8); kit.setEnv({ wind: 1, ash: .95 }, 1.2); setTimeout(() => { audio.wind(.2, 3); kit.setEnv({ wind: .2, ash: .3 }, 3); }, 2600); }
       if (kind === 'friendsLook') { kit.tween(lift, { v: 1 }, 1.4); setTimeout(() => kit.tween(lift, { v: 0 }, 2), 3200); }
@@ -672,6 +674,7 @@ async function story(A) {
     world.setEnv('ash', 0, { ash: .5, fire: .4 });
   });
   await verse('2:11');
+  world.griefFriends();
   await verse('2:12');
   world.setEnv('night', 7); audio.crackle(.35); audio.drone(.1);
   await verse('2:13');

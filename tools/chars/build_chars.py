@@ -477,7 +477,45 @@ def props():
     out.append(join(join(sw, blade), guard))
     to = cyl('prop_torch', 0.02, -0.25, 0.25, 'wood')       # 횃불 자루 (불꽃은 엔진의 불)
     out.append(join(to, cyl('wrap', 0.03, 0.2, 0.3, 'cloth_dark')))
+    out.append(fish())
+    out.append(bread())
     return out
+
+
+def fish():
+    """갈릴리 바다의 고기 (눅 5:6, 요 21:9–11). 길이 약 30cm, 머리가 -Y(게임에서는 앞)"""
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=1)
+    f = bpy.context.active_object; f.name = 'prop_fish'
+    for v in f.data.vertices:  # 옆으로 납작하고, 꼬리 쪽으로 가늘다
+        x, y, z = v.co
+        k = 1 - .55 * max(0, y)
+        v.co = (x * .028 * k, y * .15, z * .055 * k - (.008 if z < 0 else 0))
+    f.data.materials.append(material('fish'))
+    fin = material('fin')
+    tail = mesh_obj('tail', [(0, .13, 0), (0, .215, .065), (0, .195, 0), (0, .215, -.065)], [(0, 1, 2), (0, 2, 3)], 'fin')
+    dorsal = mesh_obj('dorsal', [(0, -.04, .05), (0, .07, .07), (0, .09, .035)], [(0, 1, 2)], 'fin')
+    belly = mesh_obj('belly', [(0, .02, -.045), (0, .08, -.06), (0, .1, -.03)], [(0, 1, 2)], 'fin')
+    eyes = [mesh_obj('eye', *box((sx * .021, -.11, .014), (.006, .007, .007)), 'eye') for sx in (1, -1)]
+    for o in (tail, dorsal, belly, *eyes): f = join(f, o)
+    for p in f.data.polygons: p.use_smooth = True
+    return f
+
+
+def bread():
+    """둥글고 납작한 보리떡 (요 6:9, 요 21:9). 지름 약 18cm, 윗면은 더 구워진 색"""
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=8, radius=1)
+    b = bpy.context.active_object; b.name = 'prop_bread'
+    import random; rng = random.Random(7)
+    for v in b.data.vertices:
+        x, y, z = v.co
+        bump = 1 + rng.uniform(-.06, .06) if z > .2 else 1
+        v.co = (x * .09 * bump, y * .09 * bump, (z * .035 if z > 0 else z * .008) + .008)
+    b.data.materials.append(material('bread')); b.data.materials.append(material('bread_top'))
+    b.data.update()
+    for p in b.data.polygons:
+        p.use_smooth = True
+        if p.normal.z > .8: p.material_index = 1
+    return b
 
 
 # ───────────────────────── 미리보기 ─────────────────────────
