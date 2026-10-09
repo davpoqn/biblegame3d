@@ -17,6 +17,8 @@
   - 앞으로 이 링크는 다섯 인물을 고르는 **허브(시작 화면)** 로 쓰고, 인물마다 아티팩트를 따로 둔다.
 - **이 저장소**: 데모의 원본(`src/`), 빌드 도구(`tools/`), 개역한글 데이터(`data/`), 캐릭터 원본 파일(`assets/raw/`).
 - **캐릭터 준비 완료** (6장 1번): `assets/chars/`에 남녀 캐릭터, 애니메이션 28개, 소품, 신분별 옷차림이 있다. 합계 약 1.0MB. 아직 게임 엔진(`kit.js`)에는 붙이지 않았다. 미리보기는 `assets/chars/preview/`.
+- **캐릭터 보기 페이지**: https://claude.ai/artifact/CVDFMGjTuY5hQ5EY1gfaN9 (인물 의상실). 인물 7명 × 동작 28개를 골라 돌려 보고 옷을 하나씩 벗겨 볼 수 있다. `tools/chars/viewer.py`로 묶는다(`single/chars.html`, 1.4MB).
+- 다음 작업: 사용자가 보기 페이지를 확인하고 "ㅇㅋ"하면 캐릭터를 게임에 넣는다.
 
 ## 3. 지켜야 할 원칙 (사용자가 확정한 것)
 
@@ -56,7 +58,7 @@ tools/kv.py           구절 출력: python3 tools/kv.py LUK 5 1-11
 data/                 개역한글 데이터 (출처: github.com/crizin/bible-db, holybible.or.kr 정본)
 assets/raw/           Quaternius 캐릭터·애니메이션 원본 (CC0). UAL1, UAL2, 여성 마네킹
 assets/chars/         게시용 캐릭터: char_m.glb, char_f.glb, anims.glb, props.glb, outfits.json, preview/
-tools/chars/make.sh   캐릭터 전체 빌드: build_chars.py(옷, Blender) → anims.mjs(동작) → meshopt 압축 → charcheck.py(three.js 확인)
+tools/chars/make.sh   캐릭터 전체 빌드: build_chars.py(옷, Blender) → anims.mjs(동작) → meshopt 압축 → charcheck.py(three.js 확인) → viewer.py(보기 페이지)
 ```
 
 순서는 이렇다.

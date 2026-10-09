@@ -1,0 +1,205 @@
+<title>인물 의상실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Mono&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* 왼쪽에 3D 무대, 오른쪽에 인물·동작·옷 목록. 좁은 화면에서는 무대 아래로 쌓인다 */
+:root {
+  --bg: #e7e8e4; --panel: #f4f4f1; --ink: #22231f; --muted: #66675f; --line: #cfd0c8;
+  --accent: #2f4f86; --accent-ink: #ffffff; --sky1: #d5dbe4; --sky2: #e9e3d6;
+  --f-display: "Gowun Batang", "Noto Serif KR", serif;
+  --f-body: "IBM Plex Sans KR", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #16171b; --panel: #1f2026; --ink: #ebe8e0; --muted: #a09c92; --line: #34353d;
+  --accent: #8fa8dc; --accent-ink: #11141d; --sky1: #222839; --sky2: #2d2a25; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #16171b; --panel: #1f2026; --ink: #ebe8e0; --muted: #a09c92; --line: #34353d;
+  --accent: #8fa8dc; --accent-ink: #11141d; --sky1: #222839; --sky2: #2d2a25; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 14px 28px; display: grid; gap: 14px; }
+h1 { font: 700 1.65rem/1.2 var(--f-display); margin: 0; text-wrap: balance; }
+.lede { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
+.main { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 880px) { .main { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; } }
+.stage { position: relative; border-radius: 14px; overflow: hidden; background: linear-gradient(var(--sky1), var(--sky2));
+  width: 100%; aspect-ratio: 4 / 5; max-height: 62vh; }
+@media (min-width: 880px) { .stage { aspect-ratio: auto; height: min(80vh, 720px); max-height: none;
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); } }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.msg[hidden] { display: none; }
+.msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; text-align: center; color: var(--muted); }
+.cap { position: absolute; left: 10px; right: 10px; bottom: 10px; display: flex; gap: 8px; align-items: end; justify-content: space-between; }
+.now { background: color-mix(in srgb, var(--panel) 88%, transparent); border-radius: 10px; padding: 6px 10px; font-size: .86rem; min-width: 0; }
+.now small { display: block; color: var(--muted); font: .72rem var(--f-mono); }
+.panel { display: grid; gap: 18px; min-width: 0; }
+.panel h2 { font: 600 .74rem/1 var(--f-body); letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; }
+.roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.grp { display: grid; gap: 6px; }
+.grp + .grp { margin-top: 8px; }
+.grp h3 { margin: 0; font-size: .8rem; font-weight: 500; color: var(--muted); }
+button { font: inherit; color: var(--ink); cursor: pointer; }
+.chip { font-size: .87rem; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 5px 11px;
+  display: inline-flex; gap: 6px; align-items: baseline; }
+.chip small { font: .7rem var(--f-mono); color: var(--muted); }
+.role { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 8px 10px; text-align: left; display: grid; gap: 1px; }
+.role b { font-weight: 600; }
+.role span { font-size: .74rem; color: var(--muted); }
+[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+[aria-pressed="true"] small, [aria-pressed="true"] span { color: inherit; opacity: .85; }
+.chip.off { text-decoration: line-through; color: var(--muted); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 6px 12px; font-size: .86rem; }
+.help { margin: 0; font-size: .82rem; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>인물 의상실</h1>
+    <p class="lede">「그 사람의 자리」에 들어갈 인물들입니다. 무대를 손가락이나 마우스로 끌면 돌아가고, 벌리거나 휠을 돌리면 가까워집니다.</p>
+  </header>
+  <div class="main">
+    <div class="stage" id="stage">
+      <div class="msg" id="msg">인물을 불러오는 중…</div>
+      <div class="cap">
+        <div class="now" id="now"></div>
+        <button class="btn" id="pause" type="button">멈춤</button>
+      </div>
+    </div>
+    <div class="panel">
+      <section><h2>인물</h2><div class="roles" id="roles"></div></section>
+      <section><h2>입은 옷 — 눌러서 벗기기</h2><div class="chips" id="wear"></div></section>
+      <section><h2>동작</h2><div id="clips"></div></section>
+      <p class="help">얼굴이 없는 마네킹이라 두건과 수염으로 가렸습니다. 지팡이 같은 소품은 게임에 넣을 때 손에 붙입니다.</p>
+    </div>
+  </div>
+</div>
+
+<script>/*__DATA__*/</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+
+const { GLB, OUTFITS } = window;
+const CLIPS = [
+  ['서기·걷기', [['Idle_Loop', '서 있기'], ['Idle_Talking_Loop', '서서 말하기'], ['Walk_Loop', '걷기'], ['Walk_Formal_Loop', '점잖게 걷기'],
+    ['Jog_Fwd_Loop', '뛰기'], ['Sprint_Loop', '달리기', '요 20:4']]],
+  ['앉기·엎드리기', [['Sitting_Enter', '앉기'], ['Sitting_Idle_Loop', '앉아 있기'], ['Sitting_Talking_Loop', '앉아서 말하기'], ['Sitting_Exit', '일어서기'],
+    ['Fixing_Kneeling', '무릎 꿇기'], ['Crouch_Idle_Loop', '웅크리기'], ['LayToIdle', '누웠다 일어나기', '창 28:16']]],
+  ['손으로 하는 일', [['PickUp_Table', '물건 집기'], ['Interact', '건네기'], ['Consume', '먹기', '요 21:13'], ['TreeChopping_Loop', '나무 쪼개기', '창 22:3'],
+    ['Walk_Carry_Loop', '지고 가기', '창 22:6'], ['Idle_Torch_Loop', '횃불 들기', '요 18:3'], ['Idle_Lantern_Loop', '등 들기', '요 18:3']]],
+  ['물과 싸움', [['Swim_Fwd_Loop', '헤엄치기', '요 21:7'], ['Swim_Idle_Loop', '물에 떠 있기'], ['Sword_Attack', '칼 휘두르기', '요 18:10'],
+    ['OverhandThrow', '물매 던지기', '삼상 17:49'], ['Death01', '쓰러지기', '삼상 17:49'], ['Push_Loop', '밀기·씨름', '창 32:24']]],
+  ['몸짓', [['Yes', '끄덕이기'], ['Idle_No_Loop', '고개 젓기']]],
+];
+const WEAR = { tunic_long: '긴 튜닉', tunic_short: '짧은 튜닉', mantle: '겉옷', belt: '허리띠', headcloth: '두건', veil: '너울',
+  sandals: '샌들', beard: '수염', crown: '면류관', helmet: '투구', helmet_crest: '투구 볏', armor: '갑옷', cloak: '붉은 망토' };
+const label = Object.fromEntries(CLIPS.flatMap(([, l]) => l.map(([n, k, r]) => [n, r ? `${k} (${r})` : k])));
+const $ = (s) => document.querySelector(s);
+const store = { get(k, d) { try { return localStorage.getItem(k) || d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const state = { role: store.get('role', 'shepherd'), clip: store.get('clip', 'Walk_Loop'), hidden: new Set(), paused: false };
+if (!OUTFITS.roles[state.role]) state.role = 'shepherd';
+if (!label[state.clip]) state.clip = 'Walk_Loop';
+
+const stage = $('#stage'), msg = $('#msg');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xfff4e6, 0x574e46, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(2.5, 4, 3); scene.add(sun);
+const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 50); cam.position.set(1.3, 1.4, 3.9);
+const ctl = new OrbitControls(cam, renderer.domElement);
+Object.assign(ctl, { enableDamping: true, enablePan: false, minDistance: 1.1, maxDistance: 7, maxPolarAngle: Math.PI * 0.56 });
+ctl.target.set(0, 0.9, 0); ctl.update();
+{ // 발밑 그림자
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+  const r = g.createRadialGradient(64, 64, 4, 64, 64, 64); r.addColorStop(0, 'rgba(0,0,0,.32)'); r.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 128, 128);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; scene.add(m);
+}
+const resize = () => { const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); cam.aspect = r.width / r.height; cam.updateProjectionMatrix(); };
+new ResizeObserver(resize).observe(stage); resize();
+
+let src, clips, fig, mixer, cur;
+try {
+  const ld = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+  const [m, f, a] = await Promise.all([GLB.char_m, GLB.char_f, GLB.anims].map((u) => ld.loadAsync(u)));
+  src = { m, f }; clips = Object.fromEntries(a.animations.map((c) => [c.name, c]));
+  msg.hidden = true;
+} catch (e) {
+  msg.textContent = `3D를 불러오지 못했습니다. 새로고침해 보세요. (${e.message})`;
+  throw e;
+}
+
+function dress() {
+  if (fig) scene.remove(fig);
+  const spec = OUTFITS.roles[state.role], col = { ...OUTFITS.default_colors, ...(spec.colors || {}) };
+  fig = SkeletonUtils.clone(src[spec.body].scene);
+  fig.traverse((o) => {
+    if (!o.isMesh) return;
+    o.frustumCulled = false;
+    if (!o.name.startsWith('Mannequin')) o.visible = spec.wear.includes(o.name) && !state.hidden.has(o.name);
+    o.material = o.material.clone();
+    const c = col[o.material.name]; if (c) o.material.color.set(c);
+  });
+  scene.add(fig);
+  mixer = new THREE.AnimationMixer(fig); cur = null; play();
+}
+function play() {
+  const act = mixer.clipAction(clips[state.clip]);
+  if (cur && cur !== act) { act.reset().play(); cur.crossFadeTo(act, 0.25, false); } else act.reset().play();
+  cur = act;
+}
+function setWear() {
+  fig.traverse((o) => { if (o.isMesh && WEAR[o.name]) o.visible = OUTFITS.roles[state.role].wear.includes(o.name) && !state.hidden.has(o.name); });
+}
+
+function ui() {
+  const spec = OUTFITS.roles[state.role];
+  $('#roles').replaceChildren(...Object.entries(OUTFITS.roles).map(([id, r]) => {
+    const [name, sub] = r.name.split(' — ');
+    const b = Object.assign(document.createElement('button'), { type: 'button', className: 'role', id: `role-${id}` });
+    b.setAttribute('aria-pressed', id === state.role);
+    b.innerHTML = `<b>${name}</b><span>${sub || (r.body === 'f' ? '여자' : '남자')}</span>`;
+    b.onclick = () => { state.role = id; state.hidden.clear(); store.set('role', id); dress(); ui(); };
+    return b;
+  }));
+  $('#wear').replaceChildren(...spec.wear.map((w) => {
+    const b = Object.assign(document.createElement('button'), { type: 'button', className: 'chip' + (state.hidden.has(w) ? ' off' : ''), id: `wear-${w}`, textContent: WEAR[w] || w });
+    b.onclick = () => { state.hidden.has(w) ? state.hidden.delete(w) : state.hidden.add(w); setWear(); ui(); };
+    return b;
+  }));
+  $('#clips').replaceChildren(...CLIPS.map(([g, list]) => {
+    const d = document.createElement('div'); d.className = 'grp';
+    const row = document.createElement('div'); row.className = 'chips';
+    row.append(...list.map(([n, k, r]) => {
+      const b = Object.assign(document.createElement('button'), { type: 'button', className: 'chip', id: `clip-${n}` });
+      b.setAttribute('aria-pressed', n === state.clip);
+      b.innerHTML = r ? `${k}<small>${r}</small>` : k;
+      b.onclick = () => { state.clip = n; store.set('clip', n); play(); ui(); };
+      return b;
+    }));
+    d.innerHTML = `<h3>${g}</h3>`; d.append(row); return d;
+  }));
+  const [name] = spec.name.split(' — ');
+  $('#now').innerHTML = `${name} · ${label[state.clip]}<small>${state.clip}</small>`;
+}
+$('#pause').onclick = () => { state.paused = !state.paused; $('#pause').textContent = state.paused ? '다시 재생' : '멈춤'; };
+
+dress(); ui();
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta();
+  if (!state.paused) mixer.update(dt);
+  ctl.update(); renderer.render(scene, cam);
+});
+</script>

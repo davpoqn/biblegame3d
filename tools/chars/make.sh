@@ -9,3 +9,4 @@ node tools/chars/anims.mjs
 for f in char_m char_f props; do npx gltf-transform meshopt assets/chars/build/$f.glb assets/chars/$f.glb >/dev/null; done
 ls -l assets/chars/*.glb | awk '{s+=$5; print $5, $9} END {print s, "합계"}'
 python3 tools/chars/charcheck.py
+python3 tools/chars/viewer.py   # 캐릭터 보기 페이지 → single/chars.html
