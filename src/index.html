@@ -1,0 +1,770 @@
+<title>그 사람의 자리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Hahmlet:wght@300;500;700&family=IBM+Plex+Sans+KR:wght@400;500&display=swap">
+<style>
+:root{
+  /* layout: full-bleed first-person WebGL world; scripture set low-left like a film subtitle; choices are ruled lines, never boxes */
+  --night:#0c0a09;
+  --ash:#1c1916;
+  --glass:rgba(16,13,11,.72);
+  --bone:#ece4d6;
+  --dust:#a89d8e;
+  --ember:#d98352;
+  --star:#bccbe0;
+  --line:rgba(236,228,214,.17);
+  --f-display:"Hahmlet","Gowun Batang","Nanum Myeongjo","AppleMyungjo",serif;
+  --f-verse:"Gowun Batang","Nanum Myeongjo","AppleMyungjo","Batang",serif;
+  --f-ui:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --gutter:clamp(16px,6vw,72px);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--night);color:var(--bone);font-family:var(--f-ui);overflow:hidden;-webkit-font-smoothing:antialiased;line-height:1.5}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--star);outline-offset:3px}
+
+#backdrop{position:fixed;inset:0;z-index:0;background:radial-gradient(130% 90% at 62% 100%,#7a4f36 0%,#2b2433 46%,#0c0a09 100%);transition:background 2.5s ease}
+#backdrop[data-env="storm"]{background:radial-gradient(130% 90% at 50% 100%,#4a3a31 0%,#1c1c22 50%,#0c0a09 100%)}
+#backdrop[data-env="ash"]{background:radial-gradient(130% 90% at 50% 100%,#857a6d 0%,#4c4945 55%,#1c1916 100%)}
+#backdrop[data-env="night"]{background:radial-gradient(130% 90% at 50% 100%,#1a1f2e 0%,#07090f 60%,#030305 100%)}
+#backdrop[data-env="whirl"]{background:radial-gradient(130% 90% at 45% 80%,#3b3129 0%,#141210 60%,#050505 100%)}
+#backdrop[data-env="cosmos"]{background:radial-gradient(130% 90% at 50% 0%,#0d1430 0%,#03040b 70%,#000 100%)}
+#backdrop[data-env="dawn"]{background:radial-gradient(130% 90% at 50% 100%,#e2a477 0%,#4a5577 50%,#1b2236 100%)}
+
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:1;touch-action:none}
+
+.hud{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) var(--gutter) 14px;pointer-events:none}
+.hud-title{display:flex;gap:.9rem;align-items:baseline;font-size:.78rem;letter-spacing:.12em;color:var(--dust);min-width:0}
+.hud-title b{font-family:var(--f-display);font-weight:500;letter-spacing:.02em;font-size:.95rem;color:var(--bone)}
+.hud-title span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body:not(.playing) .hud-title{visibility:hidden}
+.pill{pointer-events:auto;background:rgba(12,10,9,.4);border:1px solid var(--line);border-radius:999px;padding:.38rem .8rem;font-size:.76rem;letter-spacing:.06em;cursor:pointer;white-space:nowrap}
+.pill:hover{border-color:var(--dust)}
+
+#fade{position:fixed;inset:0;z-index:8;background:var(--night);opacity:0;pointer-events:none;transition:opacity 1.3s ease;display:grid;align-content:center;padding-inline:var(--gutter)}
+#fade.on{opacity:1}
+.chapter-card{opacity:0;transform:translateY(8px);transition:opacity 1.1s ease .2s,transform 1.4s ease .2s;display:grid;gap:.6rem;max-width:40rem}
+#fade.card .chapter-card{opacity:1;transform:none}
+.chapter-num{font:500 .8rem var(--f-ui);letter-spacing:.3em;color:var(--dust);font-variant-numeric:tabular-nums}
+.chapter-name{font:300 clamp(2.6rem,9vw,5rem)/1.05 var(--f-display);margin:0;text-wrap:balance}
+.chapter-sub{font:400 .85rem var(--f-ui);color:var(--dust);letter-spacing:.06em}
+
+#title-screen{position:fixed;inset:0;z-index:6;display:grid;align-content:end;padding-inline:var(--gutter);padding-block:96px calc(env(safe-area-inset-bottom,0px) + clamp(28px,8vh,84px));background:linear-gradient(to top,rgba(12,10,9,.92) 0%,rgba(12,10,9,.55) 42%,rgba(12,10,9,0) 75%);overflow-y:auto}
+.title-block{max-width:42rem;display:grid;gap:1.15rem;min-width:0}
+.eyebrow{font:500 .74rem var(--f-ui);letter-spacing:.22em;color:var(--dust);margin:0}
+h1{font:300 clamp(3rem,11vw,6.4rem)/.98 var(--f-display);margin:0;letter-spacing:-.015em;text-wrap:balance}
+h1 .comma{color:var(--ember)}
+.lede{font:400 clamp(1rem,2.5vw,1.14rem)/1.85 var(--f-verse);margin:0;max-width:33em;color:var(--bone)}
+.meta{display:flex;flex-wrap:wrap;gap:.35rem 1.2rem;font-size:.78rem;color:var(--dust);letter-spacing:.03em;margin:0;padding:0;list-style:none}
+.start-row{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:.3rem}
+.btn-primary{background:var(--bone);color:var(--night);border:0;border-radius:2px;padding:.85rem 1.35rem;font-weight:500;font-size:.98rem;cursor:pointer;letter-spacing:.02em}
+.btn-primary:hover{background:#fff8ec}
+.btn-ghost{background:transparent;color:var(--bone);border:1px solid var(--line);border-radius:2px;padding:.85rem 1.2rem;font-size:.95rem;cursor:pointer}
+.btn-ghost:hover{border-color:var(--dust)}
+.notice{font-size:.8rem;color:var(--ember);margin:0}
+
+#stage{position:fixed;left:0;right:0;bottom:0;z-index:5;padding-inline:var(--gutter);padding-block:120px calc(env(safe-area-inset-bottom,0px) + clamp(20px,6vh,56px));background:linear-gradient(to top,rgba(10,8,7,.86) 0%,rgba(10,8,7,.6) 45%,rgba(10,8,7,0) 100%);pointer-events:none}
+.stage-inner{max-width:42rem;display:grid;gap:.85rem;justify-items:start;pointer-events:auto;max-height:min(68vh,40rem);overflow-y:auto;scrollbar-width:thin;min-width:0;padding:5px;margin-inline:-5px}
+.stage-inner:empty{pointer-events:none}
+.layer-tag{display:inline-flex;align-items:center;gap:.4rem;font:500 .66rem var(--f-ui);letter-spacing:.16em;padding:.18rem .5rem;border:1px solid currentColor;border-radius:2px;opacity:.9}
+.tag-text{color:var(--star)}
+.tag-stage{color:var(--ember)}
+.direction{margin:0;font:400 clamp(1rem,2.4vw,1.12rem)/1.75 var(--f-ui);color:var(--dust);max-width:36em}
+.verse{margin:0;font:400 clamp(1.14rem,3vw,1.5rem)/1.8 var(--f-verse);color:var(--bone);max-width:30em;text-wrap:pretty;word-break:keep-all;overflow-wrap:anywhere}
+.verse.voice{font:500 clamp(1.25rem,3.5vw,1.85rem)/1.65 var(--f-display);color:var(--star)}
+.ref{margin:0;font:500 .72rem var(--f-ui);letter-spacing:.12em;color:var(--dust);font-variant-numeric:tabular-nums}
+.w{opacity:0;filter:blur(5px);animation:wIn 1s ease forwards;display:inline}
+@keyframes wIn{to{opacity:1;filter:blur(0)}}
+.prompt{margin:0;font:400 clamp(1.08rem,2.8vw,1.3rem)/1.6 var(--f-display);color:var(--bone)}
+.choices{display:grid;width:100%;max-width:34rem}
+.choice{display:flex;gap:1rem;align-items:baseline;text-align:left;background:transparent;border:0;border-top:1px solid var(--line);padding:.8rem .1rem;cursor:pointer;font:400 clamp(1rem,2.5vw,1.1rem)/1.5 var(--f-verse);width:100%}
+.choice:last-child{border-bottom:1px solid var(--line)}
+.choice .k{font:500 .72rem var(--f-ui);color:var(--dust);min-width:1.2rem;font-variant-numeric:tabular-nums}
+.choice:hover .label,.choice:focus-visible .label{color:var(--ember)}
+.continue{background:none;border:0;padding:.35rem 0;cursor:pointer;font:500 .82rem var(--f-ui);letter-spacing:.1em;color:var(--dust);display:inline-flex;gap:.6rem;align-items:center}
+.continue:hover,.continue:focus-visible{color:var(--bone)}
+.continue:focus-visible{outline:none;text-decoration:underline;text-underline-offset:4px}
+.continue::after{content:"";width:22px;height:1px;background:currentColor;animation:breathe 2.4s ease-in-out infinite}
+.kbd{font-size:.66rem;border:1px solid var(--line);border-radius:3px;padding:.05rem .35rem;letter-spacing:.05em}
+@keyframes breathe{50%{transform:scaleX(.4);opacity:.5}}
+.speak{display:grid;gap:.6rem;width:100%;max-width:34rem}
+.speak textarea{width:100%;min-height:5.2rem;resize:vertical;background:rgba(0,0,0,.42);border:1px solid var(--line);border-radius:2px;color:var(--bone);font:400 1.05rem/1.6 var(--f-verse);padding:.8rem .9rem}
+.speak textarea::placeholder{color:#8a8072}
+.speak textarea:focus{outline:none;border-color:var(--dust)}
+.speak-row{display:flex;flex-wrap:wrap;gap:.6rem}
+.speak-row .btn-primary,.speak-row .btn-ghost{padding:.65rem 1rem;font-size:.9rem}
+.note{margin:0;font-size:.74rem;color:var(--dust);letter-spacing:.02em}
+
+.compare{width:100%;max-width:44rem;display:grid;grid-template-columns:1fr 1.25fr;gap:1rem 1.8rem;padding:1.1rem 1.2rem 1.2rem;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:2px}
+.compare .col{display:grid;gap:.5rem;align-content:start;min-width:0}
+.compare h3{margin:0;font:500 .7rem var(--f-ui);letter-spacing:.2em;color:var(--dust)}
+.you-choice{margin:0;font:400 1.08rem/1.6 var(--f-verse)}
+.you-said{margin:0;font:400 1rem/1.65 var(--f-verse);color:var(--ember);overflow-wrap:anywhere}
+.job-q{margin:0;font:400 1rem/1.75 var(--f-verse);color:var(--star);word-break:keep-all;overflow-wrap:anywhere}
+.path-chip{grid-column:1/-1;margin:0;justify-self:start;font:500 .7rem var(--f-ui);letter-spacing:.14em;padding:.2rem .55rem;border:1px solid currentColor;border-radius:999px}
+.path-chip.same{color:var(--star)}
+.path-chip.diff{color:var(--ember)}
+@media (max-width:620px){.compare{grid-template-columns:1fr}}
+
+.echo{position:fixed;left:var(--gutter);right:var(--gutter);bottom:34vh;z-index:5;margin:0;max-width:36rem;font:300 clamp(1.4rem,4.4vw,2.4rem)/1.35 var(--f-display);color:var(--bone);text-wrap:balance;overflow-wrap:anywhere;pointer-events:none;transition:transform 6.5s cubic-bezier(.2,.6,.2,1),opacity 6s ease,filter 6s ease}
+.echo.go{transform:translateY(-36vh) scale(.94);opacity:0;filter:blur(4px)}
+
+.daycount{position:fixed;left:var(--gutter);top:22vh;z-index:5;margin:0;font:300 clamp(2rem,7vw,4rem)/1 var(--f-display);color:var(--bone);opacity:0;transition:opacity .6s ease;pointer-events:none}
+.daycount.on{opacity:.92}
+.daycount small{display:block;font:500 .74rem var(--f-ui);letter-spacing:.26em;color:var(--dust);margin-bottom:.8rem}
+
+#summary{position:fixed;inset:0;z-index:9;overflow-y:auto;background:rgba(10,8,7,.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding-inline:var(--gutter);padding-block:calc(env(safe-area-inset-top,0px) + 84px) calc(env(safe-area-inset-bottom,0px) + 72px)}
+.sum-inner{max-width:52rem;margin:0 auto;display:grid;gap:1.4rem;min-width:0}
+.sum-inner h2{font:300 clamp(2.4rem,8vw,4.4rem)/1 var(--f-display);margin:0}
+.sum-inner h3{font:500 .78rem var(--f-ui);letter-spacing:.22em;color:var(--dust);margin:1.4rem 0 0;padding-top:1.2rem;border-top:1px solid var(--line)}
+.sum-lede{margin:0;font:400 1.15rem/1.7 var(--f-verse);max-width:34em}
+.sum-lede small{display:block;font:400 .82rem/1.6 var(--f-ui);color:var(--dust);margin-top:.4rem}
+.paths{list-style:none;margin:0;padding:0;display:grid}
+.path{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.2fr) auto;gap:.6rem 1.4rem;padding:1rem 0;border-bottom:1px solid var(--line);align-items:start}
+.path:first-child{border-top:1px solid var(--line)}
+.path .sit{display:grid;gap:.2rem}
+.path .sit b{font:500 .7rem var(--f-ui);letter-spacing:.16em;color:var(--dust)}
+.path .sit span{font:400 .95rem/1.55 var(--f-verse)}
+.path .cell{display:grid;gap:.25rem;font:400 .98rem/1.55 var(--f-verse);min-width:0}
+.path .cell i{font:500 .66rem var(--f-ui);font-style:normal;letter-spacing:.18em;color:var(--dust)}
+.path .cell.job{color:var(--star)}
+.path .cell q{color:var(--ember);quotes:"“" "”";overflow-wrap:anywhere}
+.path .path-chip{grid-column:auto;align-self:start}
+@media (max-width:760px){.path{grid-template-columns:1fr 1fr}.path .sit{grid-column:1/-1}.path .path-chip{grid-column:1/-1;grid-row:1;justify-self:end}}
+@media (max-width:440px){.path{grid-template-columns:1fr}}
+.words{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem 2rem}
+.words .col{display:grid;gap:.6rem;align-content:start;min-width:0}
+.words h4{margin:0;font:500 .7rem var(--f-ui);letter-spacing:.2em;color:var(--dust)}
+.words p{margin:0;font:400 1rem/1.7 var(--f-verse);overflow-wrap:anywhere}
+.words .mine p{color:var(--ember)}
+.words .his p{color:var(--star)}
+@media (max-width:620px){.words{grid-template-columns:1fr}}
+.hidden-scene{display:grid;gap:.8rem}
+.hidden-scene blockquote{margin:0;font:400 1.02rem/1.75 var(--f-verse);color:var(--bone);padding-left:1rem;border-left:1px solid var(--line)}
+.lens{display:grid;gap:.4rem;padding:1rem 1.1rem;border:1px solid var(--line);border-radius:2px}
+.lens p{margin:0}
+.lens .q{font:400 1.1rem/1.6 var(--f-display)}
+.sum-actions{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:.6rem}
+.source{margin:0;font-size:.76rem;color:var(--dust);line-height:1.7}
+
+@media (prefers-reduced-motion: reduce){
+  .w{animation:none;opacity:1;filter:none}
+  .continue::after{animation:none}
+  .echo{transition:opacity 1.2s ease}
+  .echo.go{transform:none}
+}
+/* --- 여러 인물 · 풀어 쓴 말 --- */
+:root{--wheat:#d9c48e}
+#backdrop{transition:background 1.6s ease}
+body:not(.playing) #text-toggle{visibility:hidden}
+.hud-right{display:flex;gap:.5rem;pointer-events:none}
+.tag-easy{color:var(--wheat)}
+.ref-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:.3rem 1.1rem}
+.mode-switch{background:none;border:0;border-bottom:1px dashed currentColor;padding:.1rem 0;cursor:pointer;font:500 .72rem var(--f-ui);letter-spacing:.06em;color:var(--dust)}
+.mode-switch:hover,.mode-switch:focus-visible{color:var(--bone)}
+.picker{display:flex;flex-wrap:wrap;gap:0 1.5rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0;padding:0;min-width:0}
+.pick{background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:.75rem 0 .6rem;cursor:pointer;display:grid;gap:.12rem;text-align:left;color:var(--dust)}
+.pick b{font:500 1.18rem/1.2 var(--f-display);color:inherit}
+.pick small{font:400 .7rem/1.3 var(--f-ui);letter-spacing:.05em}
+.pick:hover{color:var(--bone)}
+.pick[aria-checked="true"]{color:var(--bone);border-bottom-color:var(--ember)}
+.recall{width:100%;max-width:40rem;display:grid;gap:.5rem;padding:1rem 1.2rem;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:2px}
+.recall h3{margin:0;font:500 .7rem var(--f-ui);letter-spacing:.2em;color:var(--dust)}
+.path .cell .said-text{font:400 .92rem/1.65 var(--f-verse);color:var(--bone);opacity:.92;overflow-wrap:anywhere;word-break:keep-all}
+.sum-mode{display:flex;flex-wrap:wrap;gap:.4rem 1rem;align-items:baseline}
+.loading{margin:0;font:400 .9rem var(--f-ui);color:var(--dust)}
+.tag-say{color:var(--bone);border-style:dashed}
+.say-line{margin:0;font:400 clamp(1.14rem,3.1vw,1.48rem)/1.7 var(--f-display);color:var(--bone);max-width:30em;text-wrap:pretty;word-break:keep-all;overflow-wrap:anywhere}
+.heard{display:grid;gap:.25rem;margin-top:.45rem;padding-left:.7rem;border-left:1px solid var(--line)}
+.heard .h-line{font:400 .92rem/1.55 var(--f-display);color:var(--bone)}
+.heard .h-who{font:500 .64rem var(--f-ui);letter-spacing:.14em;color:var(--dust)}
+.heard .said-text{font:400 .86rem/1.6 var(--f-verse);color:var(--star);word-break:keep-all;overflow-wrap:anywhere}
+</style>
+
+<div id="backdrop"></div>
+<canvas id="gl" aria-hidden="true"></canvas>
+
+<header class="hud">
+  <div class="hud-title"><b id="hud-name"></b><span id="hud-chapter">데모 챕터</span></div>
+  <div class="hud-right">
+    <button class="pill" id="text-toggle" type="button" aria-pressed="false">원문 보기</button>
+    <button class="pill" id="sound-toggle" type="button" aria-pressed="false">소리 켜기</button>
+  </div>
+</header>
+
+<section id="title-screen" aria-labelledby="game-title">
+  <div class="title-block">
+    <p class="eyebrow">성경 인물 1인칭 체험 · 데모 챕터</p>
+    <h1 id="game-title"></h1>
+    <div class="picker" id="picker" role="radiogroup" aria-label="누구의 자리에 설지 고르기"></div>
+    <p class="lede" id="lede"></p>
+    <ul class="meta" id="meta"></ul>
+    <p class="notice" id="gl-notice" hidden>이 기기에서는 3D 화면을 띄울 수 없어 글과 소리로 진행합니다.</p>
+    <div class="start-row">
+      <button class="btn-primary" id="start-sound" type="button">소리 켜고 시작</button>
+      <button class="btn-ghost" id="start-quiet" type="button">소리 없이 시작</button>
+    </div>
+  </div>
+</section>
+
+<section id="stage" aria-live="polite">
+  <div class="stage-inner" id="stage-inner"></div>
+</section>
+
+<p class="daycount" id="daycount" aria-live="polite"></p>
+
+<div id="fade" aria-hidden="true">
+  <div class="chapter-card">
+    <span class="chapter-num" id="card-num"></span>
+    <p class="chapter-name" id="card-name"></p>
+    <span class="chapter-sub" id="card-sub"></span>
+  </div>
+</div>
+
+<section id="summary" hidden aria-labelledby="sum-title">
+  <div class="sum-inner">
+    <p class="eyebrow">데모 챕터를 마쳤습니다</p>
+    <h2 id="sum-title"></h2>
+    <p class="sum-lede" id="sum-count"></p>
+    <div class="sum-mode"><p class="note" id="sum-mode-note"></p><button class="mode-switch" type="button" data-modeswitch>원문 보기</button></div>
+    <ol class="paths" id="sum-paths"></ol>
+
+    <h3 id="words-title"></h3>
+    <div class="words">
+      <div class="col mine"><h4>당신</h4><div id="sum-mine" class="col"></div></div>
+      <div class="col his"><h4 id="his-label"></h4><div id="sum-his" class="col"></div></div>
+    </div>
+
+    <div id="hidden-wrap">
+      <h3 id="hidden-title"></h3>
+      <div class="hidden-scene" id="sum-hidden"></div>
+    </div>
+
+    <h3>해석 한 줄</h3>
+    <aside class="lens">
+      <p class="note">너진똑의 관점 · [040] 기독교의 비밀, 사이비 사망 선고 [계시록] (1:31:19)</p>
+      <p class="q">“이 모든 이야기는 ‘다른 사람’이 아닌, 당신의 이야기입니다.”</p>
+    </aside>
+
+    <div class="sum-actions">
+      <button class="btn-primary" id="restart" type="button">처음부터 다시</button>
+      <button class="btn-ghost" id="pick-other" type="button">다른 인물 고르기</button>
+    </div>
+    <p class="source">본문은 성경전서 개역한글판(대한성서공회, 1961)을 그대로 옮겼고, ‘(일부)’ 표시는 절의 일부만 인용한 것입니다. ‘풀어 쓴 말’은 이 체험을 위해 개역한글 본문을 쉬운 말로 옮긴 것으로, 성경 번역본이 아닙니다. ‘연출’ 표시가 붙은 문장과 선택지는 게임을 위해 쓴 것으로 성경 본문이 아닙니다.</p>
+  </div>
+</section>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+/* ---------- 인물 목록 (시작 화면) ---------- */
+const CHARS = [
+  { id: 'job', name: '욥', sub: '재 위에서', short: '욥기', minutes: 13,
+    lede: '당신은 우스 땅의 욥입니다. 일곱 아들과 세 딸, 많은 종과 가축을 가진 사람입니다.',
+    sky: ['#c9875a', '#2a3150'] },
+  { id: 'peter', name: '베드로', sub: '숯불 곁에서', short: '누가·마태·요한복음', minutes: 12,
+    lede: '당신은 게네사렛 호숫가의 어부 시몬입니다. 배와 그물, 함께 일하는 동업자들이 있습니다.',
+    sky: ['#d79a6c', '#33456a'] },
+  { id: 'david', name: '다윗', sub: '두 문 사이에서', short: '사무엘상·하, 열왕기상', minutes: 13,
+    lede: '당신은 베들레헴 사람 이새의 막내아들입니다. 들에서 아버지의 양을 지키고 있습니다.',
+    sky: ['#d9a46a', '#3b4f78'] },
+  { id: 'abraham', name: '아브라함', sub: '모리아로 가는 길', short: '창세기 12–25장', minutes: 13,
+    lede: '당신은 하란에 사는 아브람입니다. 아내 사래와 조카 롯, 모은 재물과 사람들이 곁에 있습니다.',
+    sky: ['#e0aa74', '#41507a'] },
+  { id: 'jacob', name: '야곱', sub: '얍복 나루에서', short: '창세기 27–49장', minutes: 13,
+    lede: '당신은 이삭의 작은아들 야곱입니다. 아버지의 장막에는 눈이 어두운 아버지와 어머니 리브가, 형 에서가 있습니다.',
+    sky: ['#c98e66', '#2c3552'] }
+];
+const RULE = '성경 본문이 정한 일은 그대로 일어납니다. 그 일 앞에서 무엇을 하고 무슨 말을 할지는 당신이 고릅니다. 당신의 선택과 성경 속 그의 선택은 마지막에 한꺼번에 나란히 보여 드립니다.';
+
+/* ---------- 소리 (Web Audio로 합성) ---------- */
+const audio = (() => {
+  let ctx = null, master = null, enabled = false;
+  let white, brown, windGain, windFilter, windLfoAmt, droneGain, chordGain, revIn, waterGain, waterLfo;
+  let crackleLevel = 0, crackleTimer = null;
+  function buffers() {
+    const len = ctx.sampleRate * 3;
+    white = ctx.createBuffer(1, len, ctx.sampleRate);
+    const w = white.getChannelData(0);
+    for (let i = 0; i < len; i++) w[i] = Math.random() * 2 - 1;
+    brown = ctx.createBuffer(1, len, ctx.sampleRate);
+    const b = brown.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; b[i] = last * 3.5; }
+  }
+  function init() {
+    if (ctx) return true;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    try { ctx = new AC(); } catch (e) { ctx = null; return false; }
+    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    buffers();
+    // 공간감: 두 갈래 지연 되먹임
+    revIn = ctx.createGain();
+    const d1 = ctx.createDelay(1), d2 = ctx.createDelay(1); d1.delayTime.value = .37; d2.delayTime.value = .53;
+    const f1 = ctx.createGain(), f2 = ctx.createGain(); f1.gain.value = .4; f2.gain.value = .36;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+    const wet = ctx.createGain(); wet.gain.value = .5;
+    revIn.connect(d1); revIn.connect(d2); d1.connect(f1); d2.connect(f2); f1.connect(lp); f2.connect(lp);
+    lp.connect(d1); lp.connect(d2); lp.connect(wet); wet.connect(master);
+    // 바람
+    const ws = ctx.createBufferSource(); ws.buffer = brown; ws.loop = true;
+    windFilter = ctx.createBiquadFilter(); windFilter.type = 'bandpass'; windFilter.frequency.value = 420; windFilter.Q.value = .7;
+    windGain = ctx.createGain(); windGain.gain.value = 0;
+    const l1 = ctx.createOscillator(); l1.frequency.value = .11; const l1a = ctx.createGain(); l1a.gain.value = 180;
+    l1.connect(l1a); l1a.connect(windFilter.frequency);
+    const l2 = ctx.createOscillator(); l2.frequency.value = .07; windLfoAmt = ctx.createGain(); windLfoAmt.gain.value = 0;
+    l2.connect(windLfoAmt); windLfoAmt.connect(windGain.gain);
+    ws.connect(windFilter); windFilter.connect(windGain); windGain.connect(master);
+    ws.start(); l1.start(); l2.start();
+    // 낮은 울림
+    droneGain = ctx.createGain(); droneGain.gain.value = 0;
+    const dl = ctx.createBiquadFilter(); dl.type = 'lowpass'; dl.frequency.value = 170;
+    [[55, 'sawtooth', .3], [82.41, 'sine', .6], [110.7, 'sine', .22]].forEach(([f, t, g]) => {
+      const o = ctx.createOscillator(); o.type = t; o.frequency.value = f;
+      const og = ctx.createGain(); og.gain.value = g; o.connect(og); og.connect(dl); o.start();
+    });
+    dl.connect(droneGain); droneGain.connect(master);
+    // 새벽 별들의 노래 (화음)
+    chordGain = ctx.createGain(); chordGain.gain.value = 0;
+    const cl = ctx.createBiquadFilter(); cl.type = 'lowpass'; cl.frequency.value = 2600;
+    [220, 277.18, 329.63, 440, 554.37, 659.25, 880, 1318.5].forEach((f, i) => {
+      const o = ctx.createOscillator(); o.type = i < 3 ? 'triangle' : 'sine'; o.frequency.value = f;
+      const vib = ctx.createOscillator(); vib.frequency.value = 4 + Math.random() * 1.5;
+      const va = ctx.createGain(); va.gain.value = f * .004; vib.connect(va); va.connect(o.frequency);
+      const og = ctx.createGain(); const base = i < 6 ? .08 : .03; og.gain.value = base;
+      const tr = ctx.createOscillator(); tr.frequency.value = .12 + Math.random() * .3;
+      const ta = ctx.createGain(); ta.gain.value = base * .6; tr.connect(ta); ta.connect(og.gain);
+      o.connect(og); og.connect(cl); o.start(); vib.start(); tr.start();
+    });
+    cl.connect(chordGain); chordGain.connect(master); chordGain.connect(revIn);
+    // 물결
+    const wsrc = ctx.createBufferSource(); wsrc.buffer = brown; wsrc.loop = true;
+    const wf = ctx.createBiquadFilter(); wf.type = 'lowpass'; wf.frequency.value = 520;
+    waterGain = ctx.createGain(); waterGain.gain.value = 0;
+    const wl = ctx.createOscillator(); wl.frequency.value = .23; waterLfo = ctx.createGain(); waterLfo.gain.value = 0; wl.connect(waterLfo); waterLfo.connect(waterGain.gain);
+    wsrc.connect(wf); wf.connect(waterGain); waterGain.connect(master); wsrc.start(); wl.start();
+    return true;
+  }
+  const levels = { wind: 0, drone: 0, chord: 0, water: 0 };
+  function applyLevels() { if (!ctx) return; windGain.gain.value = levels.wind * .5; droneGain.gain.value = levels.drone * .22; chordGain.gain.value = levels.chord * .45; windLfoAmt.gain.value = levels.wind * .12; waterGain.gain.value = levels.water * .4; waterLfo.gain.value = levels.water * .18; }
+  function to(param, v, t) { if (!ctx) return; const n = ctx.currentTime; param.cancelScheduledValues(n); param.setTargetAtTime(v, n, Math.max(.05, t / 3)); }
+  function burst(buf, filterType, f0, f1, dur, peak, attack = .03, toRev = false, offset = 0) {
+    if (!ctx || !enabled) return;
+    const t = ctx.currentTime + offset;
+    const s = ctx.createBufferSource(); s.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = filterType; f.frequency.setValueAtTime(f0, t);
+    if (f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, t + dur * .9);
+    const g = ctx.createGain(); g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + attack);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(master); if (toRev) g.connect(revIn);
+    s.start(t, Math.random() * 1.5); s.stop(t + dur + .1);
+  }
+  return {
+    get enabled() { return enabled; },
+    enable() { const fresh = !ctx; if (!init()) return false; if (fresh) applyLevels(); enabled = true; ctx.resume && ctx.resume(); to(master.gain, .9, .6); return true; },
+    disable() { enabled = false; if (ctx) to(master.gain, 0, .4); },
+    wind(level, t = 2) { levels.wind = level; if (!ctx) return; to(windGain.gain, level * .5, t); to(windFilter.frequency, 300 + level * 700, t); windLfoAmt.gain.value = level * .12; },
+    drone(level, t = 3) { levels.drone = level; if (!ctx) return; to(droneGain.gain, level * .22, t); },
+    chord(level, t = 5) { levels.chord = level; if (!ctx) return; to(chordGain.gain, level * .45, t); },
+    thunder(power = 1, delay = 0) {
+      burst(white, 'highpass', 900, 900, .35, .25 * power, .01, false, delay);
+      burst(brown, 'lowpass', 1300, 80, 4.2, .9 * power, .04, true, delay);
+    },
+    whoosh(dur = 2.8) { burst(white, 'bandpass', 2800, 240, dur, .45, .5, true); },
+    rumble() { burst(white, 'highpass', 1600, 1600, .5, .3, .01); burst(brown, 'lowpass', 220, 60, 3, 1, .08, true); },
+    water(level, t = 2) { levels.water = level; if (!ctx) return; to(waterGain.gain, level * .4, t); waterLfo.gain.value = level * .18; },
+    splash() { burst(white, 'bandpass', 1900, 420, 1.3, .38, .02, true); burst(brown, 'lowpass', 400, 90, 1.2, .5, .02); },
+    thud() { burst(brown, 'lowpass', 200, 60, .9, .9, .01, true); },
+    rooster() {
+      if (!ctx || !enabled) return;
+      const t = ctx.currentTime + .1;
+      [[0, .2, 560, 780], [.22, .16, 720, 840], [.4, .62, 840, 560]].forEach(([o, d, f0, f1]) => {
+        const osc = ctx.createOscillator(); osc.type = 'sawtooth';
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1500; f.Q.value = 2.5;
+        const g = ctx.createGain();
+        osc.frequency.setValueAtTime(f0, t + o); osc.frequency.linearRampToValueAtTime(f1, t + o + d);
+        g.gain.setValueAtTime(.0001, t + o); g.gain.exponentialRampToValueAtTime(.16, t + o + .03); g.gain.exponentialRampToValueAtTime(.0001, t + o + d);
+        osc.connect(f); f.connect(g); g.connect(master); g.connect(revIn); osc.start(t + o); osc.stop(t + o + d + .05);
+      });
+    },
+    crackle(level) {
+      crackleLevel = level;
+      if (!ctx || crackleTimer) return;
+      crackleTimer = setInterval(() => {
+        if (!enabled || crackleLevel < .02 || Math.random() > crackleLevel * .35) return;
+        const t = ctx.currentTime;
+        const s = ctx.createBufferSource(); s.buffer = white;
+        const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1200 + Math.random() * 2400;
+        const g = ctx.createGain(); g.gain.setValueAtTime(.03 + Math.random() * .12 * crackleLevel, t);
+        g.gain.exponentialRampToValueAtTime(.0001, t + .02 + Math.random() * .05);
+        s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random() * 2); s.stop(t + .12);
+      }, 55);
+    }
+  };
+})();
+
+/* ---------- 화면 장치 ---------- */
+const stage = $('#stage-inner');
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const clearStage = () => stage.replaceChildren();
+let C = null;            // 지금 고른 인물의 모듈
+let textMode = 'easy';   // 'easy' 풀어 쓴 말 · 'orig' 개역한글 원문
+const isEasy = () => textMode === 'easy';
+const textOf = ref => (isEasy() && C.P[ref]) ? C.P[ref] : C.V[ref];
+function fmtRef(ref) {
+  const r = ref.replace(/#\d+$/, '');
+  const full = /^[가-힣]/.test(r) ? r : `${C.abbr} ${r}`;
+  return full.replace(/-/g, '–') + (C.PARTIAL.has(ref) ? ' (일부)' : '');
+}
+const refLine = ref => fmtRef(ref) + (isEasy() ? ' · 개역한글을 풀어 쓴 말' : ' · 개역한글');
+const textTag = () => { const t = el('span', 'layer-tag ' + (isEasy() ? 'tag-easy' : 'tag-text'), isEasy() ? '풀어 쓴 말' : '성경 본문'); t.dataset.texttag = ''; return t; };
+const stageTag = () => el('span', 'layer-tag tag-stage', '연출');
+const modeLabel = () => isEasy() ? '개역한글 원문 보기' : '풀어 쓴 말 보기';
+function modeSwitch() { const b = el('button', 'mode-switch', modeLabel()); b.type = 'button'; b.dataset.modeswitch = ''; b.addEventListener('click', toggleMode); return b; }
+function refNode(ref, cls = 'ref') { const p = el('p', cls, refLine(ref)); p.dataset.refline = ref; return p; }
+function textNode(tag, cls, ref) { const n = el(tag, cls, textOf(ref)); n.dataset.ref = ref; return n; }
+function applyMode() {
+  if (!C) return;
+  document.querySelectorAll('[data-ref]').forEach(n => { n.textContent = textOf(n.dataset.ref); });
+  document.querySelectorAll('[data-refline]').forEach(n => { n.textContent = refLine(n.dataset.refline); });
+  document.querySelectorAll('[data-texttag]').forEach(n => { n.className = 'layer-tag ' + (isEasy() ? 'tag-easy' : 'tag-text'); n.textContent = isEasy() ? '풀어 쓴 말' : '성경 본문'; });
+  document.querySelectorAll('[data-modeswitch]').forEach(n => { n.textContent = modeLabel(); });
+  const tb = $('#text-toggle'); tb.textContent = isEasy() ? '원문 보기' : '풀어 쓴 말'; tb.setAttribute('aria-pressed', String(!isEasy()));
+  $('#sum-mode-note').textContent = isEasy() ? '성경 구절은 풀어 쓴 말로 보여 드립니다.' : '성경 구절은 개역한글 원문으로 보여 드립니다.';
+}
+function toggleMode() { textMode = isEasy() ? 'orig' : 'easy'; applyMode(); }
+$('#text-toggle').addEventListener('click', toggleMode);
+$('#summary [data-modeswitch]').addEventListener('click', toggleMode);
+
+function revealWords(node, text) {
+  if (reduceMotion) { node.textContent = text; return; }
+  const words = text.split(' '), step = Math.min(55, 2400 / Math.max(1, words.length));
+  words.forEach((w, i) => { const s = el('span', 'w', w); s.style.animationDelay = (i * step) + 'ms'; node.append(s); if (i < words.length - 1) node.append(' '); });
+}
+let pendingContinue = null;
+function waitContinue(label = '계속') {
+  return new Promise(res => {
+    const b = el('button', 'continue'); b.type = 'button';
+    b.append(document.createTextNode(label + ' '), el('span', 'kbd', 'Space'));
+    let fired = false;
+    const onKey = e => { const t = e.target && e.target.tagName; if (t === 'TEXTAREA' || t === 'INPUT') return; if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); done(); } };
+    const done = () => { if (fired) return; fired = true; window.removeEventListener('keydown', onKey); pendingContinue = null; b.disabled = true; res(); };
+    b.addEventListener('click', done); window.addEventListener('keydown', onKey); pendingContinue = done;
+    stage.append(b); setTimeout(() => { try { b.focus({ preventScroll: true }); } catch (_) {} }, 80);
+  });
+}
+// 화면을 짧게 두드리면 '계속' (캔버스는 인물을 바꿀 때 새로 만들어지므로 문서에서 받는다)
+{
+  let down = null;
+  document.addEventListener('pointerdown', e => { down = e.target && e.target.id === 'gl' ? { x: e.clientX, y: e.clientY, t: performance.now() } : null; });
+  document.addEventListener('pointerup', e => {
+    if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 8 && performance.now() - down.t < 350 && pendingContinue) pendingContinue();
+    down = null;
+  });
+}
+async function verse(ref, { voice = false } = {}) {
+  clearStage();
+  const p = el('p', 'verse' + (voice ? ' voice' : '')); p.dataset.ref = ref; revealWords(p, textOf(ref));
+  const row = el('div', 'ref-row'); row.append(refNode(ref), modeSwitch());
+  stage.append(textTag(), p, row);
+  await waitContinue();
+}
+// 사람의 말은 요즘 말투로. 출처 구절(ref)은 엔딩에서 원문과 함께 보여 준다
+const sayTag = who => el('span', 'layer-tag tag-say', who);
+async function say(who, line, ref, { auto = false, ms = 0 } = {}) {
+  clearStage();
+  const p = el('p', 'say-line'); revealWords(p, line);
+  stage.append(sayTag(who), p);
+  if (auto) { if (ms) await sleep(ms); return; }
+  await waitContinue();
+}
+async function direction(text, { auto = false, ms = 0 } = {}) {
+  clearStage();
+  stage.append(stageTag(), el('p', 'direction', text));
+  if (auto) { if (ms) await sleep(ms); return; }
+  await waitContinue();
+}
+function choose(question, options, heard) {
+  return new Promise(res => {
+    clearStage();
+    if (heard && heard.line && !heard.quiet) stage.append(sayTag(heard.who), el('p', 'say-line', heard.line)); else stage.append(stageTag());
+    if (question) stage.append(el('p', 'prompt', question));
+    const list = el('div', 'choices'); list.setAttribute('role', 'group'); list.setAttribute('aria-label', question);
+    let fired = false;
+    const onKey = e => { const t = e.target && e.target.tagName; if (t === 'TEXTAREA') return; const n = parseInt(e.key, 10); if (n >= 1 && n <= options.length) { e.preventDefault(); pick(options[n - 1]); } };
+    const pick = o => { if (fired) return; fired = true; window.removeEventListener('keydown', onKey); res(o); };
+    options.forEach((o, i) => { const b = el('button', 'choice'); b.type = 'button'; b.append(el('span', 'k', String(i + 1)), el('span', 'label', o.label)); b.addEventListener('click', () => pick(o)); list.append(b); });
+    window.addEventListener('keydown', onKey);
+    stage.append(list);
+    setTimeout(() => { const f = list.querySelector('button'); if (f) try { f.focus({ preventScroll: true }); } catch (_) {} }, 80);
+  });
+}
+let speakCount = 0;
+function speak(prompt, { submit = '말하기', skip = '말하지 않기', heard = null } = {}) {
+  return new Promise(res => {
+    clearStage();
+    const form = el('form', 'speak'); form.noValidate = true;
+    const ta = document.createElement('textarea'); ta.id = 'speak-input-' + (++speakCount); ta.rows = 3; ta.maxLength = 400;
+    ta.placeholder = '무슨 말이든 괜찮습니다. 욕이어도 괜찮습니다.'; ta.setAttribute('aria-label', prompt);
+    const row = el('div', 'speak-row');
+    const send = el('button', 'btn-primary', submit); send.type = 'submit';
+    const no = el('button', 'btn-ghost', skip); no.type = 'button';
+    row.append(send, no);
+    form.append(ta, row, el('p', 'note', '입력한 말은 이 화면에서만 쓰이고 어디에도 저장되지 않습니다. Enter로 보내고 Shift+Enter로 줄을 바꿉니다.'));
+    if (heard && heard.line && !heard.quiet) stage.append(sayTag(heard.who), el('p', 'say-line', heard.line));
+    stage.append(el('p', 'prompt', prompt), form);
+    let done = false;
+    const finish = v => { if (done) return; done = true; res(v); };
+    form.addEventListener('submit', e => { e.preventDefault(); const v = ta.value.trim(); if (!v) { ta.focus(); return; } finish(v); });
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); send.click(); } });
+    no.addEventListener('click', () => finish(null));
+    setTimeout(() => { try { ta.focus({ preventScroll: true }); } catch (_) {} }, 80);
+  });
+}
+async function echo(text) {
+  clearStage();
+  const e = el('p', 'echo', text); document.body.append(e);
+  await sleep(60); e.classList.add('go');
+  await sleep(reduceMotion ? 1400 : 3400);
+  setTimeout(() => e.remove(), 4000);
+}
+const fadeEl = $('#fade');
+async function sceneCut(num, name, sub, setup) {
+  clearStage();
+  $('#card-num').textContent = num; $('#card-name').textContent = name; $('#card-sub').textContent = sub;
+  fadeEl.classList.add('on'); await sleep(1400);
+  fadeEl.classList.add('card');
+  $('#hud-chapter').textContent = `${num} · ${name}`;
+  if (setup) await setup();
+  await sleep(2600);
+  fadeEl.classList.remove('card'); await sleep(500);
+  fadeEl.classList.remove('on'); await sleep(900);
+}
+const dayEl = $('#daycount');
+const ORD = ['첫째', '둘째', '셋째', '넷째', '다섯째', '여섯째', '일곱째'];
+function showDay(d, label = '칠일 칠야', unit = '날') { dayEl.replaceChildren(el('small', null, label), document.createTextNode(`${ORD[d - 1]} ${unit}`)); dayEl.classList.add('on'); }
+function hideDay() { dayEl.classList.remove('on'); }
+
+/* ---------- 기록 ---------- */
+let record = { choices: [], words: [] };
+let world = null;
+// 말한 뒤에는 대답 대신 주변의 반응만 보여 준다
+async function react(r) {
+  if (!r) return;
+  if (r.fx && world && world.react) world.react(r.fx);
+  if (r.sound && audio[r.sound]) audio[r.sound]();
+  await direction(r.text, { auto: true, ms: r.ms || 3400 });
+}
+async function choicePoint(id) {
+  const def = C.CHOICES[id];
+  const opt = await choose(def.question, def.options, def.heard);
+  let said = null;
+  if (opt.ask) {
+    said = await speak(opt.ask, { submit: opt.submit || '말하기', skip: '말하지 않기' });
+    if (said) { record.words.push({ scene: def.scene, text: said }); await echo(said); }
+  }
+  if (said || !opt.ask) await react(opt.react || (said ? def.react : null));
+  record.choices.push({ id, scene: def.scene, situation: def.situation, heard: def.heard || null, you: opt.label, said, his: def.hisShort, hisRefs: def.hisRefs, same: opt.key === def.hisKey });
+}
+async function speakLoop({ scene, prompts, submit, skips, reacts }) {
+  for (let i = 0; i < prompts.length; i++) {
+    const pr = prompts[i], obj = typeof pr === 'object' ? pr : null;
+    const s = await speak(obj ? obj.ask : pr, { submit, skip: skips[Math.min(i, skips.length - 1)], heard: obj && obj.who ? obj : null });
+    if (obj && obj.his) record.choices.push({ id: 'w', scene, situation: obj.situation || '', heard: obj.who ? obj : null, you: s ? '직접 말했다' : '아무 말도 하지 않았다', said: s, his: obj.hisShort || '', hisRefs: obj.his, same: null });
+    if (!s) return;
+    record.words.push({ scene, text: s });
+    await echo(s);
+    await react(reacts[Math.min(i, reacts.length - 1)]);
+  }
+}
+async function recall(title) {
+  clearStage();
+  if (title) stage.append(stageTag(), el('p', 'prompt', title));
+  const box = el('div', 'recall'); box.append(el('h3', null, '당신이 한 말'));
+  if (record.words.length) record.words.forEach(w => box.append(el('p', 'you-said', `“${w.text}”`)));
+  else box.append(el('p', 'you-choice', '당신은 아무 말도 하지 않았다.'));
+  stage.append(box);
+  await waitContinue();
+}
+
+function showSummary() {
+  clearStage();
+  const S = C.summary, who = C.name;
+  $('#sum-title').textContent = `당신과 ${who}`;
+  const n = record.choices.filter(c => c.same === true).length, total = record.choices.filter(c => c.same !== null).length;
+  const lede = $('#sum-count'); lede.replaceChildren();
+  lede.append(document.createTextNode(
+    n === total ? `${total}개의 갈림길 모두에서 ${who}와 같은 길을 골랐습니다.` :
+    n === 0 ? `${total}개의 갈림길 모두에서 ${who}와 다른 길을 골랐습니다.` :
+    `${total}개의 갈림길 가운데 ${n}번, ${who}와 같은 길을 골랐습니다.`));
+  lede.append(el('small', null, `이 기록에는 점수가 없습니다. 장면마다 당신이 들은 말이 실제로는 어느 구절이었는지, 그 말에 당신과 ${who}가 어떻게 답했는지를 나란히 보여 줍니다.`));
+  const list = $('#sum-paths'); list.replaceChildren();
+  record.choices.forEach(c => {
+    const li = el('li', 'path');
+    const sit = el('div', 'sit'); sit.append(el('b', null, c.scene)); if (c.situation) sit.append(el('span', null, c.situation));
+    if (c.heard) { const h = el('div', 'heard'); h.append(el('span', 'h-who', `들은 말 · ${c.heard.who}`)); if (c.heard.line) h.append(el('span', 'h-line', `“${c.heard.line}”`)); h.append(textNode('span', 'said-text', c.heard.ref), refNode(c.heard.ref)); sit.append(h); }
+    const you = el('div', 'cell'); you.append(el('i', null, '당신'), el('span', null, c.you)); if (c.said) you.append(el('q', null, c.said));
+    const his = el('div', 'cell job'); his.append(el('i', null, who), el('span', null, c.his));
+    c.hisRefs.forEach(r => his.append(textNode('span', 'said-text', r), refNode(r)));
+    li.append(sit, you, his, c.same === null ? el('span') : el('span', 'path-chip ' + (c.same ? 'same' : 'diff'), c.same ? '같은 길' : '다른 길'));
+    list.append(li);
+  });
+  $('#words-title').textContent = S.wordsTitle;
+  $('#words-title').hidden = true; $('#summary .words').hidden = true;
+  $('#his-label').textContent = who;
+  const mine = $('#sum-mine'); mine.replaceChildren();
+  if (record.words.length) record.words.forEach(w => mine.append(el('p', null, `“${w.text}”`)));
+  else mine.append(el('p', null, S.silentMine || '당신은 아무 말도 하지 않았습니다.'));
+  const his = $('#sum-his'); his.replaceChildren();
+  S.hisWords.forEach(r => his.append(textNode('p', null, r), refNode(r)));
+  const hw = $('#hidden-wrap');
+  hw.hidden = !S.hidden;
+  if (S.hidden) {
+    $('#hidden-title').textContent = S.hidden.title;
+    const hid = $('#sum-hidden'); hid.replaceChildren();
+    S.hidden.refs.forEach(r => hid.append(textNode('blockquote', null, r), refNode(r)));
+    if (S.hidden.note) hid.append(el('p', 'note', S.hidden.note));
+  }
+  applyMode();
+  $('#hud-chapter').textContent = '기록';
+  const s = $('#summary'); s.hidden = false; s.scrollTop = 0;
+  setTimeout(() => { try { $('#restart').focus({ preventScroll: true }); } catch (_) {} }, 100);
+}
+
+/* ---------- 3D 세계 불러오기 ---------- */
+const bd = $('#backdrop');
+function paintBackdrop(horizon, top) { bd.style.background = `radial-gradient(130% 90% at 55% 100%, ${horizon} 0%, ${top} 50%, #0c0a09 100%)`; }
+function stubWorld() {
+  const preset = name => (C.presets && C.presets[name]) || null;
+  const base = {
+    stub: true,
+    setEnv(name, dur = 0) { const p = typeof name === 'string' ? preset(name) : null; if (p && p.horizon && p.top) paintBackdrop(p.horizon, p.top); return sleep(Math.min(dur, 1.5) * 1000); },
+    focus() { return Promise.resolve(); },
+    show() {}, react() {}, dispose() {},
+    reset() { const p = preset(C.initialEnv); if (p && p.horizon) paintBackdrop(p.horizon, p.top); },
+    cycleDays(n, secs, onDay) { return (async () => { for (let d = 1; d <= n; d++) { onDay && onDay(d); await sleep(secs * 1000 / n); } })(); }
+  };
+  Object.assign(base, C.stub ? C.stub({ audio, sleep }) : {});
+  return new Proxy(base, { get(t, k) { if (k in t) return t[k]; if (typeof k === 'symbol' || k === 'then') return undefined; return () => sleep(900); } });
+}
+const kitReady = import('./kit.js').catch(e => { console.warn('3D 도구를 불러오지 못했습니다:', e); return null; });
+let glFailed = false;
+async function makeWorld() {
+  const kitMod = await kitReady;
+  if (!kitMod || glFailed) throw new Error('3D 없음');
+  const canvas = $('#gl');
+  const kit = await kitMod.createKit(canvas, { presets: C.presets, initial: C.initialEnv, audio });
+  return await C.world(kit, { audio, sleep });
+}
+
+/* ---------- 시작 화면 ---------- */
+let selected = 'job';
+function renderPicker() {
+  const pk = $('#picker'); pk.replaceChildren();
+  CHARS.forEach((c, i) => {
+    const b = el('button', 'pick'); b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset.id = c.id;
+    b.setAttribute('aria-checked', String(c.id === selected)); b.tabIndex = c.id === selected ? 0 : -1;
+    b.append(el('b', null, c.name), el('small', null, c.short));
+    b.addEventListener('click', () => select(c.id));
+    b.addEventListener('keydown', e => {
+      const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+      if (!d) return; e.preventDefault();
+      const nx = CHARS[(i + d + CHARS.length) % CHARS.length]; select(nx.id);
+      const nb = pk.querySelector(`[data-id="${nx.id}"]`); nb && nb.focus();
+    });
+    pk.append(b);
+  });
+}
+function select(id) {
+  selected = id;
+  const c = CHARS.find(x => x.id === id);
+  const h = $('#game-title'); h.replaceChildren(document.createTextNode(c.name), el('span', 'comma', ','), el('br'), document.createTextNode(c.sub));
+  $('#lede').textContent = `${c.lede} ${RULE}`;
+  const meta = $('#meta'); meta.replaceChildren();
+  [`약 ${c.minutes}분`, '본문: 성경전서 개역한글판(1961)', '화면에는 풀어 쓴 말, 버튼으로 원문', '입력한 말은 저장되지 않습니다'].forEach(t => meta.append(el('li', null, t)));
+  paintBackdrop(c.sky[0], c.sky[1]);
+  renderPicker();
+}
+select('job');
+
+const soundBtn = $('#sound-toggle');
+function syncSound() { const on = audio.enabled; soundBtn.textContent = on ? '소리 끄기' : '소리 켜기'; soundBtn.setAttribute('aria-pressed', String(on)); }
+soundBtn.addEventListener('click', () => { if (audio.enabled) audio.disable(); else audio.enable(); syncSound(); });
+
+const api = () => ({ V: C.V, P: C.P, world, audio, sleep, reduceMotion, verse, say, direction, choose, speak, echo, react, sceneCut, choicePoint, speakLoop, recall, showDay, hideDay, clearStage, get record() { return record; } });
+
+let running = false;
+async function runStory() {
+  record = { choices: [], words: [] };
+  textMode = 'easy'; applyMode();
+  world.reset();
+  audio.chord(0, 2); audio.crackle(0); audio.water && audio.water(0, 1);
+  await C.story(api());
+  audio.chord(.4, 6);
+  showSummary();
+}
+async function begin(withSound) {
+  if (running) return; running = true;
+  if (withSound) audio.enable();
+  syncSound();
+  const meta = CHARS.find(x => x.id === selected);
+  document.body.classList.add('playing');
+  $('#title-screen').hidden = true;
+  $('#hud-name').textContent = `${meta.name}, ${meta.sub}`;
+  clearStage(); stage.append(el('p', 'loading', `${meta.name}의 장면을 불러오는 중입니다.`));
+  try {
+    C = (await import(`./chars/${meta.id}.js`)).default;
+    C.PARTIAL = new Set(C.PARTIAL_LIST || []);
+  } catch (e) {
+    console.error(e);
+    clearStage(); stage.append(el('p', 'notice', '이 인물의 장면을 불러오지 못했습니다. 페이지를 새로 고친 뒤 다시 시도해 주세요.'));
+    running = false; return;
+  }
+  try {
+    world = await Promise.race([makeWorld(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 40000))]);
+    $('#gl').style.display = '';
+  } catch (e) {
+    console.warn('3D 화면을 띄우지 못해 글과 소리로 진행합니다:', e);
+    glFailed = true; $('#gl').style.display = 'none'; $('#gl-notice').hidden = false;
+    world = stubWorld();
+  }
+  clearStage();
+  try { await runStory(); } finally { running = false; }
+}
+$('#start-sound').addEventListener('click', () => begin(true));
+$('#start-quiet').addEventListener('click', () => begin(false));
+$('#restart').addEventListener('click', async () => {
+  if (running) return;
+  $('#summary').hidden = true;
+  running = true;
+  try { await runStory(); } finally { running = false; }
+});
+$('#pick-other').addEventListener('click', () => {
+  if (running) return;
+  $('#summary').hidden = true;
+  if (world && world.dispose) world.dispose();
+  world = null;
+  const old = $('#gl'), fresh = old.cloneNode(false); old.replaceWith(fresh);
+  audio.wind(0, 1); audio.drone(0, 1); audio.chord(0, 1); audio.crackle(0); audio.water && audio.water(0, 1);
+  document.body.classList.remove('playing');
+  $('#hud-chapter').textContent = '데모 챕터';
+  clearStage();
+  $('#title-screen').hidden = false;
+  select(selected);
+  const b = $(`#picker [data-id="${selected}"]`); b && b.focus();
+});
+</script>
