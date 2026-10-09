@@ -196,7 +196,7 @@ async function world(kit, { audio, sleep }) {
   kit.rocks({ n: 90, height: heightAt, rMin: 6, rMax: 60, center: [0, 10], avoid: (x, z) => z < -4 || (Math.abs(x) < 5 && z < 6), sMax: .5 });
 
   const ROBE = '#d8d0bf';
-  const jesus = kit.person(ROBE, { skin: '#6a5140' });
+  const jesus = kit.figure('man', { tint: ROBE });
   const jesusLight = new THREE.PointLight('#ffe6c4', 0, 9, 2); jesusLight.position.set(0, 1.4, .3); jesus.add(jesusLight);
   const jw = kit.walker(jesus, { height: (x, z) => Math.max(0, heightAt(x, z)), pace: 4, amp: .02, lean: .03, standLean: .02 });
 
@@ -210,7 +210,7 @@ async function world(kit, { audio, sleep }) {
   const crewA = [[.55, 1.4], [-.55, -1.6]].map(([x, z]) => { const g = kit.person('#43362a', { pose: 'seat' }); g.position.set(x, .25, z); boatA.add(g); g.visible = true; return g; });
   const crewB = [[.5, .8], [-.5, -1], [0, -2.4]].map(([x, z]) => { const g = kit.person('#3c3127', { pose: 'seat' }); g.position.set(x, .25, z); boatB.add(g); g.visible = true; return g; });
   const crewSea = [[.6, -.2], [-.6, .3], [.5, -3.1]].map(([x, z]) => { const g = kit.person('#3a2f26', { pose: 'seat' }); g.position.set(x, .25, z); boatA.add(g); return g; });
-  const jesusSeat = kit.person(ROBE, { pose: 'seat', skin: '#6a5140' }); jesusSeat.position.set(0, .25, -2.6); boatA.add(jesusSeat);
+  const jesusSeat = kit.figure('man', { tint: ROBE, pose: 'seat' }); jesusSeat.position.set(0, .25, -2.6); boatA.add(jesusSeat);
 
   // 고기 떼 (그물 안에서 퍼덕이는)
   const FN = 170, fish = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: '#c9d1d4', roughness: .35, metalness: .6 }), FN);
@@ -227,7 +227,7 @@ async function world(kit, { audio, sleep }) {
   kit.box(6, .35, 1.4, '#5a4636', 0, .2, -2.2, room);
   const lamps = [[-2, -2], [0, -2.4], [2, -2]].map(([x, z]) => { kit.glow(.08, .12, 4, 2, .7, x, .5, z + .7, room); const L = new THREE.PointLight('#ffb070', 3, 8, 2); L.position.set(x, .7, z); room.add(L); return L; });
   const diners = [[-2.6, -3.3], [-1.3, -3.4], [1.3, -3.4], [2.6, -3.3], [-3.6, -2.2], [3.6, -2.2], [-3.2, -.9], [3.2, -.9], [-1.8, -.6], [1.8, -.6], [.9, .1]].map(([x, z], i) => { const g = kit.person(['#3e3228', '#4a3b2f', '#352c25'][i % 3], { pose: 'seat', visible: true }); g.position.set(x, 0, z); g.rotation.y = Math.atan2(-x, -2.2 - z); room.add(g); return g; });
-  const jesusRoom = kit.person(ROBE, { pose: 'seat', skin: '#6a5140', visible: true }); jesusRoom.position.set(0, 0, -3.5); room.add(jesusRoom);
+  const jesusRoom = kit.figure('man', { tint: ROBE, pose: 'seat', visible: true }); jesusRoom.position.set(0, 0, -3.5); room.add(jesusRoom);
   room.visible = false;
 
   /* --- 대제사장의 뜰 (눅 22:54–62) --- */
@@ -242,8 +242,8 @@ async function world(kit, { audio, sleep }) {
   kit.box(10, .4, 4.4, '#4f4943', 0, 4.7, -11.5, court);
   const courtFire = kit.fire([COURT.x, .05, COURT.z - 2.2], { level: 0 });
   const warmers = [[-1.4, -1.4], [1.5, -1.2], [-1.8, -3.3], [1.9, -3.4], [0, -4.1], [-.4, .1]].map(([x, z], i) => { const g = kit.person(['#3a3029', '#2f2924', '#463a2f', '#3a332d', '#2c2622', '#4b3f34'][i], { pose: i % 2 ? 'seat' : 'stand', visible: true }); g.position.set(x, 0, z); g.rotation.y = Math.atan2(-x, -2.2 - z); court.add(g); return g; });
-  const maid = kit.person('#7b6a5c', { scale: .92, visible: true }); maid.position.set(2.4, 0, -1.6); maid.rotation.y = Math.atan2(-2.4, 1.6); court.add(maid); maid.visible = false;
-  const lordCourt = kit.person(ROBE, { skin: '#6a5140', visible: true }); lordCourt.position.set(0, .9, -11.2); lordCourt.rotation.y = Math.PI; court.add(lordCourt);
+  const maid = kit.figure('woman_veil', { tint: '#7b6a5c', scale: .92, visible: true }); maid.position.set(2.4, 0, -1.6); maid.rotation.y = Math.atan2(-2.4, 1.6); court.add(maid); maid.visible = false;
+  const lordCourt = kit.figure('man', { tint: ROBE, visible: true }); lordCourt.position.set(0, .9, -11.2); lordCourt.rotation.y = Math.PI; court.add(lordCourt);
   const guards = [-1.1, 1.1].map(x => { const g = kit.person('#2a2420', { visible: true }); g.position.set(x, .9, -11.6); g.rotation.y = Math.PI; court.add(g); return g; });
   court.visible = false;
 

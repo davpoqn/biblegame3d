@@ -173,9 +173,9 @@ async function world(kit, { audio, sleep }) {
   const lamp = new THREE.PointLight('#ffae66', 3.2, 9, 2); lamp.position.set(-1.2, .6, -2.4); scene.add(lamp);
   const lampG = kit.glow(.08, .12, 4, 2, .7, -1.2, .45, -2.3);
   kit.box(2.6, .08, 1.8, '#5a3f2e', .3, .04, -3.4);
-  const isaac = kit.person('#8b806c', { pose: 'seat', skin: '#7b6450', visible: true }); isaac.position.set(.3, .08, -3.6);
-  const rebekah = kit.person('#7b5a48', { scale: .96, visible: true }); rebekah.position.set(-1.6, 0, .6); rebekah.rotation.y = Math.PI * .7;
-  const esau = kit.person('#7a4a2a', { scale: 1.06 }); const ew = kit.walker(esau, { height: h0 });
+  const isaac = kit.figure('elder', { tint: '#8b806c', pose: 'seat', visible: true }); isaac.position.set(.3, .08, -3.6);
+  const rebekah = kit.figure('woman_veil', { tint: '#7b5a48', scale: .96, visible: true }); rebekah.position.set(-1.6, 0, .6); rebekah.rotation.y = Math.PI * .7;
+  const esau = kit.figure('shepherd', { tint: '#7a4a2a', scale: 1.06 }); const ew = kit.walker(esau, { height: h0 });
   [[-14, -6, .4], [12, -10, -.5]].forEach(([x, z, r]) => kit.tent({ at: [x, h0(x, z), z], ry: r }));
   const goats0 = kit.herd('goat', { n: 30, center: [-20, 14], rx: 10, rz: 7, height: h0 });
 
@@ -199,8 +199,8 @@ async function world(kit, { audio, sleep }) {
   kit.box(10, 3.2, 6, '#a08c70', 0, 1.6, -11, court); kit.box(16, 1.2, .5, '#8c7a62', 0, .6, 6, court);
   const feast = kit.throng({ n: 22, place: i => { const a = (i / 22) * Math.PI * 2, r = 4.5 + (i % 2) * 1.2; return [X2 + Math.cos(a) * r, -4 + Math.sin(a) * r * .6, Math.atan2(-Math.cos(a), -Math.sin(a))]; }, pose: 'seat' });
   const feastFire = kit.fire([X2, .05, -4], { level: 0 });
-  const laban = kit.person('#5a4a3a', { visible: true }); laban.position.set(X2 + 1.8, 0, -2.6);
-  const leah = kit.person('#6a5a6e', { scale: .94 }); leah.position.set(X2 - .9, 0, -1.6);
+  const laban = kit.figure('elder', { tint: '#5a4a3a', visible: true }); laban.position.set(X2 + 1.8, 0, -2.6);
+  const leah = kit.figure('woman_veil', { tint: '#6a5a6e', scale: .94 }); leah.position.set(X2 - .9, 0, -1.6);
   const flocks2 = kit.herd('sheep', { n: 40, center: [X2 + 20, -24], rx: 14, rz: 8, height: h2 });
 
   /* --- 4 · 얍복 나루 --- */
@@ -208,17 +208,17 @@ async function world(kit, { audio, sleep }) {
   const h3 = (x, z) => { const lx = x - X3, d = Math.abs(z + 12 + Math.sin(lx * .03) * 3); return 3 * smooth(3, 11, d) - 2 + 2.5 * (vnoise(lx * .02, z * .02) - .5) * smooth(4, 14, d) + 18 * smooth(220, 320, Math.hypot(lx, z)); };
   kit.terrain({ height: h3, size: 600, seg: 150, at: [X3, 0], lo: '#2e2a24', hi: '#6f6450' });
   kit.water({ y: -1.05, size: 300, seg: 80, at: [X3, -12], deep: '#13252c' });
-  const family = [['#6a5a6e', 1], ['#7b5a4a', 1], ['#5a4a3a', .95], ['#5e4e44', .95]].map(([c, s]) => kit.person(c, { scale: s }));
+  const family = [['#6a5a6e', 1], ['#7b5a4a', 1], ['#5a4a3a', .95], ['#5e4e44', .95]].map(([c, s]) => kit.figure('woman_veil', { tint: c, scale: s }));
   const kids = Array.from({ length: 11 }, (_, i) => kit.person(['#5b4a3a', '#6a5644', '#4e4034'][i % 3], { scale: .5 + (i % 5) * .08 }));
   const crossers = [...family, ...kids].map(g => ({ g, w: kit.walker(g, { height: h3, pace: 6, amp: .04, lean: .06, standLean: .02 }) }));
   const herds3 = [kit.herd('sheep', { n: 46, center: [X3 - 16, 8], rx: 12, rz: 6, height: h3 }), kit.herd('goat', { n: 30, center: [X3 + 14, 9], rx: 10, rz: 5, height: h3 }), kit.herd('camel', { n: 12, center: [X3 + 4, 16], rx: 8, rz: 4, height: h3 }), kit.herd('ox', { n: 14, center: [X3 - 6, 18], rx: 8, rz: 4, height: h3 }), kit.herd('donkey', { n: 10, center: [X3 + 22, 18], rx: 6, rz: 4, height: h3 })];
   const herdHome = herds3.map(g => g.position.clone());
-  const stranger = kit.person('#24201d', { scale: 1.04 });
+  const stranger = kit.figure('man', { tint: '#24201d', scale: 1.04 });
 
   /* --- 5 · 에서를 만나는 들 --- */
   const X4 = SITE[4], h4 = land(X4, .6, 14);
   kit.terrain({ height: h4, size: 700, seg: 120, at: [X4, -100], lo: '#6e5c42', hi: '#c0a77c' });
-  const esau4 = kit.person('#7a4a2a', { scale: 1.06 }); const ew4 = kit.walker(esau4, { height: h4, pace: 12, amp: .1, lean: .25 });
+  const esau4 = kit.figure('shepherd', { tint: '#7a4a2a', scale: 1.06 }); const ew4 = kit.walker(esau4, { height: h4, pace: 12, amp: .1, lean: .25 });
   const fourHundred = kit.throng({ n: 160, height: h4, place: i => [X4 + rnd(-40, 40), rnd(-170, -130), 0], colors: ['#5a4430', '#6b5238', '#4a3a2a'] });
   const behind = [[-1.4, 3, '#5a4a3a'], [1.4, 3.2, '#5e4e44'], [-1, 6, '#6a5a6e'], [1.2, 6.4, '#6a5a6e'], [0, 9.5, '#7b5a4a']].map(([x, z, c]) => { const g = kit.person(c, { scale: .95 }); g.position.set(X4 + x, h4(X4 + x, z), z); g.rotation.y = Math.PI; return g; });
   const behindKids = Array.from({ length: 12 }, (_, i) => { const g = kit.person('#5b4a3a', { scale: .52 + (i % 4) * .08 }); const x = rnd(-3, 3), z = [3.8, 7, 10][i % 3] + rnd(-.4, .4); g.position.set(X4 + x, h4(X4 + x, z), z); g.rotation.y = Math.PI; return g; });
@@ -257,7 +257,7 @@ async function world(kit, { audio, sleep }) {
       await sleep(9000);
     },
     alone() { crossers.forEach(c => { c.g.visible = false; }); herds3.forEach(g => { g.visible = false; }); audio.water(.25, 3); },
-    wrestle() { stranger.visible = true; stranger.position.set(X3, h3(X3, 2.6), 2.6); kit.faceCamera(stranger, .1); kit.setEnv({ shake: .7, camH: 1.35 + h3(X3, 4), camP: -.05 }, 2); audio.thud(); },
+    wrestle() { stranger.visible = true; stranger.position.set(X3, h3(X3, 2.6), 2.6); kit.faceCamera(stranger, .1); stranger.userData.fig && stranger.userData.fig.play('Push_Loop'); kit.setEnv({ shake: .7, camH: 1.35 + h3(X3, 4), camP: -.05 }, 2); audio.thud(); },
     hip() { audio.thud(); return kit.setEnv({ camH: 1.0 + h3(X3, 4), camR: .12, shake: .45 }, 1.2); },
     release() { kit.setEnv({ shake: 0, camR: .04 }, 3); kit.tween(stranger.position, { z: -4 }, 6, () => { stranger.visible = false; }); },
     async limp() { kit.focus(0, 2); await kit.setEnv({ camZ: -20, camH: 1.5 + h3(X3, -20), camR: .06, shake: .25 }, 9); kit.setEnv({ shake: 0, camR: 0 }, 2); },

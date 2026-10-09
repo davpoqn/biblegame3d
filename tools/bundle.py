@@ -9,9 +9,10 @@ head="""export async function createKit(""".replace('export ','')
 assert head in kit
 kit=kit.replace("async function createKit(canvas, { presets = {}, initial = 'start', audio } = {}) {",
 """async function createKit(canvas, { presets = {}, initial = 'start', audio } = {}) {
-  const [THREE, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { ShaderPass }, { OutputPass }] = await Promise.all([
+  const [THREE, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { ShaderPass }, { OutputPass }, { GLTFLoader }, SkeletonUtils] = await Promise.all([
     import('three'), import('three/addons/postprocessing/EffectComposer.js'), import('three/addons/postprocessing/RenderPass.js'),
-    import('three/addons/postprocessing/UnrealBloomPass.js'), import('three/addons/postprocessing/ShaderPass.js'), import('three/addons/postprocessing/OutputPass.js')]);""",1)
+    import('three/addons/postprocessing/UnrealBloomPass.js'), import('three/addons/postprocessing/ShaderPass.js'), import('three/addons/postprocessing/OutputPass.js'),
+    import('three/addons/loaders/GLTFLoader.js'), import('three/addons/utils/SkeletonUtils.js')]);""",1)
 assert 'import(\'three\')' in kit
 chars=[]
 for n in ['job','peter','david','abraham','jacob']:
@@ -31,6 +32,12 @@ assert a in page; page=page.replace(a,b)
 marker='<script type="module">\n'
 i=page.index(marker)+len(marker)
 page=page[:i]+block+'\n'+page[i:]
+# 인물 캐릭터(assets/chars)를 base64로 넣는다. 모듈 스크립트보다 앞에 둔다
+import base64, json
+glb={k:'data:model/gltf-binary;base64,'+base64.b64encode(open(S+f'assets/chars/{k}.glb','rb').read()).decode() for k in ('char_m','char_f','anims')}
+outfits=json.load(open(S+'assets/chars/outfits.json',encoding='utf8'))
+j=page.index(marker)
+page=page[:j]+'<script>window.CHAR_GLB='+json.dumps(glb)+';window.OUTFITS='+json.dumps(outfits,ensure_ascii=False)+';</script>\n'+page[j:]
 os.makedirs(S+'single',exist_ok=True)
 open(S+'single/index.html','w',encoding='utf8').write(page)
 print('bytes',len(page.encode('utf8')))

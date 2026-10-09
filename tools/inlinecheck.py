@@ -6,7 +6,9 @@ S=str(pathlib.Path(__file__).resolve().parent.parent)+'/'
 T=S+'node_modules/three/'
 src=sys.argv[1]; char=sys.argv[2]
 body=open(S+src,encoding='utf8').read()
-html='<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"></head><body>'+body+'</body></html>'
+# 아티팩트와 비슷한 보안 정책: fetch(data: 포함) 금지
+CSP='<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\' https://cdn.jsdelivr.net; style-src \'unsafe-inline\' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data: blob:; media-src data: blob:; connect-src \'none\'">'
+html='<!doctype html><html><head><meta charset=utf8>'+CSP+'<meta name=viewport content="width=device-width,initial-scale=1"></head><body>'+body+'</body></html>'
 with sync_playwright() as p:
     b=p.chromium.launch(args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'])
     pg=b.new_page(viewport={'width':390,'height':844},is_mobile=True,has_touch=True)

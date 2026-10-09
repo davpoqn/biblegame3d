@@ -175,8 +175,8 @@ async function world(kit, { audio, sleep }) {
   const tents0 = [[-7, -4, .4], [6, -6, -.3], [-2, -11, 0], [11, 3, -1]].map(([x, z, r]) => kit.tent({ at: [x, h0(x, z), z], ry: r, color: '#3a2f27' }));
   const herds0 = [kit.herd('sheep', { n: 50, center: [-24, -14], rx: 14, rz: 10, height: h0 }), kit.herd('goat', { n: 30, center: [22, -18], rx: 10, rz: 8, height: h0 }), kit.herd('camel', { n: 12, center: [12, -32], rx: 9, rz: 6, height: h0 }), kit.herd('donkey', { n: 10, center: [-8, -28], rx: 6, rz: 5, height: h0 })];
   const herdHome = herds0.map(g => g.position.clone());
-  const sarai = person(SARAI, { scale: .95, visible: true }); sarai.position.set(-5.4, h0(-5.4, -2.2), -2.2); sarai.rotation.y = Math.atan2(5.4, 2.2);
-  const lot = person('#4b3d30', { visible: true }); lot.position.set(3.4, h0(3.4, -3), -3); lot.rotation.y = Math.atan2(-3.4, 3);
+  const sarai = kit.figure('woman', { tint: SARAI, scale: .95, visible: true });  // 창 12:11 아리따운 여인 sarai.position.set(-5.4, h0(-5.4, -2.2), -2.2); sarai.rotation.y = Math.atan2(5.4, 2.2);
+  const lot = kit.figure('man', { tint: '#4b3d30', visible: true }); lot.position.set(3.4, h0(3.4, -3), -3); lot.rotation.y = Math.atan2(-3.4, 3);
   const people0 = kit.throng({ n: 22, height: h0, place: i => { const a = rnd(0, 6.3), r = rnd(9, 22); return [Math.cos(a) * r, -8 + Math.sin(a) * r * .7]; } });
   const fire0 = kit.fire([1.2, h0(1.2, -6) + .05, -6], { level: 0, smoke: true });
 
@@ -193,7 +193,7 @@ async function world(kit, { audio, sleep }) {
   kit.terrain({ height: h2, size: 700, seg: 140, at: [X2, -140], lo: '#5a4a38', hi: '#b59c74' });
   const oaks = new THREE.Group(); scene.add(oaks);
   [[-6, 4], [7, 6], [-11, 10], [12, -2]].forEach(([x, z]) => { const y = h2(X2 + x, z); kit.box(.35, 3, .35, '#3b2c20', X2 + x, y + 1.5, z, oaks); const c = new THREE.Mesh(new THREE.SphereGeometry(2.4, 10, 8), new THREE.MeshStandardMaterial({ color: '#3d4a2a', roughness: 1, flatShading: true })); c.position.set(X2 + x, y + 3.8, z); c.scale.y = .8; oaks.add(c); });
-  const men3 = [0, 1, 2].map(i => { const g = person(['#cfc7b6', '#c7bfae', '#d4ccbb'][i]); return { g, w: kit.walker(g, { height: h2, pace: 4, amp: .02, lean: .03, standLean: .02 }) }; });
+  const men3 = [0, 1, 2].map(i => { const g = kit.figure('man', { tint: ['#cfc7b6', '#c7bfae', '#d4ccbb'][i] }); return { g, w: kit.walker(g, { height: h2, pace: 4, amp: .02, lean: .03, standLean: .02 }) }; });
   const sodomGlow = kit.glow(14, 1.6, 2.2, 1.1, .5, X2 - 30, h2(X2 - 30, -260) + 1, -260);
 
   /* --- 4 · 브엘세바 --- */
@@ -201,9 +201,9 @@ async function world(kit, { audio, sleep }) {
   kit.terrain({ height: h3, size: 700, seg: 120, at: [X3, -150], lo: '#9a8160', hi: '#e2cba2', yMul: .02 });
   kit.rocks({ n: 40, height: h3, center: [X3, 0], rMin: 10, rMax: 120, color: '#a08a6a', sMax: .5 });
   [[-6, -3, .3], [5, -5, -.4]].forEach(([x, z, r]) => kit.tent({ at: [X3 + x, h3(X3 + x, z), z], ry: r, color: '#3d3129' }));
-  const sarah = person(SARAI, { scale: .95, visible: true }); sarah.position.set(X3 - 5.2, h3(X3 - 5.2, -1), -1);
-  const isaacChild = person('#a8977e', { scale: .5, visible: true }); isaacChild.position.set(X3 - 4.2, h3(X3 - 4.2, -.4), -.4);
-  const hagar = person('#6b5642', { scale: .95 }), ishmael = person('#5a4a3a', { scale: .78 });
+  const sarah = kit.figure('woman_veil', { tint: SARAI, scale: .95, visible: true }); sarah.position.set(X3 - 5.2, h3(X3 - 5.2, -1), -1);
+  const isaacChild = kit.figure('boy', { tint: '#a8977e', scale: .5, visible: true }); isaacChild.position.set(X3 - 4.2, h3(X3 - 4.2, -.4), -.4);
+  const hagar = kit.figure('woman_veil', { tint: '#6b5642', scale: .95 }), ishmael = kit.figure('boy', { tint: '#5a4a3a', scale: .78 });
   const hw = kit.walker(hagar, { height: h3, pace: 5, amp: .03, lean: .06, standLean: .02 }), iw = kit.walker(ishmael, { height: h3, pace: 6, amp: .04, lean: .06, standLean: .02 });
   const herds3 = [kit.herd('sheep', { n: 30, center: [X3 + 22, -16], rx: 12, rz: 8, height: h3 }), kit.herd('camel', { n: 6, center: [X3 - 18, -20], rx: 6, rz: 4, height: h3 })];
 
@@ -214,7 +214,7 @@ async function world(kit, { audio, sleep }) {
   kit.terrain({ height: h4, size: 760, seg: 170, at: [X4, -90], lo: '#6a5a44', hi: '#bea67e', yMul: .02 });
   kit.rocks({ n: 90, height: h4, center: [X4, -90], rMin: 6, rMax: 160, sMax: .6 });
   const tent4 = kit.tent({ at: [X4 + 4, h4(X4 + 4, 4), 4], ry: -.5 });
-  const isaac = person('#a8977e', { scale: .88 });
+  const isaac = kit.figure('boy', { tint: '#a8977e', scale: .88 });
   const iw4 = kit.walker(isaac, { height: h4, pace: 6, amp: .04, lean: .08, standLean: .03 });
   const wood = kit.box(.25, .25, 1.1, '#5a4130', 0, 1.15, -.15, isaac); wood.rotation.x = .3;
   const servants4 = [0, 1].map(i => { const g = person(['#463a2e', '#3c3128'][i]); return { g, w: kit.walker(g, { height: h4 }) }; });

@@ -169,6 +169,38 @@
         "veil": "#e3dac4"
       },
       "under": "#33507e"
+    },
+    "goliath": {
+      "name": "골리앗 — 놋투구, 비늘 갑옷, 놋경갑 (삼상 17:5-6)",
+      "body": "m",
+      "wear": [
+        "tunic_short",
+        "armor",
+        "helmet",
+        "belt",
+        "sandals",
+        "beard"
+      ],
+      "under": "#5c4c33",
+      "colors": {
+        "metal": "#8c6a3c",
+        "tunic": "#5c4c33",
+        "under_calf": "#8c6a3c",
+        "belt": "#3a2c1f"
+      }
+    },
+    "boy": {
+      "name": "소년 — 짧은 튜닉",
+      "body": "m",
+      "wear": [
+        "tunic_short",
+        "belt",
+        "sandals"
+      ],
+      "under": "#a8977e",
+      "bare": [
+        "under_calf"
+      ]
     }
   }
 }

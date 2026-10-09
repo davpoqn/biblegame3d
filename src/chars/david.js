@@ -194,9 +194,9 @@ async function world(kit, { audio, sleep }) {
   kit.box(8, 3.4, 6, '#9a8b74', 0, 1.7, -6, yard); kit.box(8.6, .3, 6.6, '#7d6d58', 0, 3.5, -6, yard);
   kit.glow(1.1, 1.9, 2.2, 1.3, .6, 1.4, .95, -2.98, yard);
   kit.box(14, 1, .5, '#8c7d68', 0, .5, 4, yard);
-  const samuel = kit.person('#cfc6b5', { skin: '#7a604c', visible: true }); samuel.position.set(.6, 0, -1.6); yard.add(samuel);
-  const jesse = kit.person('#5b4a3a', { visible: true }); jesse.position.set(-1.6, 0, -2.2); yard.add(jesse);
-  const brothers = Array.from({ length: 7 }, (_, i) => { const g = kit.person(['#4a3b2e', '#5a4636', '#3e3329', '#54412f', '#463a2d', '#5e4a39', '#3b3028'][i], { scale: 1.06 - i * .015, visible: true }); g.position.set(-5 + i * 1.5, 0, -.2 - Math.abs(i - 3) * .3); g.rotation.y = Math.atan2(-g.position.x, 5 - g.position.z); yard.add(g); return g; });
+  const samuel = kit.figure('elder', { tint: '#cfc6b5', visible: true }); samuel.position.set(.6, 0, -1.6); yard.add(samuel);
+  const jesse = kit.figure('elder', { tint: '#5b4a3a', visible: true }); jesse.position.set(-1.6, 0, -2.2); yard.add(jesse);
+  const brothers = Array.from({ length: 7 }, (_, i) => { const g = kit.figure('man', { tint: ['#4a3b2e', '#5a4636', '#3e3329', '#54412f', '#463a2d', '#5e4a39', '#3b3028'][i], scale: 1.06 - i * .015, visible: true }); g.position.set(-5 + i * 1.5, 0, -.2 - Math.abs(i - 3) * .3); g.rotation.y = Math.atan2(-g.position.x, 5 - g.position.z); yard.add(g); return g; });
   const runner = kit.person('#463a2e'); const rw = kit.walker(runner, { height: h0 });
   const elders = kit.throng({ n: 6, place: i => [HOUSE.x - 5 + i * 2, HOUSE.z - 9.5, 0], height: h0 });
 
@@ -207,12 +207,12 @@ async function world(kit, { audio, sleep }) {
   kit.rocks({ n: 80, height: h1, center: [X1, -45], rMin: 4, rMax: 140, sMax: .7 });
   const israel = kit.throng({ n: 130, height: h1, place: i => { let x; do { x = rnd(-60, 60); } while (Math.abs(x) < 3.5); return [X1 + x, rnd(-3, 5), Math.PI]; }, colors: ['#4a3d30', '#584736', '#3c332a', '#6a5541'] });
   const philistia = kit.throng({ n: 150, height: h1, place: i => [X1 + rnd(-70, 70), rnd(-96, -88), 0], colors: ['#5d4630', '#6f5236', '#4d3a29', '#7b5f40'] });
-  const goliath = kit.person('#5c4c33', { scale: 2.05, skin: '#6b503b', visible: true });
+  const goliath = kit.figure('goliath', { scale: 2.05, visible: true });
   const spear = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 2.6, 6), new THREE.MeshStandardMaterial({ color: '#3a2c1f' })); spear.position.set(.42, 1.1, .1); spear.rotation.z = .08; goliath.add(spear);
-  const helm = new THREE.Mesh(new THREE.SphereGeometry(.16, 12, 8, 0, Math.PI * 2, 0, Math.PI * .55), new THREE.MeshStandardMaterial({ color: '#8a6a3c', roughness: .4, metalness: .7 })); helm.position.y = 1.6; goliath.add(helm);
+  const helm = new THREE.Mesh(new THREE.SphereGeometry(.16, 12, 8, 0, Math.PI * 2, 0, Math.PI * .55), new THREE.MeshStandardMaterial({ color: '#8a6a3c', roughness: .4, metalness: .7 })); helm.position.y = 1.6; goliath.add(helm); helm.visible = !goliath.userData.fig;  // 캐릭터는 놋투구를 이미 썼다
   const GOL = v3(X1 + 2, 0, -54); goliath.position.set(GOL.x, h1(GOL.x, GOL.z), GOL.z);
   const gw = kit.walker(goliath, { height: h1, pace: 4, amp: .03, lean: .05, standLean: .02 });
-  const saul = kit.person('#4c2f2b', { scale: 1.12, visible: true }); saul.position.set(X1 - 2.4, h1(X1 - 2.4, -1.8), -1.8); saul.rotation.y = Math.atan2(2.4, 1.8);
+  const saul = kit.figure('king', { tint: '#4c2f2b', scale: 1.12, visible: true }); saul.position.set(X1 - 2.4, h1(X1 - 2.4, -1.8), -1.8); saul.rotation.y = Math.atan2(2.4, 1.8);
   const armor = kit.box(.01, .01, .01, '#000'); armor.visible = false;
 
   /* --- 3 · 엔게디 굴 --- */
@@ -231,8 +231,8 @@ async function world(kit, { audio, sleep }) {
     shell.count = k; }
   scene.add(shell);
   kit.box(26, .1, 30, '#2d2620', X2, -.05, -2);
-  const saulCave = kit.person('#5a3a2a', { pose: 'kneel', scale: 1.08 }); saulCave.position.set(X2 + .4, 0, -9.6); saulCave.rotation.y = Math.PI;
-  const saulOut = kit.person('#5a3a2a', { scale: 1.08 });
+  const saulCave = kit.figure('king', { tint: '#5a3a2a', pose: 'kneel', scale: 1.08 }); saulCave.position.set(X2 + .4, 0, -9.6); saulCave.rotation.y = Math.PI;
+  const saulOut = kit.figure('king', { tint: '#5a3a2a', scale: 1.08 });
   const scw = kit.walker(saulOut, { height: h2, pace: 5, amp: .03, lean: .05, standLean: .02 });
   const men = [[-2.4, .6], [2.2, .4], [-3.4, -1.8], [3.2, -2], [-1.2, 1.8]].map(([x, z]) => { const g = kit.person('#2f2823', { pose: 'kneel', visible: true }); g.position.set(X2 + x, 0, z); g.rotation.y = Math.atan2(-x, -z) + Math.PI; return g; });
   const saulArmy = kit.throng({ n: 70, height: h2, place: i => [X2 + rnd(-40, 40), rnd(-70, -50), 0], colors: ['#4c2f2b', '#5a4030', '#3f3226'] });
@@ -256,7 +256,7 @@ async function world(kit, { audio, sleep }) {
   kit.box(16, .1, 14, '#3a3028', 0, -.05, 0, hall); kit.box(16, 6, .3, null, 0, 3, -7, hall, hm); kit.box(.3, 6, 14, null, -8, 3, 0, hall, hm); kit.box(.3, 6, 14, null, 8, 3, 0, hall, hm); kit.box(16, .3, 14, null, 0, 6, 0, hall, hm); kit.box(16, 6, .3, null, 0, 3, 7, hall, hm);
   [-4, 4].forEach(x => [-3, 2].forEach(z => kit.box(.6, 6, .6, '#6a5a48', x, 3, z, hall)));
   const hallLights = [[-3, -5], [3, -5], [0, 4]].map(([x, z]) => { kit.glow(.12, .18, 4, 2, .7, x, 1.6, z + .1, hall); const L = new THREE.PointLight('#ffb070', 4, 12, 2); L.position.set(x, 1.8, z + .4); hall.add(L); return L; });
-  const nathan = kit.person('#6e665a', { skin: '#6a5140', visible: true }); nathan.position.set(.3, 0, -2.6); hall.add(nathan);
+  const nathan = kit.figure('elder', { tint: '#6e665a', visible: true }); nathan.position.set(.3, 0, -2.6); hall.add(nathan);
 
   /* --- 6 · 마하나임 성문 --- */
   const X4 = SITE[4];

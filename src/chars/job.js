@@ -265,9 +265,9 @@ async function world(kit, { audio, sleep }) {
   /* --- 소식을 전하는 사람들, 아내, 친구들 --- */
   const MSG_X = [-2.1, -.7, .7, 2.1];
   const msgs = MSG_X.map((x, i) => { const g = kit.person(['#2b241f', '#33281f', '#28221e', '#3a2c22'][i], { scale: rnd(.97, 1.05) }); return { g, w: kit.walker(g, { height: heightAt }), to: new THREE.Vector3(x, 0, -6.4 - Math.abs(x) * .35) }; });
-  const wifeG = kit.person('#4a3a32', { scale: .96 });
+  const wifeG = kit.figure('woman_veil', { tint: '#4a3a32', scale: .96 });
   const wife = { g: wifeG, w: kit.walker(wifeG, { height: heightAt, pace: 5, amp: .03, lean: .04, standLean: .02 }) };
-  const friends = [[-2.3, -3.4], [.25, -4.7], [2.5, -3.3]].map(([x, z], i) => { const g = kit.person(['#2e2a26', '#3b3128', '#2a2b2e'][i], { pose: 'seat' }); g.position.set(x, 0, z); g.rotation.y = Math.atan2(-x, -z); return g; });
+  const friends = [[-2.3, -3.4], [.25, -4.7], [2.5, -3.3]].map(([x, z], i) => { const g = kit.figure('elder', { tint: ['#2e2a26', '#3b3128', '#2a2b2e'][i], pose: 'seat' }); g.position.set(x, 0, z); g.rotation.y = Math.atan2(-x, -z); return g; });
   const lift = { v: 0 };
 
   /* --- 모닥불과 잿더미 --- */

@@ -5,6 +5,8 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -22,6 +24,17 @@ export function vnoise(x, y) {
 export const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
 
 const BASE = { top: '#2a3150', horizon: '#c9875a', sun: '#ffb07a', fog: '#84604b', fogD: .0062, sunEl: 5, sunAz: 26, sunI: 2.4, hemiI: .55, stars: .08, storm: .05, ash: .14, wind: .2, camH: 1.65, camP: .02, camY: 0, camX: 0, camZ: 0, camR: 0, exposure: 1, fire: 0, sing: 0, shake: 0, waves: 0 };
+
+/* 성경 인물 캐릭터 (assets/chars, PLAN 6장 1번). 게시본은 window.CHAR_GLB에 GLB가 base64로 들어 있다.
+   게시된 페이지는 fetch로 data URI를 읽지 못하므로 직접 풀어 parse한다. 없거나 실패하면 figure()가 person()으로 대신한다 */
+let figSrc = null;
+async function loadFigs(GLTFLoader) {
+  const D = window.CHAR_GLB; if (!D) return null;
+  const buf = u => Uint8Array.from(atob(u.slice(u.indexOf(',') + 1)), c => c.charCodeAt(0)).buffer;
+  const ld = new GLTFLoader();
+  const [m, f, a] = await Promise.all([D.char_m, D.char_f, D.anims].map(u => ld.parseAsync(buf(u), '')));
+  return { m, f, clips: Object.fromEntries(a.animations.map(c => [c.name, c])), outfits: window.OUTFITS };
+}
 
 export async function createKit(canvas, { presets = {}, initial = 'start', audio } = {}) {
   const PRE = {};
@@ -319,6 +332,46 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     g.scale.setScalar(scale); g.visible = visible; scene.add(g);
     return g;
   }
+  // 이름 있는 인물: 옷 입은 마네킹 + 동작. person()과 같은 자리에 쓴다. role은 outfits.json의 신분, tint는 겉옷 색
+  if (!figSrc) figSrc = await loadFigs(GLTFLoader).catch(e => { console.warn('인물 캐릭터를 불러오지 못했습니다:', e); return null; });
+  const POSE_CLIP = { stand: 'Idle_Loop', seat: 'Sitting_Idle_Loop', kneel: 'Fixing_Kneeling' };
+  const UNDER = ['under_chest', 'under_body', 'under_arm', 'under_thigh', 'under_calf'];
+  const TINT = [['dress', 'dress'], ['royal_mantle', 'royal'], ['mantle', 'mantle'], ['tunic_long', 'tunic'], ['tunic_short', 'tunic']];
+  const figs = [];
+  function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3 } = {}) {
+    const spec = figSrc && figSrc.outfits.roles[role];
+    if (!spec) return person(tint || '#4a3c30', { pose, scale, visible });
+    const d = figSrc.outfits.default_colors, col = { ...d };  // 색 규칙은 tools/chars/build_chars.py role_colors와 같다
+    for (const u of UNDER) col[u] = spec.under || d.tunic;
+    for (const u of spec.bare || []) col[u] = d.M_Main;
+    Object.assign(col, spec.colors || {});
+    const t = tint && TINT.find(([w]) => spec.wear.includes(w)); if (t) col[t[1]] = tint;
+    Object.assign(col, colors || {});
+    const g = new THREE.Group(), body = SkeletonUtils.clone((spec.body === 'f' ? figSrc.f : figSrc.m).scene);
+    body.traverse(o => {
+      if (!o.isMesh) return;
+      o.frustumCulled = false;
+      if (!o.name.startsWith('Mannequin')) o.visible = spec.wear.includes(o.name);
+      o.material = o.material.clone();
+      const c = col[o.material.name]; if (c) o.material.color.set(c);
+      if (o.material.metalness > .5) { o.material.metalness = .35; o.material.roughness = .45; }  // 반사 환경이 없어도 금빛이 보이게
+    });
+    if (pose === 'seat' && !clip) body.position.y = -seatDrop;  // 의자 높이로 앉는 동작을 땅·배 위에 맞춘다
+    g.add(body);
+    const mixer = new THREE.AnimationMixer(body);
+    const F = { mixer, base: clip || POSE_CLIP[pose] || 'Idle_Loop', cur: null,
+      play(name, fade = .3, speed = 1) {
+        const c = figSrc.clips[name]; if (!c) return;
+        const a = mixer.clipAction(c); a.timeScale = speed; if (F.cur === a) return;
+        a.reset().play(); if (F.cur && fade) F.cur.crossFadeTo(a, fade, false); else if (F.cur) F.cur.stop();
+        F.cur = a;
+      } };
+    F.play(F.base, 0); mixer.update(Math.random() * 3);  // 여러 사람이 같은 박자로 움직이지 않게
+    g.userData.fig = F; g.userData.head = body.getObjectByName('Head');
+    g.scale.setScalar(scale * .92); g.visible = visible; scene.add(g); figs.push(g);
+    return g;
+  }
+  const stepFigs = dt => { for (const g of figs) if (g.visible) g.userData.fig.mixer.update(dt); };
   // 많은 사람을 한 번에 (무리, 군대)
   function throng({ n, place, height, colors = ['#3a3029', '#4a3c30', '#2e2925', '#5a4a3a'], scale = [.92, 1.06], pose = 'stand' }) {
     const g = new THREE.Group();
@@ -346,8 +399,13 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   }
   const walkers = [];
   function walker(g, { height, pace = 11, amp = .09, lean = .22, standLean = .3 } = {}) {
+    const F = g.userData.fig; if (F) { amp = 0; lean = 0; standLean = 0; }  // 캐릭터는 걷기 동작이 몸을 움직인다
     const o = { g, height: height || (() => 0), pace, amp, lean, standLean, state: 'idle', t0: 0, dur: 1, from: new THREE.Vector3(), to: new THREE.Vector3(), res: null, seed: Math.random() * 6 };
-    o.go = (from, to, dur) => { if (from) o.from.copy(from); if (to) o.to.copy(to); o.dur = dur || o.dur; g.visible = true; o.state = 'run'; o.t0 = clock; g.position.copy(o.from); return new Promise(r => { o.res = r; }); };
+    o.go = (from, to, dur) => {
+      if (from) o.from.copy(from); if (to) o.to.copy(to); o.dur = dur || o.dur; g.visible = true; o.state = 'run'; o.t0 = clock; g.position.copy(o.from);
+      if (F) { const sp = Math.hypot(o.to.x - o.from.x, o.to.z - o.from.z) / o.dur / g.scale.x, run = sp > 2.4 || pace >= 10; F.play(run ? 'Jog_Fwd_Loop' : 'Walk_Loop', .25, clamp(sp / (run ? 3 : 1.25), .6, 1.7)); }
+      return new Promise(r => { o.res = r; });
+    };
     o.idle = () => { o.state = 'idle'; };
     walkers.push(o); return o;
   }
@@ -359,11 +417,11 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
         o.g.position.set(x, o.height(x, z) + Math.abs(Math.sin(clock * o.pace)) * o.amp * (1 - k * .5), z);
         o.g.rotation.x = o.lean;
         o.g.rotation.y = Math.atan2(o.to.x - o.from.x, o.to.z - o.from.z);
-        if (k >= 1) { o.state = 'stand'; o.g.rotation.y = Math.atan2(camera.position.x - o.g.position.x, camera.position.z - o.g.position.z); const r = o.res; o.res = null; r && r(); }
+        if (k >= 1) { o.state = 'stand'; o.g.userData.fig && o.g.userData.fig.play(o.g.userData.fig.base); o.g.rotation.y = Math.atan2(camera.position.x - o.g.position.x, camera.position.z - o.g.position.z); const r = o.res; o.res = null; r && r(); }
       } else if (o.state === 'stand') {
         const b = Math.sin(clock * 2.2 + o.seed);
         o.g.position.y = o.height(o.g.position.x, o.g.position.z) + b * .012;
-        o.g.rotation.x = o.standLean + b * .03;
+        o.g.rotation.x = o.g.userData.fig ? 0 : o.standLean + b * .03;
       }
     });
   }
@@ -584,7 +642,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       f.obj.rotation.x = (waveH(p.x, p.z + 2, env.waves) - waveH(p.x, p.z - 2, env.waves)) * .25 * f.roll;
     });
 
-    stepWalkers(); stepFires(dt);
+    stepWalkers(); stepFires(dt); stepFigs(dt);
     for (const fn of frameFns) fn(dt, clock);
     fx.flash *= Math.exp(-dt * 6);
     skyU.uFlash.value = fx.flash;
@@ -615,12 +673,13 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     onReset(fn) { resetFns.push(fn); },
     camOnWater(on, k = 1) { camWater.on = on; camWater.k = k; },
     waveH: (x, z) => waveH(x, z, env.waves),
-    terrain, disc, rocks, box, glow, glowMat, person, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
+    terrain, disc, rocks, box, glow, glowMat, person, figure, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
     reset() {
       for (const k in tw) delete tw[k];
       tweens.length = 0; cyc = null; camWater.on = false;
       setEnv(initial, 0); env.camY = 0; env.camX = 0; env.camZ = 0; env.camR = 0;
       walkers.forEach(w => { w.state = 'idle'; w.g.visible = false; });
+      figs.forEach(g => g.userData.fig.play(g.userData.fig.base, 0));
       fires.forEach(f => { f.level = 0; });
       sparks.clear(); dust.clear(); fx.flash = 0;
       resetFns.forEach(fn => fn());
