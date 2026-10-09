@@ -295,7 +295,7 @@ async function story(A) {
   const { world, audio, sleep, verse, direction, sceneCut, choicePoint, speakLoop, showDay, hideDay, clearStage } = A;
 
   // 1 · 아버지의 장막
-  await sceneCut('1', '장막', '창세기 27장', async () => { world.place('tent'); world.setEnv('tent', 0); world.focus(0, 0); });
+  await sceneCut('1', '장막', '창세기 27장', async () => { world.setEnv('tent', 0); world.place('tent'); world.focus(0, 0); });
   audio.wind(.06); audio.drone(.06, 3); audio.crackle(.08);
   await direction('아버지의 장막. 등잔 하나가 탄다. 눈이 어두운 아버지가 앉아 있고, 어머니가 입구에 서 있다.');
   await verse('창 27:1');
@@ -327,7 +327,7 @@ async function story(A) {
   await direction('지팡이 하나를 들고 집을 떠난다. 아버지의 장막, 어머니, 형이 등 뒤에 남는다.');
 
   // 2 · 벧엘
-  await sceneCut('2', '벧엘', '창세기 28장 10–22절', async () => { world.place('bethel'); world.setEnv('night', 0); world.focus(0, 0); });
+  await sceneCut('2', '벧엘', '창세기 28장 10–22절', async () => { world.setEnv('night', 0); world.place('bethel'); world.focus(0, 0); });
   audio.crackle(0); audio.wind(.1); audio.drone(.05, 3);
   await verse('창 28:10-11');
   world.setEnv('dream', 6); world.dream(true);
@@ -342,7 +342,7 @@ async function story(A) {
     reacts: [{ fx: 'dawn', text: '해가 떠오른다. 들려오는 대답은 없다.' }] });
 
   // 3 · 라반의 집
-  await sceneCut('3', '라반의 집', '창세기 29장', async () => { world.place('laban'); world.setEnv('haran', 0); world.focus(0, 0); });
+  await sceneCut('3', '라반의 집', '창세기 29장', async () => { world.setEnv('haran', 0); world.place('laban'); world.focus(0, 0); });
   audio.chord(0, 3); audio.wind(.1); audio.drone(.04, 3);
   await verse('창 29:18');
   clearStage();
@@ -358,7 +358,7 @@ async function story(A) {
   await choicePoint('c4');
 
   // 4 · 얍복 나루 — 가진 것을 모두 건너보내고
-  await sceneCut('4', '얍복 나루', '창세기 32장 22–31절', async () => { world.place('ford'); world.setEnv('ford', 0); world.focus(0, 0); });
+  await sceneCut('4', '얍복 나루', '창세기 32장 22–31절', async () => { world.setEnv('ford', 0); world.place('ford'); world.focus(0, 0); });
   audio.wind(.12); audio.water(.3, 2); audio.drone(.08, 3);
   await direction('얍복 강가의 밤. 두 아내와 두 여종, 열한 아들, 양과 염소와 약대와 소와 나귀가 당신 곁에 있다.');
   world.cross();
@@ -380,7 +380,7 @@ async function story(A) {
   await world.limp();
 
   // 5 · 에서
-  await sceneCut('5', '에서', '창세기 33장', async () => { world.place('plain'); world.setEnv('morning', 0); world.focus(0, 0); });
+  await sceneCut('5', '에서', '창세기 33장', async () => { world.setEnv('morning', 0); world.place('plain'); world.focus(0, 0); });
   audio.water(0, 2); audio.wind(.14); audio.drone(.1, 3);
   world.esauComes();
   await verse('창 33:1-2');

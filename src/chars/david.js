@@ -205,13 +205,36 @@ async function world(kit, { audio, sleep }) {
   const h1 = (x, z) => { const lx = x - X1; const ridge = 9 * smooth(-20, 6, z) + 10 * smooth(-60, -96, z) - 3; return ridge + 2.2 * (vnoise(lx * .03, z * .03) - .5) + 20 * smooth(260, 340, Math.hypot(lx, z + 45)); };
   kit.terrain({ height: h1, size: 640, seg: 160, at: [X1, -45], lo: '#6e6247', hi: '#b9a57c', yMul: .03 });
   kit.rocks({ n: 80, height: h1, center: [X1, -45], rMin: 4, rMax: 140, sMax: .7 });
-  const israel = kit.throng({ n: 130, height: h1, place: i => { let x; do { x = rnd(-60, 60); } while (Math.abs(x) < 3.5); return [X1 + x, rnd(-3, 5), Math.PI]; }, colors: ['#4a3d30', '#584736', '#3c332a', '#6a5541'] });
+  const israel = kit.throng({ n: 130, height: h1, place: i => { let x, z; do { x = rnd(-60, 60); z = rnd(-3, 5); } while (Math.abs(x) < 3.5 || Math.hypot(x, z - 1) < 8); return [X1 + x, z, Math.PI]; }, colors: ['#4a3d30', '#584736', '#3c332a', '#6a5541'] });
   const philistia = kit.throng({ n: 150, height: h1, place: i => [X1 + rnd(-70, 70), rnd(-96, -88), 0], colors: ['#5d4630', '#6f5236', '#4d3a29', '#7b5f40'] });
   const goliath = kit.figure('goliath', { scale: 2.05, visible: true });
   const spear = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 2.6, 6), new THREE.MeshStandardMaterial({ color: '#3a2c1f' })); spear.position.set(.42, 1.1, .1); spear.rotation.z = .08; goliath.add(spear);
   const helm = new THREE.Mesh(new THREE.SphereGeometry(.16, 12, 8, 0, Math.PI * 2, 0, Math.PI * .55), new THREE.MeshStandardMaterial({ color: '#8a6a3c', roughness: .4, metalness: .7 })); helm.position.y = 1.6; goliath.add(helm); helm.visible = !goliath.userData.fig;  // 캐릭터는 놋투구를 이미 썼다
-  const GOL = v3(X1 + 2, 0, -54); goliath.position.set(GOL.x, h1(GOL.x, GOL.z), GOL.z);
+  const GOL = v3(X1 + 2, 0, -42), GOL0 = v3(X1 + 2, 0, -72); goliath.position.set(GOL.x, h1(GOL.x, GOL.z), GOL.z);  // GOL0: 블레셋 진, GOL: 싸움을 거는 자리
   const gw = kit.walker(goliath, { height: h1, pace: 4, amp: .03, lean: .05, standLean: .02 });
+  // 방패 든 자 (17:7, 17:41): 골리앗 앞에서 걷는 보통 키의 사람. 곁에 서면 골리앗이 얼마나 큰지 보인다
+  const bearer = kit.figure('man', { tint: '#5d4630', visible: true });
+  kit.box(.75, 1, .07, '#6b5233', .28, .85, .36, bearer);  // 머리와 어깨는 방패 위로 보인다
+  const bw = kit.walker(bearer, { height: h1, pace: 4 });
+  // 가까운 이스라엘 군사들: 사십 일 동안(17:16) 크게 두려워하여(17:11) 앉거나 웅크려 있다. 골리앗이 나오면 물러선다(17:24)
+  const SOLDIERS = [[-1.6, -1.8, 'seat'], [1.4, -2.6, 'crouch'], [-3.6, -.6, 'crouch'], [3.4, -1.2, 'seat'], [-.4, -4.6, 'crouch'], [2.4, -5.4, 'stand'], [-2.8, -6.2, 'seat'], [-5.6, -3, 'stand'], [5.4, -3.8, 'crouch'], [.9, -7.4, 'stand']];
+  const soldiers = SOLDIERS.map(([x, z, p], i) => {
+    const g = kit.figure('man', { tint: ['#4a3d30', '#584736', '#3c332a', '#6a5541'][i % 4], pose: p === 'seat' ? 'seat' : 'stand', clip: p === 'crouch' ? 'Crouch_Idle_Loop' : undefined, visible: true });
+    return { g, w: kit.walker(g, { height: h1, pace: 11 }), x: X1 + x, z, p };
+  });
+  const armyBack = { k: 0, last: 0 };  // 먼 군사들(throng)이 물러난 정도
+  israel.userData.items.forEach(o => { o.z0 = o.z; o.dz = rnd(3, 7); });
+  kit.onFrame(() => {
+    if (armyBack.k === armyBack.last) return; armyBack.last = armyBack.k;
+    israel.userData.items.forEach(o => { o.z = o.z0 + o.dz * armyBack.k; o.y = h1(o.x, o.z); }); israel.userData.draw();
+  });
+  function armyHome() {
+    soldiers.forEach(s => {
+      const F = s.g.userData.fig; s.w.idle(); s.g.visible = true; s.g.position.set(s.x, h1(s.x, s.z), s.z); s.g.rotation.set(0, Math.PI + rnd(-.3, .3), 0);
+      if (F) { F.base = s.p === 'crouch' ? 'Crouch_Idle_Loop' : s.p === 'seat' ? 'Sitting_Idle_Loop' : 'Idle_Loop'; F.play(F.base, 0); s.g.children[0].position.y = s.p === 'seat' ? -.3 : 0; }
+    });
+    armyBack.k = 0;
+  }
   const saul = kit.figure('king', { tint: '#4c2f2b', scale: 1.12, visible: true }); saul.position.set(X1 - 2.4, h1(X1 - 2.4, -1.8), -1.8); saul.rotation.y = Math.atan2(2.4, 1.8);
   const armor = kit.box(.01, .01, .01, '#000'); armor.visible = false;
 
@@ -285,9 +308,10 @@ async function world(kit, { audio, sleep }) {
     stub: false, setEnv: kit.setEnv, focus: kit.focus,
     place(where) {
       wins.forEach(w => { w.visible = where === 'roof'; });
-      if (where === 'field') { kit.setEnv(Object.assign(at(0, 0), { camH: 1.65 + h0(0, 0) }), 0); flock.visible = true; }
+      flock.visible = where === 'field';
+      if (where === 'field') kit.setEnv(Object.assign(at(0, 0), { camH: 1.65 + h0(0, 0) }), 0);
       if (where === 'yard') kit.setEnv(Object.assign(at(HOUSE.x + .2, HOUSE.z + 6), { camH: 1.6 + HOUSE.y }), 0);
-      if (where === 'elah') { kit.setEnv(Object.assign(at(X1, 1), { camH: 1.65 + h1(X1, 1) }), 0); goliath.position.set(GOL.x, h1(GOL.x, GOL.z), GOL.z); goliath.rotation.set(0, 0, 0); gw.idle(); }
+      if (where === 'elah') { kit.setEnv(Object.assign(at(X1, 1), { camH: 1.65 + h1(X1, 1) }), 0); goliath.position.set(GOL0.x, h1(GOL0.x, GOL0.z), GOL0.z); goliath.rotation.set(0, 0, 0); gw.idle(); goliath.visible = bearer.visible = true; bearer.position.set(GOL0.x + 1.6, h1(GOL0.x + 1.6, GOL0.z + 2.6), GOL0.z + 2.6); bearer.rotation.set(0, 0, 0); bw.idle(); armyHome(); }
       if (where === 'cave') { kit.setEnv(Object.assign(at(X2, 1.4), { camH: 1.05 }), 0); saulCave.visible = false; saulCave.position.set(X2 + .4, 0, -9.6); saulCave.rotation.set(0, Math.PI, 0); }
       if (where === 'roof') kit.setEnv(Object.assign(at(X3 - 1, 3), { camH: 7.65 }), 0);
       if (where === 'hall') kit.setEnv(Object.assign(at(HALL.x, HALL.z + 2.4), { camH: 1.15 }), 0);
@@ -302,15 +326,31 @@ async function world(kit, { audio, sleep }) {
     },
     armorOn() { kit.setEnv({ camH: kit.env.camH - .08, shake: .15 }, 1.5); audio.thud(); },
     armorOff() { kit.setEnv({ camH: 1.65 + h1(X1, 1), shake: 0 }, 1.5); },
+    // 17:4, 17:7 — 블레셋 진에서 싸움을 거는 사람이 방패 든 자를 앞세우고 나온다
+    async goliathOut() {
+      kit.setEnv({ camP: -.06 }, 4);
+      bw.go(v3(GOL0.x + 1.6, 0, GOL0.z + 2.6), v3(GOL.x + 1.6, 0, GOL.z + 2.6), 15);
+      await gw.go(GOL0.clone(), GOL.clone(), 15);
+    },
+    // 17:24 — 이스라엘 사람들이 그를 보고 도망하며 두려워한다
+    retreat() {
+      soldiers.forEach((s, i) => setTimeout(() => {
+        const F = s.g.userData.fig; if (F) s.g.children[0].position.y = 0;
+        s.w.go(s.g.position.clone(), v3(s.x + Math.sign(s.x - X1) * rnd(1.5, 3), 0, s.z + rnd(6, 10)), rnd(2.4, 3.4)).then(() => { s.g.rotation.y = Math.PI + rnd(-.4, .4); if (F) { F.base = i % 3 ? 'Crouch_Idle_Loop' : 'Idle_Loop'; F.play(F.base, .4); } });
+      }, i * 160 + rnd(0, 300)));
+      kit.tween(armyBack, { k: 1 }, 3.5);
+    },
     async descend() {
-      kit.focus(0, 2);
-      gw.go(goliath.position.clone(), v3(GOL.x - 1, 0, -40), 12);
+      kit.focus(0, 2); kit.setEnv({ camP: 0 }, 3);
+      bw.go(bearer.position.clone(), v3(GOL.x + .8, 0, -35), 12);
+      gw.go(goliath.position.clone(), v3(GOL.x - 1, 0, -37.5), 12);
       await kit.setEnv({ camZ: -24, camH: 1.65 + h1(X1, -24) }, 12);
     },
-    async charge() { gw.go(goliath.position.clone(), v3(GOL.x - 1.4, 0, -33), 4); await kit.setEnv({ camZ: -27.5, camH: 1.65 + h1(X1, -27.5), shake: .2 }, 3.5); kit.setEnv({ shake: 0 }, .5); },
+    async charge() { bw.go(bearer.position.clone(), v3(GOL.x + 4, 0, -36), 2.5); gw.go(goliath.position.clone(), v3(GOL.x - 1.4, 0, -33), 4); await kit.setEnv({ camZ: -27.5, camH: 1.65 + h1(X1, -27.5), camP: .12, shake: .2 }, 3.5); kit.setEnv({ shake: 0 }, .5); },
     async sling() {
       audio.whoosh(1.2); await sleep(1100); audio.thud(); gw.idle();
       await kit.tween(goliath.rotation, { x: 1.45 }, 1.4); audio.rumble();
+      kit.setEnv({ camP: -.05 }, 2); setTimeout(() => bw.go(bearer.position.clone(), v3(GOL.x + 8, 0, -86), 7), 1800);  // 17:51 블레셋 사람들이 도망한다
       kit.dust.emit(goliath.position.x, goliath.position.y + .3, goliath.position.z + 2, { vx: 0, vy: 1, vz: 0, c: [.5, .42, .32], life: 3, size: 6, grow: 1.5, g: 0, drag: .3, alpha: .5 });
     },
     saulEnters() { saulCave.visible = true; },
@@ -362,13 +402,13 @@ async function story(A) {
   const { world, audio, sleep, verse, direction, sceneCut, choicePoint, speakLoop } = A;
 
   // 1 · 들 — 아버지의 양 떼
-  await sceneCut('1', '들', '사무엘상 16장', async () => { world.place('field'); world.setEnv('dusk', 0); world.focus(0, 0); });
+  await sceneCut('1', '들', '사무엘상 16장', async () => { world.setEnv('dusk', 0); world.place('field'); world.focus(0, 0); });
   audio.wind(.14); audio.drone(.04); audio.chord(.08, 4);
   await direction('해 질 녘 들판. 아버지의 양 떼가 당신 곁에서 풀을 뜯는다. 형들은 모두 집으로 불려 갔다.');
   world.callRunner();
   await direction('집 쪽에서 누군가 달려온다.', { auto: true, ms: 7000 });
   await choicePoint('c1');
-  await sceneCut('1', '이새의 집', '사무엘상 16장 12–13절', async () => { world.place('yard'); world.setEnv('lamp', 0); world.focus(0, 0); });
+  await sceneCut('1', '이새의 집', '사무엘상 16장 12–13절', async () => { world.setEnv('lamp', 0); world.place('yard'); world.focus(0, 0); });
   await direction('마당에 형 일곱이 서 있다. 늙은 선지자가 당신을 본다.', { auto: true, ms: 2800 });
   await verse('삼상 16:12');
   world.anoint();
@@ -376,9 +416,11 @@ async function story(A) {
   await verse('삼상 16:13');
 
   // 2 · 엘라 골짜기
-  await sceneCut('2', '엘라 골짜기', '사무엘상 17장', async () => { world.place('elah'); world.setEnv('valley', 0); world.focus(0, 0); });
+  await sceneCut('2', '엘라 골짜기', '사무엘상 17장', async () => { world.setEnv('valley', 0); world.place('elah'); world.focus(0, 0); });
   audio.chord(0, 3); audio.wind(.22); audio.drone(.1, 3);
+  world.goliathOut();
   await verse('삼상 17:4');
+  world.retreat();
   await choicePoint('c2');
   await speakLoop({ scene: '2 · 엘라 골짜기', prompts: [{ who: '사울', line: '네가 저 사람이랑 싸우겠다고? 넌 아직 애야. 저 사람은 어릴 때부터 싸움만 해 온 용사고.', ref: '삼상 17:33', ask: '무엇이라고 대답하겠습니까?', situation: '사울이 말릴 때', his: ['삼상 17:34-35'], hisShort: '양을 지키다 사자와 곰을 친 일을 말했다' }], submit: '대답하기', skips: ['대답하지 않는다'],
     reacts: [{ fx: 'saulLook', text: '사울과 장수들이 당신을 내려다본다. 골짜기 건너에서 고함이 들린다.' }] });
@@ -400,7 +442,7 @@ async function story(A) {
   await verse('삼상 17:50');
 
   // 3 · 엔게디
-  await sceneCut('3', '엔게디', '사무엘상 24장', async () => { world.place('cave'); world.setEnv('cave', 0); world.focus(0, 0); });
+  await sceneCut('3', '엔게디', '사무엘상 24장', async () => { world.setEnv('cave', 0); world.place('cave'); world.focus(0, 0); });
   audio.wind(.06); audio.drone(.14, 3);
   await verse('삼상 24:2');
   world.saulEnters();
@@ -420,7 +462,7 @@ async function story(A) {
   await A.say('사울', '나는 너를 괴롭혔는데 너는 나한테 잘해 줬구나. 네가 나보다 옳다.', '삼상 24:16-17');
 
   // 4 · 지붕 위
-  await sceneCut('4', '지붕 위', '사무엘하 11장', async () => { world.place('roof'); world.setEnv('roof', 0); world.focus(0, 0); world.lamp(true); });
+  await sceneCut('4', '지붕 위', '사무엘하 11장', async () => { world.setEnv('roof', 0); world.place('roof'); world.focus(0, 0); world.lamp(true); });
   audio.drone(.06, 3); audio.wind(.1); audio.chord(.05, 4);
   await verse('삼하 11:1');
   world.focus(30, 4);
@@ -435,7 +477,7 @@ async function story(A) {
   await verse('삼하 11:26-27');
 
   // 5 · 나단
-  await sceneCut('5', '나단', '사무엘하 12장', async () => { world.place('hall'); world.setEnv('hall', 0); world.focus(0, 0); });
+  await sceneCut('5', '나단', '사무엘하 12장', async () => { world.setEnv('hall', 0); world.place('hall'); world.focus(0, 0); });
   audio.wind(0, 2); audio.drone(.08, 3); audio.crackle(.05);
   await A.say('나단', '왕이시여, 한 성에 두 사람이 있었습니다. 하나는 부자, 하나는 가난한 사람이었죠. 부자는 양이랑 소가 셀 수 없이 많았고요.', '삼하 12:1-2');
   await A.say('나단', '가난한 사람은 돈 주고 사서 키운 어린 암양 한 마리가 전부였습니다. 자식들이랑 같이 키우고, 자기 먹는 걸 나눠 먹이고, 자기 잔으로 마시게 하고, 품에 안고 재웠어요. 딸 같았죠. 그런데 그 부자한테 손님이 오니까, 자기 양이랑 소는 아깝다고 안 잡고, 그 가난한 사람의 양을 빼앗아다 잡아서 손님상에 올렸답니다.', '삼하 12:3-4');
@@ -446,7 +488,7 @@ async function story(A) {
   await choicePoint('c6');
 
   // 6 · 두 문 사이
-  await sceneCut('6', '두 문 사이', '사무엘하 18장', async () => { world.place('gate'); world.setEnv('gate', 0); world.focus(0, 0); });
+  await sceneCut('6', '두 문 사이', '사무엘하 18장', async () => { world.setEnv('gate', 0); world.place('gate'); world.focus(0, 0); });
   audio.crackle(0); audio.wind(.18); audio.drone(.1, 3);
   await direction('아들 압살롬과의 싸움이 벌어지는 날. 당신은 성문에 앉아 소식을 기다린다.');
   world.runnersCome();

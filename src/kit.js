@@ -48,11 +48,11 @@ function floatGeo(geo) {
   }
   return geo;
 }
-// 메시 조각들을 기준 물체의 좌표로 모은다: [{ geo, mat }]
+// 메시 조각들을 장면 기준 좌표로 모은다: [{ geo, mat }]. 소품 노드 자체의 변환(quantize가 넣은 크기)도 함께 굽는다
 function bakeParts(obj) {
   obj.updateWorldMatrix(true, true);
-  const inv = obj.matrixWorld.clone().invert(), parts = [];
-  obj.traverse(m => { if (m.isMesh) parts.push({ geo: floatGeo(m.geometry.clone()).applyMatrix4(inv.clone().multiply(m.matrixWorld)), mat: m.material }); });
+  const parts = [];
+  obj.traverse(m => { if (m.isMesh) parts.push({ geo: floatGeo(m.geometry.clone()).applyMatrix4(m.matrixWorld), mat: m.material }); });
   return parts;
 }
 function prepAnimal(g) {  // 뼈대(가까이 한두 마리), 굳힌 자세(무리)
@@ -157,6 +157,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   /* --- 빛 --- */
   const sun = new THREE.DirectionalLight('#ffffff', 2); scene.add(sun);
   const hemi = new THREE.HemisphereLight('#ffffff', '#332211', .6); scene.add(hemi);
+  const moon = new THREE.AmbientLight('#9aa8d0', 0); scene.add(moon);  // 어두운 장면에서도 사람과 사물이 보이게 하는 고른 빛
 
   /* --- 입자 풀 (불꽃, 흙먼지, 연기) --- */
   const PV = `attribute vec3 aColor; attribute float aSize; attribute float aAlpha; uniform float uPR;
@@ -249,6 +250,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   }
   function setEnv(name, dur = 3, extra) {
     const src = typeof name === 'string' ? Object.assign({}, BASE, PRE[name] || {}) : name;
+    // 이름으로 부르는 프리셋은 하늘·빛·날씨를 바꾼다. 서 있는 자리(camX, camZ)와 눈높이(camH)는 프리셋에 직접 적힌 경우만 바꾸고, 아니면 place()가 정한 대로 둔다
+    if (typeof name === 'string') for (const k of ['camX', 'camZ', 'camH']) if (!(PRE[name] && k in PRE[name])) delete src[k];
     const patch = Object.assign({}, src, extra || {});
     for (const k in patch) {
       if (!(k in env)) continue;
@@ -758,7 +761,10 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     fog.color.copy(env.fog); fog.density = env.fogD; skyU.uFog.value.copy(env.fog);
     sun.color.copy(env.sun); sun.intensity = env.sunI * clamp(env.sunEl / 6 + .35, 0, 1); sun.position.copy(sunDir).multiplyScalar(100);
     hemi.color.copy(env.top).lerp(env.horizon, .55); hemi.groundColor.copy(env.fog).multiplyScalar(.6); hemi.intensity = env.hemiI + fx.flash * 1.6;
-    renderer.toneMappingExposure = env.exposure;
+    // 어두운 장면일수록(해가 지고 하늘빛이 약할수록) 고른 빛과 노출을 더한다
+    const dark = clamp(1 - (sun.intensity * .4 + hemi.intensity) / .8, 0, 1);
+    moon.intensity = dark * .7;
+    renderer.toneMappingExposure = env.exposure * (1.15 + dark * .35);
     ashU.uTime.value = clock; ashU.uAmt.value = env.ash; ashU.uWind.value = env.wind; ashU.uTint.value.copy(env.fog).multiplyScalar(1.5).addScalar(.06); ashU.uCam.value.copy(camera.position);
     waters.forEach(({ u }) => {
       u.uTime.value = clock; u.uAmp.value = env.waves; u.uTop.value.copy(env.top); u.uHorizon.value.copy(env.horizon); u.uSun.value.copy(env.sun);

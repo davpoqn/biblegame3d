@@ -145,15 +145,15 @@ const CHOICES = {
 
 const presets = {
   haran: { top: '#33406e', horizon: '#e0a46e', sun: '#ffb47a', fog: '#8a6e5a', fogD: .0045, sunEl: 3, sunAz: -60, stars: .1, storm: .05, sunI: 2, hemiI: .6, ash: .03, wind: .15, waves: 0, camH: 1.65, camP: .02, exposure: 1.02, fire: 0, sing: 0, shake: 0 },
-  road: { top: '#5675ab', horizon: '#ebcfa6', sun: '#fff0d4', fog: '#b09d84', fogD: .0036, sunEl: 26, sunAz: 30, stars: 0, storm: .08, sunI: 2.6, hemiI: .8, ash: .03, wind: .18, waves: 0, camH: 1.65, camP: .02, exposure: 1, fire: 0, sing: 0, shake: 0 },
+  road: { top: '#5675ab', horizon: '#ebcfa6', sun: '#fff0d4', fog: '#b09d84', fogD: .0036, sunEl: 26, sunAz: 30, stars: 0, storm: .08, sunI: 2.6, hemiI: .8, ash: .03, wind: .18, waves: 0, camP: .02, exposure: 1, fire: 0, sing: 0, shake: 0 },
   tent: { top: '#05060c', horizon: '#0e1220', sun: '#8fa3c8', fog: '#07080c', fogD: .02, sunEl: 30, sunAz: 120, stars: .6, storm: 0, sunI: .1, hemiI: .12, ash: 0, wind: .06, waves: 0, camH: 1.0, camP: -.02, exposure: 1.3, fire: 0, sing: 0, shake: 0 },
-  stars: { top: '#020309', horizon: '#0b1226', sun: '#9fb3d9', fog: '#05070e', fogD: .003, sunEl: 30, sunAz: 120, stars: 2, storm: 0, sunI: .14, hemiI: .14, ash: 0, wind: .06, waves: 0, camH: 1.65, camP: .55, exposure: 1.2, fire: 0, sing: .7, shake: 0 },
+  stars: { top: '#020309', horizon: '#0b1226', sun: '#9fb3d9', fog: '#05070e', fogD: .003, sunEl: 30, sunAz: 120, stars: 2, storm: 0, sunI: .14, hemiI: .14, ash: 0, wind: .06, waves: 0, camP: .55, exposure: 1.2, fire: 0, sing: .7, shake: 0 },
   mamre: { top: '#3f5288', horizon: '#e6a774', sun: '#ffb880', fog: '#a07c66', fogD: .0034, sunEl: 7, sunAz: 50, stars: 0, storm: .08, sunI: 2.2, hemiI: .6, ash: .02, wind: .2, waves: 0, camH: 1.65, camP: -.02, exposure: 1.02, fire: 0, sing: 0, shake: 0 },
   sheba: { top: '#6c8fc4', horizon: '#f3dcb6', sun: '#fff1d8', fog: '#c9b394', fogD: .0042, sunEl: 12, sunAz: -40, stars: 0, storm: .05, sunI: 2.5, hemiI: .8, ash: .03, wind: .2, waves: 0, camH: 1.65, camP: .02, exposure: 1, fire: 0, sing: 0, shake: 0 },
   night: { top: '#04060c', horizon: '#131828', sun: '#9fb3d9', fog: '#080a10', fogD: .008, sunEl: 30, sunAz: 120, stars: 1, storm: .05, sunI: .2, hemiI: .2, ash: 0, wind: .08, waves: 0, camH: 1.65, camP: .02, exposure: 1.2, fire: 0, sing: 0, shake: 0 },
   day: { top: '#5b7bb1', horizon: '#ecd2aa', sun: '#fff0d6', fog: '#b6a18a', fogD: .0034, sunEl: 34, sunAz: 10, stars: 0, storm: .08, sunI: 2.6, hemiI: .82, ash: .03, wind: .16, waves: 0, camH: 1.65, camP: .02, exposure: 1, fire: 0, sing: 0, shake: 0 },
-  summit: { top: '#4a68a2', horizon: '#e8c79d', sun: '#ffe7c2', fog: '#a39079', fogD: .003, sunEl: 20, sunAz: -10, stars: 0, storm: .1, sunI: 2.4, hemiI: .75, ash: .02, wind: .25, waves: 0, camH: 1.65, camP: -.05, exposure: 1, fire: 0, sing: 0, shake: 0 },
-  sunset: { top: '#262e58', horizon: '#e08a55', sun: '#ff9a5a', fog: '#7a5948', fogD: .0034, sunEl: 1, sunAz: 60, stars: .3, storm: .05, sunI: 1.5, hemiI: .45, ash: 0, wind: .12, waves: 0, camH: 1.65, camP: .02, exposure: 1.05, fire: 0, sing: 0, shake: 0 }
+  summit: { top: '#4a68a2', horizon: '#e8c79d', sun: '#ffe7c2', fog: '#a39079', fogD: .003, sunEl: 20, sunAz: -10, stars: 0, storm: .1, sunI: 2.4, hemiI: .75, ash: .02, wind: .25, waves: 0, camP: -.05, exposure: 1, fire: 0, sing: 0, shake: 0 },
+  sunset: { top: '#262e58', horizon: '#e08a55', sun: '#ff9a5a', fog: '#7a5948', fogD: .0034, sunEl: 1, sunAz: 60, stars: .3, storm: .05, sunI: 1.5, hemiI: .45, ash: 0, wind: .12, waves: 0, camP: .02, exposure: 1.05, fire: 0, sing: 0, shake: 0 }
 };
 
 async function world(kit, { audio, sleep }) {
@@ -310,7 +310,7 @@ async function story(A) {
   const { world, audio, sleep, verse, direction, sceneCut, choicePoint, speakLoop, showDay, hideDay, clearStage } = A;
 
   // 1 · 하란 — 아비 집과 모은 재산
-  await sceneCut('1', '하란', '창세기 12장 1–5절', async () => { world.place('haran'); world.setEnv('haran', 0); world.focus(0, 0); });
+  await sceneCut('1', '하란', '창세기 12장 1–5절', async () => { world.setEnv('haran', 0); world.place('haran'); world.focus(0, 0); });
   audio.wind(.15); audio.drone(.04); audio.chord(.08, 4); audio.crackle(.12);
   await direction('하란의 저녁. 뒤로는 아버지가 살던 성읍, 앞으로는 당신의 장막과 양과 염소, 약대와 나귀, 사람들.');
   world.focus(180, 4);
@@ -326,7 +326,7 @@ async function story(A) {
   await direction('하란이 등 뒤에서 작아진다.', { auto: true, ms: world.stub ? 1000 : 6000 });
 
   // 2 · 별
-  await sceneCut('2', '별', '창세기 15장 1–6절', async () => { world.place('tent'); world.setEnv('tent', 0); world.focus(0, 0); });
+  await sceneCut('2', '별', '창세기 15장 1–6절', async () => { world.setEnv('tent', 0); world.place('tent'); world.focus(0, 0); });
   audio.chord(0, 3); audio.wind(.06); audio.drone(.06, 3);
   await verse('창 15:1', { voice: true });
   await speakLoop({ scene: '2 · 별', prompts: [{ who: '여호와', ref: '창 15:1', quiet: true, ask: '무엇이라고 대답하겠습니까?', situation: '“나는 너의 방패요 상급이니라”는 말씀을 들었을 때', his: ['창 15:2-3'], hisShort: '“나는 무자하오니… 내 집에서 길리운 자가 나의 후사가 될것이니이다” 했다' }], submit: '대답하기', skips: ['아무 말도 하지 않는다'],
@@ -339,7 +339,7 @@ async function story(A) {
   audio.chord(.2, 5);
 
   // 3 · 마므레
-  await sceneCut('3', '마므레', '창세기 18장 20–33절', async () => { world.place('mamre'); world.setEnv('mamre', 0); world.focus(0, 0); });
+  await sceneCut('3', '마므레', '창세기 18장 20–33절', async () => { world.setEnv('mamre', 0); world.place('mamre'); world.focus(0, 0); });
   audio.chord(0, 3); audio.wind(.2); audio.drone(.08, 3);
   await direction('높은 곳에서 요단 평지가 내려다보인다. 멀리 소돔이 있다.', { auto: true, ms: 3200 });
   await verse('창 18:20-21', { voice: true });
@@ -352,7 +352,7 @@ async function story(A) {
   await verse('창 18:33');
 
   // 4 · 브엘세바
-  await sceneCut('4', '브엘세바', '창세기 21장', async () => { world.place('sheba'); world.setEnv('sheba', 0); world.focus(0, 0); });
+  await sceneCut('4', '브엘세바', '창세기 21장', async () => { world.setEnv('sheba', 0); world.place('sheba'); world.focus(0, 0); });
   audio.wind(.2); audio.drone(.04, 3); audio.chord(.1, 4);
   await verse('창 21:1-2');
   await verse('창 21:3');
@@ -367,7 +367,7 @@ async function story(A) {
   await direction('두 사람이 보이지 않는다.');
 
   // 5 · 모리아
-  await sceneCut('5', '모리아', '창세기 22장', async () => { world.place('moriahNight'); world.setEnv('night', 0); world.focus(0, 0); });
+  await sceneCut('5', '모리아', '창세기 22장', async () => { world.setEnv('night', 0); world.place('moriahNight'); world.focus(0, 0); });
   audio.chord(0, 3); audio.wind(.1); audio.drone(.08, 3);
   await verse('창 22:1#1', { voice: true });
   await speakLoop({ scene: '5 · 모리아', prompts: [{ who: '하나님', ref: '창 22:1#1', quiet: true, ask: '당신의 이름이 불렸습니다. 무엇이라고 대답하겠습니까?', situation: '밤에 이름이 불렸을 때', his: ['창 22:1'], hisShort: '“내가 여기 있나이다” 했다' }], submit: '대답하기', skips: ['대답하지 않는다'],

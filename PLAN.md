@@ -28,7 +28,13 @@
   - 욥 2:12: 세 친구가 티끌을 하늘로 날려 머리에 뿌리고, 겉옷을 찢고, 얼굴을 감싸고 운다(`kit.gesture`, 코드로 만든 몸짓).
   - ESC: 이야기 중 어디서든 처음 화면으로 돌아가 다른 인물을 고른다(사용자 시험용).
   - 게시용 HTML 4.9MB.
-- **다음 작업: 11장 1단계부터** (새 대화에서 시작).
+- **11장 1단계 끝남** (2026-10-09, 같은 게임 링크 버전 3)
+  - **장면이 바뀌어도 카메라가 첫 장소에 있던 문제**: 장면을 열 때 `place()` 뒤에 부르는 `setEnv('<프리셋>')`가 `BASE`의 `camX: 0, camZ: 0`을 덮어써서, 모든 장면이 그 인물의 첫 장소(원점)에서 보였다. 다윗의 양 떼가 모든 장면에 나온 것, 기름 부음 장면이 거의 검었던 것도 이 때문이다. 이제 프리셋은 `camX`·`camZ`·`camH`가 직접 적힌 경우만 바꾸고, 장면을 열 때는 `setEnv(프리셋)` 다음에 `place()`를 부른다. 아브라함의 `road`·`stars`·`summit`·`sunset`은 `camH`를 뺐다(모리아 산꼭대기에서 땅속으로 내려가던 것). 욥의 `storm`·`whirl`·`cosmos`에는 예전 값 `camH: 1.65`를 적어 두었다.
+  - 생선·떡 크기: `bakeParts`가 소품 노드의 크기(quantize가 넣은 것)까지 장면 기준으로 굽는다. 생선 약 25~35cm, 떡 지름 18cm.
+  - 그물 속 고기(눅 5:6, 요 21:6): 코르크 찌를 단 둥근 그물 안에 모여 옆으로 뒤집히며 퍼덕이고, 번갈아 최고 85cm까지 튀어 오르며 물보라를 낸다. 그물을 보는 방향이 반대(왼쪽)였던 것을 배 오른편으로 고쳤다(요 21:6).
+  - 밝기: 어두운 장면일수록 고른 빛(`moon`)과 노출을 더한다. 낮 장면은 노출 1.15배.
+  - 다윗 엘라 골짜기: 가까운 이스라엘 군사 10명을 3D 캐릭터로(앉기·웅크리기·서기, 17:11·17:16). 골리앗이 방패 든 자(17:7, 17:41)를 앞세우고 블레셋 진에서 걸어 나오고(17:4), 군사들은 양옆 뒤로 달아난다(17:24). 먼 군사 무리도 뒤로 물러난다. 방패 든 자가 골리앗 곁에 서서 키를 견주어 보이고, 맞붙을 때는 비켜서며, 골리앗이 쓰러지면 블레셋 진으로 달아난다(17:51). 양 떼는 들판에서만 보인다.
+- **다음 작업: 11장 2단계(예수님 모습)**.
 
 ## 3. 지켜야 할 원칙 (사용자가 확정한 것)
 
@@ -92,6 +98,7 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
 - **`say(who, line, ref)`**: 사람의 요즘 말투 대사.
 - **`verse(ref)`**: 원문 구절 카드.
 - **`direction(text)`**: '연출' 문장.
+- **장면 열기**: `sceneCut(…, async () => { world.setEnv('<프리셋>', 0); world.place('<장소>'); … })` 순서로 쓴다. 프리셋은 하늘·빛·날씨를 바꾸고, 자리(`camX`, `camZ`)와 눈높이(`camH`)는 프리셋에 직접 적힌 경우만 바꾼다. 땅 높이가 있는 장소에서는 `place()`가 `camH: 1.65 + h(x, z)`처럼 정한다.
 - **`kit.figure(role, { tint, colors, pose, clip, scale, visible })`**: 이름 있는 인물. `role`은 `assets/chars/outfits.json`의 신분(`man`, `elder`, `shepherd`, `fisherman`, `king`, `roman`, `goliath`, `boy`, `woman`, `woman_veil`), `tint`는 겉옷 색, `pose`는 `stand`·`seat`·`kneel`. `g.userData.fig.play('Walk_Loop')`처럼 동작을 바꾼다. `kit.walker`에 넘기면 걸을 때 걷기·달리기 동작을 자동으로 튼다. 캐릭터를 못 읽으면 `person()`으로 대신한다.
 - **`kit.person(color, …)`**: 군중, 무리, 이름 없는 일꾼.
 - **`kit.herd(kind, …)`**: 가축 떼. `kind`는 `sheep`, `ram`, `goat`, `ox`, `donkey`, `colt`, `camel`, `pig`. 3마리 이하는 움직이는 모델.
@@ -234,7 +241,7 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
 
 게임(https://claude.ai/artifact/WVdUr7QHvSbZJi5v1Div2B)을 해 본 사용자의 의견이다. 단계마다 작업량을 먼저 알리고 "ㅇㅋ"를 받는다.
 
-### 1단계: 바로 고칠 것 (🟠, 약 6천~9천 토큰)
+### 1단계: 바로 고칠 것 (🟠, 약 6천~9천 토큰) — 끝남 (2026-10-09, 2장 참고)
 - **생선이 너무 크다 (1~2m).** 원인: `kit.js`의 `bakeParts`가 소품 노드 자체의 변환을 빼고 굽는다. quantize 압축은 크기 정보를 그 노드 변환에 넣기 때문에 생선이 -1~1 단위(약 2m)가 됐다. `m.matrixWorld`(장면 기준)로 구우면 고쳐진다. 동물(`prepAnimal`)은 이미 장면 기준이라 괜찮다.
 - **그물 속 고기가 날뛰는 모습** (눅 5:6, 요 21:6): 크기를 고친 뒤 퍼덕임과 튀어 오름을 더 크게, 그물 안에 모이게.
 - **화면 전체가 너무 어둡다.** 밤 장면도 인물과 사물이 보이게 전체 밝기(노출)를 올린다. 다윗의 기름 부음 장면(삼상 16:12)은 거의 검다.
@@ -268,4 +275,5 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
 
 ### 작업 환경 메모 (이번 대화에서 확인)
 - 캐릭터·동물 다시 만들기: `pip install bpy 'playwright==1.56.0' --break-system-packages && npm install` 후 `tools/chars/make.sh`. 이어서 `python3 tools/build.py && python3 tools/bundle.py && tools/check.sh`, `python3 tools/inlinecheck.py single/index.html <인물> <스크린샷.png>`.
+- 장면 하나를 골라 찍어 볼 때: 묶은 HTML의 `return await C.world(kit, …)`를 고쳐 `window.__w`(world api), `window.__k`(kit)를 내놓게 한 사본을 playwright로 열고 `place()`·`setEnv()`를 부른다(저장소에는 넣지 않았다). headless는 프레임이 느려 게임 시계(tween, 걷기)가 실제 시간보다 몇 배 늦으니 기다리는 시간을 넉넉히 둔다. `kit.reset()`은 걷는 인물(walker)을 모두 숨기므로 `place()`에서 다시 보이게 해야 한다.
 - 게임 게시는 같은 파일(`single/index.html`)을 위 링크에 publish한다. 새 대화에서는 링크를 `url`로 넘기면 된다(먼저 읽어야 하므로 크기가 크면 사용량이 든다).

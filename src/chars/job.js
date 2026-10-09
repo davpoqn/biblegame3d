@@ -136,11 +136,11 @@ const CHOICES = {
 
 const presets = {
     dusk: { top: '#2a3150', horizon: '#c9875a', sun: '#ffb07a', fog: '#84604b', fogD: .0062, sunEl: 5, sunAz: 26, sunI: 2.4, hemiI: .55, stars: .08, storm: .05, ash: .14, wind: .2, camH: 1.65, camP: .02, exposure: 1, fire: 0, sing: 0, shake: 0 },
-    storm: { top: '#1d1d24', horizon: '#7a5640', sun: '#ff9a5c', fog: '#57423a', fogD: .0085, storm: .75, sunI: 1.2, hemiI: .45, wind: .55, exposure: 1.05 },
+    storm: { top: '#1d1d24', horizon: '#7a5640', sun: '#ff9a5c', fog: '#57423a', fogD: .0085, storm: .75, sunI: 1.2, hemiI: .45, wind: .55, exposure: 1.05, camH: 1.65 },
     ash: { top: '#56534f', horizon: '#9a8b79', sun: '#e8dccb', fog: '#776b5e', fogD: .015, sunEl: 38, sunAz: -40, storm: .62, sunI: 1.3, hemiI: .9, stars: 0, ash: .9, wind: .35, camH: .95, camP: -.06, exposure: .95, fire: 0, sing: 0, shake: 0 },
     night: { top: '#04060c', horizon: '#161b29', sun: '#9fb3d9', fog: '#0b0e16', fogD: .011, sunEl: 32, sunAz: 115, sunI: .3, hemiI: .2, stars: 1, storm: 0, ash: .3, wind: .2, camH: .95, camP: 0, exposure: 1.15, fire: 1, sing: 0, shake: 0 },
-    whirl: { top: '#0d0d10', horizon: '#3a3029', sun: '#7d6a5a', fog: '#2a231e', fogD: .013, storm: 1, sunI: .35, hemiI: .3, stars: 0, ash: .7, wind: 1, fire: 0, camP: .1, exposure: 1.1, shake: .6 },
-    cosmos: { top: '#020309', horizon: '#0b1226', sun: '#9fb3d9', fog: '#05070e', fogD: .004, storm: 0, stars: 1.9, sunI: .15, hemiI: .14, ash: 0, wind: .08, camP: .62, sing: 1, exposure: 1.2, shake: 0, fire: 0 },
+    whirl: { top: '#0d0d10', horizon: '#3a3029', sun: '#7d6a5a', fog: '#2a231e', fogD: .013, storm: 1, sunI: .35, hemiI: .3, stars: 0, ash: .7, wind: 1, fire: 0, camP: .1, exposure: 1.1, shake: .6, camH: 1.65 },
+    cosmos: { top: '#020309', horizon: '#0b1226', sun: '#9fb3d9', fog: '#05070e', fogD: .004, storm: 0, stars: 1.9, sunI: .15, hemiI: .14, ash: 0, wind: .08, camP: .62, sing: 1, exposure: 1.2, shake: 0, fire: 0, camH: 1.65 },
     dawn: { top: '#2f4366', horizon: '#e3a57a', sun: '#ffc38e', fog: '#a07a64', fogD: .0068, sunEl: 2, sunAz: 0, storm: .1, stars: .15, sunI: 2, hemiI: .7, ash: .05, wind: .15, camP: .03, camH: .95, fire: .25, sing: 0, exposure: 1, shake: 0 },
   morning: { top: '#5a76ab', horizon: '#efbd8b', sun: '#ffd4a3', fog: '#b19275', fogD: .0052, sunEl: 13, sunAz: -55, storm: .08, stars: 0, sunI: 2.6, hemiI: .75, ash: .04, wind: .15, camH: 1.65, camP: .02, exposure: 1, fire: 0, sing: 0, shake: 0 },
   evening: { top: '#262f58', horizon: '#d98a55', sun: '#ff9a5c', fog: '#7a5847', fogD: .0062, sunEl: 1.5, sunAz: 38, storm: .05, stars: .3, sunI: 1.5, hemiI: .5, ash: .05, wind: .12, camH: 1.65, camP: .02, exposure: 1.05, fire: 0, sing: 0, shake: 0 },

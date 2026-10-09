@@ -215,9 +215,16 @@ async function world(kit, { audio, sleep }) {
   // 고기 떼 (그물 안에서 퍼덕이는)
   const FN = 170, fishProp = kit.instancedProp('prop_fish', FN), fish = fishProp || new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: '#c9d1d4', roughness: .35, metalness: .6 }), FN);
   fish.frustumCulled = false; scene.add(fish); fish.visible = false;
-  const fishSt = Array.from({ length: FN }, () => ({ a: rnd(0, 6.3), r: Math.sqrt(Math.random()), ph: rnd(0, 6.3), sp: rnd(1.2, 2.6) }));
+  // 한 마리마다: 그물 안 자리(a, r), 퍼덕임 위상(ph), 튀어 오르는 주기(jp)·시작(jo)·높이(jh), 크기(s, 실제 길이 약 25~35cm)
+  const fishSt = Array.from({ length: FN }, () => ({ a: rnd(0, 6.3), r: Math.sqrt(Math.random()), ph: rnd(0, 6.3), sp: rnd(1.2, 2.6), jp: rnd(2.2, 5.5), jo: rnd(0, 6), jh: rnd(.3, .85), s: rnd(.7, .95) }));
   const fishAt = { c: v3(0, 0, 0), r: 2.2, on: 0 };
   const dm = new THREE.Object3D();
+  // 물 위에 떠 있는 그물: 코르크 찌를 단 둥근 테두리와, 물속으로 처진 그물코
+  const fishNet = new THREE.Group(); scene.add(fishNet); fishNet.visible = false;
+  const netBowl = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 6, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#8a7b62', roughness: 1, wireframe: true, transparent: true, opacity: .75 }));
+  const netRim = new THREE.Mesh(new THREE.TorusGeometry(1, .012, 4, 40), new THREE.MeshStandardMaterial({ color: '#7a6a52', roughness: 1 })); netRim.rotation.x = Math.PI / 2;
+  const CORKS = 26, corks = new THREE.InstancedMesh(new THREE.SphereGeometry(.06, 6, 4), new THREE.MeshStandardMaterial({ color: '#b39a6e', roughness: 1 }), CORKS);
+  fishNet.add(netBowl, netRim, corks);
 
   /* --- 다락방 (눅 22:31–34) --- */
   const ROOM = v3(60, 0, 1000);
@@ -250,22 +257,35 @@ async function world(kit, { audio, sleep }) {
   // 숯불과 생선, 떡 (요 21:9)
   const coal = kit.fire([.8, heightAt(.8, -3.2) + .05, -3.2], { coals: true, ring: true, logs: false, level: 0, smoke: true, size: .9 });
   const meal = new THREE.Group(); coal.g.add(meal);
-  for (let i = 0; i < 4; i++) { const f = kit.prop('prop_fish', { colors: { fish: '#6e5034', fin: '#3e2c1e' } }); if (f) { f.rotation.set(0, 0, Math.PI / 2); f.position.set(-.15 + i * .1, .14, 0); meal.add(f); continue; } const s = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: '#8a7a62', roughness: .8 })); s.scale.set(.05, .03, .16); s.position.set(-.15 + i * .1, .12, 0); meal.add(s); }  // 숯불 위에 구운 생선
+  for (let i = 0; i < 4; i++) { const f = kit.prop('prop_fish', { colors: { fish: '#6e5034', fin: '#3e2c1e' } }); if (f) { f.rotation.set(0, 0, Math.PI / 2); f.scale.setScalar(.7); f.position.set(-.15 + i * .1, .14, 0); meal.add(f); continue; } const s = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: '#8a7a62', roughness: .8 })); s.scale.set(.05, .03, .16); s.position.set(-.15 + i * .1, .12, 0); meal.add(s); }  // 숯불 위에 구운 생선
   for (let i = 0; i < 3; i++) { const b = kit.prop('prop_bread') || new THREE.Mesh(new THREE.CylinderGeometry(.09, .1, .05, 10), new THREE.MeshStandardMaterial({ color: '#b08452', roughness: 1 })); b.position.set(.55, .03, -.2 + i * .2); b.rotation.y = i * 1.3; meal.add(b); }  // 떡 (요 21:9)
   coal.g.visible = false;
   const shoreDisciples = [[-.9, -2.2], [-1.2, -3.8], [.4, -1.7], [2.2, -2.4], [2.4, -3.9], [.9, -4.6]].map(([x, z]) => { const g = kit.person('#3f3329', { pose: 'seat' }); g.position.set(x, heightAt(x, z), z); g.rotation.y = Math.atan2(.8 - x, -3.2 - z); return g; });
 
   /* --- 매 프레임: 고기 떼 --- */
   kit.onFrame((dt, t) => {
+    fishNet.visible = fish.visible;
     if (!fish.visible) return;
-    const on = fishAt.on;
+    const on = fishAt.on, c = fishAt.c, R = fishAt.r, sea = c.y + kit.waveH(c.x, c.z);
+    // 그물: 고기가 찰수록 테두리가 물에 잠기고 그물코가 깊이 처진다
+    fishNet.position.set(c.x, sea + .03 - on * .04, c.z); netBowl.scale.set(R, R * (.35 + on * .25), R); netRim.scale.set(R, R, 1);
+    for (let i = 0; i < CORKS; i++) { const a = i / CORKS * Math.PI * 2; dm.position.set(Math.cos(a) * R, Math.sin(t * 3 + i) * .03 * on, Math.sin(a) * R); dm.rotation.set(0, 0, 0); dm.scale.setScalar(1); dm.updateMatrix(); corks.setMatrixAt(i, dm.matrix); }
+    corks.instanceMatrix.needsUpdate = true;
     fishSt.forEach((f, i) => {
-      const a = f.a + t * .2, r = f.r * fishAt.r;
-      const jump = Math.max(0, Math.sin(t * f.sp + f.ph)) * .5 * on;
-      dm.position.set(fishAt.c.x + Math.cos(a) * r, fishAt.c.y + jump + kit.waveH(fishAt.c.x, fishAt.c.z) - .05, fishAt.c.z + Math.sin(a) * r);
-      dm.rotation.set(Math.sin(t * 9 + f.ph) * .6, a, Math.cos(t * 7 + f.ph) * .5); fishProp ? dm.scale.setScalar(1.1 * on) : dm.scale.set(.06 * on, .05 * on, .2 * on); dm.updateMatrix(); fish.setMatrixAt(i, dm.matrix);
+      const a = f.a + Math.sin(t * .6 + f.ph) * .25, r = f.r * R * .88;
+      let y = sea - .02 + Math.sin(t * 6 + f.ph) * .04, pitch = 0, roll = Math.sin(t * 15 + f.ph) * 1.1;  // 물 위에서 옆으로 뒤집히며 퍼덕임
+      const u = ((t + f.jo) % f.jp) / .7;  // 0~1이면 공중에 떠 있는 중
+      if (u < 1 && on > .5) { y += f.jh * 4 * u * (1 - u); pitch = (u - .5) * 2.6; roll = u * 6.3; }
+      dm.position.set(c.x + Math.cos(a) * r, y, c.z + Math.sin(a) * r);
+      dm.rotation.set(pitch, a + Math.sin(t * 19 + f.ph) * .6, roll);  // 꼬리를 좌우로 세차게
+      fishProp ? dm.scale.setScalar(f.s * on) : dm.scale.set(.06 * on, .05 * on, .2 * on); dm.updateMatrix(); fish.setMatrixAt(i, dm.matrix);
     });
     fish.instanceMatrix.needsUpdate = true;
+    // 물보라
+    for (let i = 0, n = kit.perFrame('netSpray', 60 * dt * on); i < n; i++) {
+      const a = rnd(0, 6.3), r = Math.sqrt(Math.random()) * R * .9;
+      kit.dust.emit(c.x + Math.cos(a) * r, sea + .02, c.z + Math.sin(a) * r, { vx: rnd(-.4, .4), vy: rnd(1, 2.4), vz: rnd(-.4, .4), c: [.82, .88, .92], life: rnd(.4, .8), size: rnd(.04, .09), g: -7, drag: .2, alpha: .7 });
+    }
   });
 
   const show = (arr, v) => arr.forEach(g => { g.visible = v; });
@@ -299,10 +319,10 @@ async function world(kit, { audio, sleep }) {
     // 눅 5:6 — 그물 가득한 고기
     catchFish() {
       fishAt.c.set(-1.2, 0, -63.5); fishAt.r = 2.4; fish.visible = true; kit.tween(fishAt, { on: 1 }, 2.5); audio.splash();
-      kit.focus(-22, 2.5); fa.draft = .25;
+      kit.focus(22, 2.5); fa.draft = .25;  // 그물은 배 오른편(+x)에 있다
     },
     // 요 21:6 — 배 오른편
-    catch2() { fishAt.c.set(2.2, 0, -93); fishAt.r = 2.6; fish.visible = true; kit.tween(fishAt, { on: 1 }, 2.5); audio.splash(); kit.focus(-35, 2.5); fa.draft = .3; },
+    catch2() { fishAt.c.set(2.2, 0, -93); fishAt.r = 2.6; fish.visible = true; kit.tween(fishAt, { on: 1 }, 2.5); audio.splash(); kit.focus(33, 2.5); fa.draft = .3; },  // 요 21:6 배 오른편
     // 눅 5:7 — 다른 배의 동무들
     async partners() {
       boatB.visible = true; boatB.position.set(14, 0, -48); boatB.rotation.y = -.6;
@@ -381,7 +401,7 @@ async function story(A) {
   const { world, audio, sleep, verse, direction, sceneCut, choicePoint, speakLoop } = A;
 
   // 1 · 게네사렛 — 배와 그물, 동업자
-  await sceneCut('1', '게네사렛', '누가복음 5장 1–11절', async () => { world.place('shore'); world.setEnv('shore', 0); world.focus(0, 0); });
+  await sceneCut('1', '게네사렛', '누가복음 5장 1–11절', async () => { world.setEnv('shore', 0); world.place('shore'); world.focus(0, 0); });
   audio.water(.3, 2); audio.wind(.12); audio.chord(.08, 4);
   await direction('밤새 그물을 던졌지만 아무것도 잡지 못했다. 동이 튼 물가에 사람들이 몰려든다.');
   await verse('눅 5:1');
@@ -405,7 +425,7 @@ async function story(A) {
   await world.leave();
 
   // 2 · 물 위
-  await sceneCut('2', '물 위', '마태복음 14장 22–33절', async () => { world.place('sea'); world.setEnv('dusk', 0); world.focus(0, 0); });
+  await sceneCut('2', '물 위', '마태복음 14장 22–33절', async () => { world.setEnv('dusk', 0); world.place('sea'); world.focus(0, 0); });
   audio.chord(0, 2); audio.water(.5, 2); audio.wind(.4, 2);
   await verse('마 14:22-23');
   world.setEnv('storm', 8); audio.wind(.85, 6); audio.water(.8, 6); audio.drone(.15, 6);
@@ -431,7 +451,7 @@ async function story(A) {
   await verse('마 14:33');
 
   // 3 · 다락방
-  await sceneCut('3', '다락방', '누가복음 22장 31–34절', async () => { world.place('room'); world.setEnv('room', 0); world.focus(0, 0); });
+  await sceneCut('3', '다락방', '누가복음 22장 31–34절', async () => { world.setEnv('room', 0); world.place('room'); world.focus(0, 0); });
   audio.water(0, 2); audio.wind(0, 2); audio.drone(.06, 3); audio.crackle(.08);
   await verse('눅 22:31-32', { voice: true });
   await speakLoop({ scene: '3 · 다락방', prompts: [{ who: '예수', ref: '눅 22:31-32', quiet: true, ask: '그 말을 들은 당신은 무엇이라고 대답하겠습니까?', situation: '“너를 위하여 기도하였노니”라는 말을 들었을 때', his: ['눅 22:33'], hisShort: '“주와 함께 옥에도, 죽는데도 가기를 준비하였나이다” 했다' }], submit: '대답하기', skips: ['아무 대답도 하지 않는다'],
@@ -439,7 +459,7 @@ async function story(A) {
   await verse('눅 22:34', { voice: true });
 
   // 4 · 뜰
-  await sceneCut('4', '뜰', '누가복음 22장 54–62절', async () => { world.place('court'); world.setEnv('court', 0); world.focus(0, 0); });
+  await sceneCut('4', '뜰', '누가복음 22장 54–62절', async () => { world.setEnv('court', 0); world.place('court'); world.focus(0, 0); });
   audio.crackle(.4); audio.wind(.12, 2); audio.drone(.12, 3);
   await verse('눅 22:54');
   await direction('불 건너편, 뜰 안쪽 높은 곳에 그분이 서 계신다. 등을 보이고 계신다.', { auto: true, ms: 3600 });
@@ -464,7 +484,7 @@ async function story(A) {
   await direction('날이 밝아 온다.');
 
   // 5 · 숯불
-  await sceneCut('5', '숯불', '요한복음 21장 1–19절', async () => { world.place('dawnBoat'); world.setEnv('daybreak', 0); world.focus(0, 0); });
+  await sceneCut('5', '숯불', '요한복음 21장 1–19절', async () => { world.setEnv('daybreak', 0); world.place('dawnBoat'); world.focus(0, 0); });
   audio.crackle(0); audio.water(.3, 2); audio.wind(.08, 2); audio.drone(.03, 3); audio.chord(.06, 4);
   await verse('요 21:3');
   await verse('요 21:4');
