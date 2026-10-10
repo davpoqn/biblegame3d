@@ -265,7 +265,7 @@ async function world(kit, { audio, sleep }) {
   /* --- 소식을 전하는 사람들, 아내, 친구들 --- */
   const MSG_X = [-2.1, -.7, .7, 2.1];
   const msgs = MSG_X.map((x, i) => { const g = kit.person(['#2b241f', '#33281f', '#28221e', '#3a2c22'][i], { scale: rnd(.97, 1.05) }); return { g, w: kit.walker(g, { height: heightAt }), to: new THREE.Vector3(x, 0, -6.4 - Math.abs(x) * .35) }; });
-  const wifeG = kit.figure('woman_veil', { tint: '#4a3a32', scale: .96 });
+  const wifeG = kit.figure('woman', { tint: '#dcd3c0', scale: .96 });
   const wife = { g: wifeG, w: kit.walker(wifeG, { height: heightAt, pace: 5, amp: .03, lean: .04, standLean: .02 }) };
   const friends = [[-2.3, -3.4], [.25, -4.7], [2.5, -3.3]].map(([x, z], i) => { const g = kit.figure('elder', { tint: ['#2e2a26', '#3b3128', '#2a2b2e'][i], pose: 'seat' }); g.position.set(x, 0, z); g.rotation.y = Math.atan2(-x, -z); return g; });
   const lift = { v: 0 };
@@ -656,6 +656,7 @@ async function story(A) {
   await world.messenger(3);
   await A.say('마지막 종', '주인님… 자녀분들이 큰아드님 댁에서 같이 식사하고 계셨는데, 광야 쪽에서 엄청난 바람이 몰려와서 집 네 모퉁이를 쳤어요. 집이 무너져서… 다 돌아가셨어요. 저만 살아서 왔어요.', '1:18-19');
   await direction('아침에 제단 앞에 섰던 열 명이 이제 없다.');
+  await A.adapt([['남은 종', '소도 나귀도 낙타도… 자녀분들까지…'], ['이웃', '하늘이 노한 거야. 무슨 죄를 지었길래.']]);  // 각색
   await choicePoint('c1');
 
   // 2 · 재
@@ -669,6 +670,7 @@ async function story(A) {
   await direction('아내가 다가와 선다.', { auto: true });
   await world.approach();
   world.setEnv({ camP: .13 }, 2.5);
+  await A.adapt([['성 밖을 지나던 사람', '저게 욥이라고? 동방에서 제일 큰 사람이었다던?'], ['성 밖을 지나던 사람', '쯧, 저렇게 되면 사람 끝이지.']]);  // 각색
   await choicePoint('c2');
   world.setEnv({ camP: -.06 }, 3);
 

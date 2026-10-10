@@ -178,7 +178,7 @@ async function world(kit, { audio, sleep }) {
   const JACOB = { tint: '#5a4a3a', colors: { tunic: '#d9ceb2' } }, DISGUISE = { tint: '#7a3a2a', colors: { tunic: '#e6dfcf', M_Main: '#4a3828', M_Joints: '#4a3828' } };
   kit.selfBody('man', JACOB);
   const faceIsaac = () => { isaac.rotation.y = Math.atan2(.28 - isaac.position.x, -2.5 - isaac.position.z); };
-  const rebekah = kit.figure('woman_veil', { tint: '#7b5a48', scale: .96, visible: true }); rebekah.position.set(-1.6, 0, .6); rebekah.rotation.y = Math.PI * .7;
+  const rebekah = kit.figure('woman', { tint: '#ece6d8', scale: .96, visible: true }); rebekah.position.set(-1.6, 0, .6); rebekah.rotation.y = Math.PI * .7;
   const esau = kit.figure('shepherd', { tint: '#7a4a2a', scale: 1.06 }); const ew = kit.walker(esau, { height: h0 });
   [[-14, -6, .4], [12, -10, -.5]].forEach(([x, z, r]) => kit.tent({ at: [x, h0(x, z), z], ry: r }));
   const goats0 = kit.herd('goat', { n: 30, center: [-20, 14], rx: 10, rz: 7, height: h0 });
@@ -204,7 +204,7 @@ async function world(kit, { audio, sleep }) {
   const feast = kit.throng({ n: 22, place: i => { const a = (i / 22) * Math.PI * 2, r = 4.5 + (i % 2) * 1.2; return [X2 + Math.cos(a) * r, -4 + Math.sin(a) * r * .6, Math.atan2(-Math.cos(a), -Math.sin(a))]; }, pose: 'seat' });
   const feastFire = kit.fire([X2, .05, -4], { level: 0 });
   const laban = kit.figure('elder', { tint: '#5a4a3a', visible: true }); laban.position.set(X2 + 1.8, 0, -2.6);
-  const leah = kit.figure('woman_veil', { tint: '#6a5a6e', scale: .94 }); leah.position.set(X2 - .9, 0, -1.6);
+  const leah = kit.figure('woman', { tint: '#e4dccb', scale: .94 }); leah.position.set(X2 - .9, 0, -1.6);
   const flocks2 = kit.herd('sheep', { n: 40, center: [X2 + 20, -24], rx: 14, rz: 8, height: h2 });
 
   /* --- 4 · 얍복 나루 --- */
@@ -212,7 +212,7 @@ async function world(kit, { audio, sleep }) {
   const h3 = (x, z) => { const lx = x - X3, d = Math.abs(z + 12 + Math.sin(lx * .03) * 3); return 3 * smooth(3, 11, d) - 2 + 2.5 * (vnoise(lx * .02, z * .02) - .5) * smooth(4, 14, d) + 18 * smooth(220, 320, Math.hypot(lx, z)); };
   kit.terrain({ height: h3, size: 600, seg: 150, at: [X3, 0], lo: '#2e2a24', hi: '#6f6450' });
   kit.water({ y: -1.05, size: 300, seg: 80, at: [X3, -12], deep: '#13252c' });
-  const family = [['#6a5a6e', 1], ['#7b5a4a', 1], ['#5a4a3a', .95], ['#5e4e44', .95]].map(([c, s]) => kit.figure('woman_veil', { tint: c, scale: s }));
+  const family = [['#e4dccb', 1], ['#ece6d8', 1], ['#dcd3c0', .95], ['#d9d4cc', .95]].map(([c, s]) => kit.figure('woman', { tint: c, scale: s }));
   const kids = Array.from({ length: 11 }, (_, i) => kit.person(['#5b4a3a', '#6a5644', '#4e4034'][i % 3], { scale: .5 + (i % 5) * .08 }));
   const crossers = [...family, ...kids].map(g => ({ g, w: kit.walker(g, { height: h3, pace: 6, amp: .04, lean: .06, standLean: .02 }) }));
   const herds3 = [kit.herd('sheep', { n: 46, center: [X3 - 16, 8], rx: 12, rz: 6, height: h3 }), kit.herd('goat', { n: 30, center: [X3 + 14, 9], rx: 10, rz: 5, height: h3 }), kit.herd('camel', { n: 12, center: [X3 + 4, 16], rx: 8, rz: 4, height: h3 }), kit.herd('ox', { n: 14, center: [X3 - 6, 18], rx: 8, rz: 4, height: h3 }), kit.herd('donkey', { n: 10, center: [X3 + 22, 18], rx: 6, rz: 4, height: h3 })];
@@ -366,6 +366,7 @@ async function story(A) {
   await verse('창 29:25#1');
   await speakLoop({ scene: '3 · 라반의 집', prompts: [{ ask: '라반에게 무엇이라고 말하겠습니까?', situation: '아침에 보니 레아였을 때', his: ['창 29:25'], hisShort: '“외삼촌이 나를 속이심은 어찜이니이까” 했다' }], submit: '말하기', skips: ['아무 말도 하지 않는다'],
     reacts: [{ fx: 'laban', text: '라반은 서두르지 않는다.' }] });
+  await A.adapt([['잔치에 온 사람', '어젯밤엔 다들 취해서 아무도 몰랐지.'], ['잔치에 온 사람', '칠 년을 일했는데… 너무하네.']]);  // 각색
   await choicePoint('c4');
 
   // 4 · 얍복 나루 — 가진 것을 모두 건너보내고
@@ -395,6 +396,7 @@ async function story(A) {
   audio.water(0, 2); audio.wind(.14); audio.drone(.1, 3);
   world.esauComes();
   await verse('창 33:1-2');
+  await A.adapt([['종', '사백 명이래요. 칼 찬 사람이 사백 명.'], ['종', '선물을 앞서 보냈으니 마음이 풀리셨을지도 몰라요.']]);  // 각색
   await choicePoint('c6');
   await world.bowSeven();
   world.embrace();

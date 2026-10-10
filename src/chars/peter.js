@@ -846,7 +846,7 @@ async function world(kit, { audio, sleep }) {
   const PH = v3(CX + 7, hC(CX + 7, 10), 10);
   const peterHouse = kit.room({ at: [PH.x, PH.y, PH.z], w: 7, d: 6, h: 3, color: '#8f7558', floor: '#6a5641', door: 0, lamps: [[-2.2, -2.2, .7], [2.2, -1.6, .7]] });
   peterHouse.rotation.y = -Math.PI / 2;  // 문(+z)이 길(-x)을 본다
-  const mil = fig('woman_veil', PH.x + 1.6, PH.y + .08, PH.z - 1.2, 0, { tint: '#6a6a7a', colors: { veil: '#cfc6b2' } });  // 시몬의 장모
+  const mil = fig('woman', PH.x + 1.6, PH.y + .08, PH.z - 1.2, 0, { tint: '#e4dccb' });  // 시몬의 장모
   const mat0 = kit.box(1.9, .08, .8, '#7a6a52', PH.x + 1.4, PH.y + .04, PH.z - 1.2);
   const doorCrowd = kit.throng({ n: 60, height: hC, place: i => [CX + rnd(-3, 2.6), PH.z + rnd(-8, 8), Math.PI / 2 + rnd(-.5, .5)] });
   const sick = [0, 1, 2, 3].map(i => { const g = kit.person(['#5a4a3a', '#4a4036', '#6a5a48', '#3a3028'][i], { pose: i % 2 ? 'seat' : 'kneel', visible: true }); g.position.set(CX + .8 + i * .5, hC(CX + 1, PH.z), PH.z - 2.4 + i * 1.4); g.rotation.y = Math.PI / 2; return g; });
@@ -868,7 +868,7 @@ async function world(kit, { audio, sleep }) {
   const girl = fig('woman', JH.x - 1.2, JH.y + .08, JH.z, Math.PI / 2, { scale: .78, colors: { dress: '#d8ccb4' } });
   kit.box(1.7, .08, .8, '#7a6a52', JH.x - 1.4, JH.y + .04, JH.z);
   const jairus = fig('elder', CX - 1, hC(CX - 1, -24), -24, 0, { tint: '#3a4a6a', colors: { mantle: '#2a3448' } }); const jaw = kit.walker(jairus, { height: hC });
-  const mother = fig('woman_veil', JH.x - 2.2, JH.y, JH.z + 1.6, Math.PI, { tint: '#5a4a62' });
+  const mother = fig('woman', JH.x - 2.2, JH.y, JH.z + 1.6, Math.PI, { tint: '#dcd3c0' });
   const mourners = kit.throng({ n: 40, height: hC, place: i => [JH.x + 4 + rnd(0, 6), JH.z + rnd(-6, 6), -Math.PI / 2 + rnd(-.6, .6)] });
   const throngC = kit.throng({ n: 70, height: hC, place: i => [CX + rnd(-4, 4), rnd(-30, -10), rnd(0, 6.3)] });
   const messenger = fig('man', CX + 2, hC(CX + 2, 14), 14, Math.PI, { tint: '#6a5a48' }); const msw = kit.walker(messenger, { height: hC });
@@ -1028,7 +1028,7 @@ async function world(kit, { audio, sleep }) {
   const soldiersX = [[-2.4, 3.6, 'seat'], [-1, 4.4, 'seat'], [1.2, 4.6, 'seat'], [2.6, 3.8, 'seat'], [-4.4, 1.6, 'stand'], [4.6, 1.8, 'stand']].map(([dx, dz, p]) => { const g = fig('roman', GO.x + dx, hJr(GO.x + dx, GO.z + dz), GO.z + dz, Math.atan2(-dx, -dz - 2), { pose: p }); return g; });
   const centurion = fig('roman', GO.x - 2.2, hJr(GO.x - 2.2, GO.z + 1.6), GO.z + 1.6, 0, { colors: { cloak: '#7a1a18' } });
   const robe = kit.box(.9, .05, .6, '#e9e2d2', GO.x - .2, hJr(GO.x, GO.z + 4.2) + .03, GO.z + 4.2);  // 통으로 짠 속옷 (요 19:23)
-  const women = [[-2.2, -.2], [-1.4, -.6], [-.8, .1], [-3, .4]].map(([dx, dz], i) => fig('woman_veil', GO.x + dx - 2, hJr(GO.x + dx - 2, GO.z + dz), GO.z + dz, Math.atan2(2 - dx, -2 - dz), { tint: ['#33507e', '#5a4a62', '#6a5a48', '#7a3a3a'][i] }));
+  const women = [[-2.2, -.2], [-1.4, -.6], [-.8, .1], [-3, .4]].map(([dx, dz], i) => fig('woman', GO.x + dx - 2, hJr(GO.x + dx - 2, GO.z + dz), GO.z + dz, Math.atan2(2 - dx, -2 - dz), { tint: ['#ece6d8', '#e4dccb', '#dcd3c0', '#d9d4cc'][i] }));
   const beloved = fig('fisherman', GO.x - 1.2, hJr(GO.x - 1.2, GO.z + .6), GO.z + .6, Math.PI * .1, { tint: '#bfae8a', colors: { headcloth: '#6a5a3a' } });
   const mockers = kit.throng({ n: 50, height: hJr, place: i => [GO.x + rnd(-14, 14), GO.z + rnd(10, 22), Math.PI + rnd(-.5, .5)] });
   const farOnes = kit.throng({ n: 40, height: hJr, place: i => [GO.x + rnd(-40, -25), GO.z + rnd(30, 50), Math.PI * .8], colors: ['#33507e', '#5a4a62', '#6a5a48', '#4a3c30'] });
@@ -1038,7 +1038,7 @@ async function world(kit, { audio, sleep }) {
   const VIA = [[JR - 200, 20], [JR - 236, 40], [JR - 262, 70], [JR - 286, 72], [GO.x + 3, GO.z + 6]];
   const jesusVia = fig('jesus', VIA[0][0] - 4, 0, VIA[0][1], -Math.PI / 2, { colors: { tunic: '#dcd3c0' } }); jesusVia.position.y = hJr(jesusVia.position.x, jesusVia.position.z); const jvw = kit.walker(jesusVia, { height: hJr, pace: 4, noRun: true });
   const guardsVia = [0, 1, 2, 3].map(i => { const g = fig('roman', VIA[0][0] - 2 + (i % 2) * 2.2, 0, VIA[0][1] + (i < 2 ? -1.6 : 1.6)); g.position.y = hJr(g.position.x, g.position.z); return { g, w: kit.walker(g, { height: hJr, pace: 4 }) }; });
-  const weepers = Array.from({ length: 6 }, (_, i) => fig('woman_veil', VIA[2][0] + rnd(-3, 3), 0, VIA[2][1] + (i % 2 ? 4 : -4) + rnd(-1, 1), i % 2 ? Math.PI : 0, { tint: ['#33507e', '#5a4a62', '#6a5a48', '#7a3a3a', '#4a5a62', '#6a4a3a'][i] }));
+  const weepers = Array.from({ length: 6 }, (_, i) => fig('woman', VIA[2][0] + rnd(-3, 3), 0, VIA[2][1] + (i % 2 ? 4 : -4) + rnd(-1, 1), i % 2 ? Math.PI : 0, { tint: ['#ece6d8', '#e4dccb', '#dcd3c0', '#e8e1d3', '#d9d4cc', '#e4dccb'][i] }));
   weepers.forEach(g => { g.position.y = hJr(g.position.x, g.position.z); });
   const viaFolk = kit.throng({ n: 90, height: hJr, place: i => { const k = rnd(0, 3.99), j = Math.floor(k), t = k - j, a = VIA[j], b = VIA[j + 1]; const s = i % 2 ? 1 : -1; return [lerp(a[0], b[0], t) + rnd(-2, 2), lerp(a[1], b[1], t) + s * rnd(3.5, 7), s > 0 ? Math.PI : 0]; } });
   const carried = kit.cross({ at: [0, 0, 0], h: 3.6 }); sites.jer.add(carried); carried.visible = false;
@@ -1084,7 +1084,7 @@ async function world(kit, { audio, sleep }) {
   kit.addFloor(COURT.x, COURT.z, 30, 30, 0, court); kit.addFloor(COURT.x, COURT.z - 11.5, 10, 4, .9, court);
   const courtFire = kit.fire([COURT.x, .05, COURT.z - 2.2], { level: 0 });
   const warmers = [[-1.4, -1.4], [1.5, -1.2], [-1.8, -3.3], [1.9, -3.4], [0, -4.1], [-.4, .1]].map(([x, z], i) => { const g = i < 3 ? kit.figure('man', { tint: ['#3a3029', '#463a2f', '#2f2924'][i], pose: i % 2 ? 'seat' : 'stand', visible: true }) : kit.person(['#3a332d', '#2c2622', '#4b3f34'][i - 3], { pose: i % 2 ? 'seat' : 'stand', visible: true }); g.position.set(x, 0, z); g.rotation.y = Math.atan2(-x, -2.2 - z); court.add(g); return g; });
-  const maid = kit.figure('woman_veil', { tint: '#7b6a5c', scale: .92, visible: true }); maid.position.set(2.4, 0, -1.6); maid.rotation.y = Math.atan2(-2.4, 1.6); court.add(maid); maid.visible = false;
+  const maid = kit.figure('woman', { tint: '#ece6d8', scale: .92, visible: true }); maid.position.set(2.4, 0, -1.6); maid.rotation.y = Math.atan2(-2.4, 1.6); court.add(maid); maid.visible = false;
   const lordCourt = kit.figure('jesus', { visible: true, colors: { tunic: '#d8cfbe' } }); lordCourt.position.set(0, .9, -11.2); lordCourt.rotation.y = Math.PI; court.add(lordCourt);
   const guardsCourt = [-1.1, 1.1].map(x => { const g = kit.figure('man', { tint: '#2a2420', visible: true }); g.position.set(x, .9, -11.6); g.rotation.y = Math.PI; court.add(g); return g; });
   const cock = kit.rooster({ at: [9, 5, 13.8], ry: Math.PI }); court.add(cock);
@@ -1093,7 +1093,7 @@ async function world(kit, { audio, sleep }) {
   const hideDisc = [[-2.4, -1.2], [2.2, -1.4], [-1, -2.4], [1, -2.6], [-3.2, .4], [3.2, .2], [-.2, -.6], [1.8, .8], [-1.8, .9], [.2, 1.6]].map(([x, z], i) => { const g = i < 5 ? kit.figure(i < 3 ? 'fisherman' : 'man', { tint: ['#c9b48e', '#d8ccb0', '#bfae8a', '#a89878', '#8a7a5a'][i], pose: 'seat', visible: true }) : kit.person(['#3e3228', '#4a3b2f', '#352c25'][i % 3], { pose: 'seat', visible: true }); g.position.set(HIDE.x + x, 0, HIDE.z + z); faceTo(g, HIDE.x, HIDE.z - .4); return g; });
   const thomas = fig('man', HIDE.x + 1.6, 0, HIDE.z - .2, -Math.PI / 2, { tint: '#7a6a4a', colors: { mantle: '#3a4a3a' } }); thomas.visible = false;
   const johnHide = hideDisc[1];
-  const magdalene = fig('woman_veil', HIDE.x, 0, HIDE.z + 3.2, Math.PI, { tint: '#7a3a3a', colors: { veil: '#d8cfba' } }); magdalene.visible = false; const mgw = kit.walker(magdalene, {});
+  const magdalene = fig('woman', HIDE.x, 0, HIDE.z + 3.2, Math.PI, { tint: '#e4dccb' }); magdalene.visible = false; const mgw = kit.walker(magdalene, {});
   const jesusHide = fig('jesus', HIDE.x, 0, HIDE.z - 1, 0, { colors: { tunic: '#f2eee4' } }); jesusHide.visible = false;
   const hideLight = new THREE.PointLight('#fff0d8', 0, 6, 2); hideLight.position.set(0, 2.4, 1.2); jesusHide.add(hideLight);
   // 못 자국과 옆구리 (요 20:20, 27)
@@ -1472,6 +1472,7 @@ async function part1(A) {
   await verse('요 1:40');
   await direction('해가 기울 무렵, 안드레가 숨이 차서 달려온다.', { auto: true, ms: 1200 });
   await world.andrewComes();
+  await A.adapt([['강가의 사람', '메시아? 요즘 그런 말 하는 사람이 한둘이야?'], ['강가의 사람', '그래도 요한이 직접 가리켰다잖아. 그냥 흘려들을 말은 아니지.']]);  // 각색
   await choicePoint('a1');
   await world.toJesus();
   await verse('요 1:42#2', { voice: true });
@@ -1517,6 +1518,7 @@ async function part1(A) {
   await verse('막 1:29');
   await world.enterHouse();
   await verse('막 1:30#1');
+  await A.adapt([['집안 사람', '열이 너무 높아요. 어제부터 아무것도 못 드셨어요.'], ['이웃', '아까 회당에서 귀신도 쫓아내셨다던데… 말씀드려 봐.']]);  // 각색
   await choicePoint('a4');
   await verse('막 1:30');
   await world.raise();
@@ -1533,6 +1535,7 @@ async function part1(A) {
   audio.wind(.22); audio.chord(.06, 4);
   await direction('그분을 따르는 많은 사람이 산까지 따라왔다. 그분이 한 사람씩 이름을 부르신다.');
   await verse('막 3:13#1');
+  await A.adapt([['무리 속 사람', '누굴 부르시려는 거지?'], ['무리 속 사람', '배운 사람들이겠지. 설마 어부를 부르시겠어?']]);  // 각색
   await choicePoint('a5');
   await world.comeForward();
   await verse('막 3:14-15');
@@ -1550,6 +1553,7 @@ async function part1(A) {
   await verse('막 5:24');
   await direction('무리 속에서 그분이 멈추셨다. 열두 해 동안 앓던 한 여자가 그분 앞에 엎드려 떨며 모든 사실을 털어놓는다.', { auto: true, ms: 3800 });
   await world.messengerComes();
+  await A.adapt([['무리 속 사람', '늦었네. 이제 와서 뭘 어쩌겠어.'], ['무리 속 여자', '방금 그 여자 낫는 거 봤잖아. 아직 몰라.']]);  // 각색
   await choicePoint('a6');
   await verse('막 5:36', { voice: true });
   await verse('막 5:37');
@@ -1579,6 +1583,7 @@ async function part1(A) {
   await verse('막 6:39-40');
   await world.bless();
   await verse('막 6:41');
+  await A.adapt([['풀밭의 사람', '떡 다섯 개로 이 많은 사람을? 장난하나.'], ['풀밭의 사람', '쉿, 기다려 봐. 뭔가 이상해…']]);  // 각색
   await choicePoint('a7');
   await world.distribute();
   await verse('요 6:11');
@@ -1672,6 +1677,7 @@ async function part2(A) {
   await sceneCut('3', '가버나움', '마태복음 17장 24절–18장 22절', async () => { world.setEnv('noon', 0); world.place('capTax'); });
   audio.water(.1, 2); audio.wind(.1); audio.chord(.04, 4);
   await direction('다시 가버나움. 집 앞에서 두 사람이 당신을 불러 세운다.');
+  await A.adapt([['지나가던 사람', '저 선생, 성전세를 안 낸다는 말이 돌던데.'], ['지나가던 사람', '에이, 율법 잘 지키는 분이라던데 설마.']]);  // 각색
   await choicePoint('b3');
   await world.enterHouse2();
   await verse('마 17:25#2', { voice: true });
@@ -1711,6 +1717,7 @@ async function part2(A) {
   await direction('유월절이 가까웠다. 감람산 너머로 예루살렘이 보인다.');
   await verse('마 21:1-3', { voice: true });
   await world.bringColt();
+  await A.adapt([['길가의 사람', '나귀 새끼를 타고 들어온다고? 왕이면 말을 타야지.'], ['길가의 사람', '그래서 더 그분 같잖아. 칼 찬 왕이 아니라.']]);  // 각색
   await choicePoint('b4');
   await verse('마 21:6-7');
   await world.ride();
@@ -1805,6 +1812,7 @@ async function part2(A) {
   await verse('요 18:4-5');
   world.fallBack();
   await verse('요 18:6');
+  await A.adapt([['무리 속 군사', '저자가 맞아? 횃불 더 가까이!'], ['무리 속 사람', '방금 다들 넘어진 거 봤어? 손대도 되는 거야?']]);  // 각색
   await choicePoint('b9');
   world.strike();
   await verse('요 18:10');
@@ -1822,6 +1830,7 @@ async function part2(A) {
   await verse('눅 22:55');
   world.maid();
   await direction('여종 하나가 불빛에 비친 당신 얼굴을 빤히 본다.', { auto: true, ms: 3000 });
+  await A.adapt([['불가의 사람', '밤이 차네. 불 좀 더 지펴.'], ['불가의 사람', '(작게) 저 사람, 끌려간 그 선생 쪽 사람 같은데…']]);  // 각색
   await choicePoint('b10');
   await direction('조금 뒤, 다른 사람이 당신을 본다.', { auto: true, ms: 2200 });
   await speakLoop({ scene: '10 · 뜰', prompts: [{ who: '다른 사람', line: '너도 그 사람들이랑 한패 아니야?', ref: '눅 22:58#1', ask: '무엇이라고 대답하겠습니까?', situation: '두 번째로 누군가 당신을 알아볼 때', his: ['눅 22:58'], hisShort: '“이 사람아 나는 아니로라” 했다' }], submit: '대답하기', skips: ['대답하지 않는다'],

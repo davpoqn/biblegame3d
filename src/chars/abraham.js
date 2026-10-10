@@ -385,7 +385,8 @@ async function world(kit, { audio, sleep }) {
   const SITE = [0, 1500, 3000, 4500, 6000];
   const land = (ox, oz = 0, amp = 1, rim = 18) => (x, z) => { const lx = x - ox, lz = z - oz; return amp * (5 * (vnoise(lx * .012 + ox * .001, lz * .012) - .5) + 1.6 * Math.sin(lx * .021) * Math.cos(lz * .018)) * smooth(8, 50, Math.hypot(lx, lz)) + rim * smooth(220, 320, Math.hypot(lx, lz)) * vnoise(lx * .01, lz * .01); };
   const person = (c, o) => kit.person(c, o);
-  const SARAI = '#7d5c4a';
+  const LAY_CLIP = 'LayToIdle';  // 누운 자세: LayToIdle의 첫 장면
+  const SARAI = '#ece6d8';  // 사라: 흰 옷
 
   /* --- 1 · 하란 --- */
   const h0 = land(0);
@@ -423,28 +424,104 @@ async function world(kit, { audio, sleep }) {
   kit.terrain({ height: h3, size: 700, seg: 120, at: [X3, -150], lo: '#9a8160', hi: '#e2cba2', yMul: .02 });
   kit.rocks({ n: 40, height: h3, center: [X3, 0], rMin: 10, rMax: 120, color: '#a08a6a', sMax: .5 });
   [[-6, -3, .3], [5, -5, -.4]].forEach(([x, z, r]) => kit.tent({ at: [X3 + x, h3(X3 + x, z), z], ry: r, color: '#3d3129' }));
-  const sarah = kit.figure('woman_veil', { tint: SARAI, scale: .95, visible: true }); sarah.position.set(X3 - 5.2, h3(X3 - 5.2, -1), -1);
+  const sarah = kit.figure('woman', { tint: SARAI, scale: .95, visible: true }); sarah.position.set(X3 - 5.2, h3(X3 - 5.2, -1), -1);
   const isaacChild = kit.figure('boy', { tint: '#a8977e', scale: .5, visible: true }); isaacChild.position.set(X3 - 4.2, h3(X3 - 4.2, -.4), -.4);
-  const hagar = kit.figure('woman_veil', { tint: '#6b5642', scale: .95 }), ishmael = kit.figure('boy', { tint: '#5a4a3a', scale: .78 });
+  const hagar = kit.figure('woman', { tint: '#e4dccb', scale: .95 }), ishmael = kit.figure('boy', { tint: '#5a4a3a', scale: .78 });
   const hw = kit.walker(hagar, { height: h3, pace: 5, amp: .03, lean: .06, standLean: .02 }), iw = kit.walker(ishmael, { height: h3, pace: 6, amp: .04, lean: .06, standLean: .02 });
   const herds3 = [kit.herd('sheep', { n: 30, center: [X3 + 22, -16], rx: 12, rz: 8, height: h3 }), kit.herd('camel', { n: 6, center: [X3 - 18, -20], rx: 6, rz: 4, height: h3 })];
 
   /* --- 5 · 모리아 --- */
+  // 브엘세바(z≈4)에서 모리아 산(z=-150)까지 한 길 위에 사흘 길의 땅을 차례로 놓는다(사용자 의견 2026-10-10):
+  // 첫째 날 마른 들과 위성류 → 둘째 날 마른 풀과 감람나무 언덕 → 셋째 날 풀밭과 나무 → 풀과 나무가 무성한 산(22:13 '수풀')
   const X4 = SITE[4];
   const MOUNT = v3(X4, 0, -150);
   const h4 = (x, z) => { const lx = x - X4; const m = 38 * Math.exp(-((lx) ** 2 + (z - MOUNT.z) ** 2) / 2600); return m + 5 * (vnoise(lx * .015, z * .015) - .5) + 16 * smooth(260, 360, Math.hypot(lx, z + 80)); };
-  kit.terrain({ height: h4, size: 760, seg: 170, at: [X4, -90], lo: '#6a5a44', hi: '#bea67e', yMul: .02 });
+  const green4 = (x, z) => Math.min(1, smooth(-20, -80, z) * .8 + Math.exp(-((x - X4) ** 2 + (z - MOUNT.z) ** 2) / 4200) * .9);  // 0 마른 땅 ~ 1 풀밭
+  const GRASS4 = new THREE.Color('#56692f');
+  kit.terrain({ height: h4, size: 760, seg: 170, at: [X4, -90], lo: '#6a5a44', hi: '#bea67e', yMul: .02, tint: (x, z, y, c) => c.lerp(GRASS4, green4(x, z) * .85) });
   kit.rocks({ n: 90, height: h4, center: [X4, -90], rMin: 6, rMax: 160, sMax: .6 });
+  const SUM = v3(X4, h4(X4, MOUNT.z), MOUNT.z);
+  // 산을 오르는 길(굽이진 오솔길)과 사흘 길의 큰길
+  const CP = [[X4, -104], [X4 + 5, -116], [X4 - 3, -128], [X4 + 2, -139], [X4, SUM.z + 3.2]];
+  const pathX = z => { for (let i = 1; i < CP.length; i++) { const [ax, az] = CP[i - 1], [bx, bz] = CP[i]; if (z <= az && z >= bz) return ax + (bx - ax) * (z - az) / (bz - az); } return X4; };
+  const nearPath = (x, z, m) => (z < -100 && z > SUM.z && Math.abs(x - pathX(z)) < m) || (z > -104 && z < 8 && Math.abs(x - X4) < m) || Math.hypot(x - SUM.x, z - SUM.z) < 9;
+  const pick = (gen, m = 3) => { for (let k = 0; k < 30; k++) { const p = gen(); if (!nearPath(p[0], p[1], m)) return p; } return gen(); };
+  const side = () => (Math.random() < .5 ? -1 : 1);
+  kit.trees('tamarisk', { n: 8, height: h4, place: () => pick(() => [X4 + side() * rnd(7, 45), rnd(-22, 6)]) });
+  kit.trees('bare', { n: 8, height: h4, place: () => pick(() => [X4 + side() * rnd(7, 50), rnd(-22, 4)]) });
+  kit.trees('olive', { n: 20, height: h4, place: () => pick(() => [X4 + side() * rnd(5, 55), rnd(-48, -22)]) });
+  kit.trees('fig', { n: 36, height: h4, place: () => pick(() => [X4 + side() * rnd(6, 60), rnd(-104, -50)]) });
+  kit.trees('olive', { n: 16, height: h4, place: () => pick(() => [X4 + side() * rnd(6, 60), rnd(-100, -50)]) });
+  const onMount = () => { const a = rnd(0, Math.PI * 2), r = rnd(10, 58); return [MOUNT.x + Math.cos(a) * r, MOUNT.z + Math.sin(a) * r * .9]; };
+  kit.trees('fig', { n: 70, height: h4, s: [.9, 1.5], place: () => pick(onMount) });
+  kit.trees('olive', { n: 26, height: h4, place: () => pick(onMount) });
+  kit.grass({ center: [X4, -34], rx: 48, rz: 13, n: 2600, height: h4, color: '#8d8a52', h: .28, thin: .5, avoid: (x, z) => nearPath(x, z, 1.2) });
+  for (const c of ['#6b8040', '#7a8a46']) kit.grass({ center: [X4, -76], rx: 58, rz: 28, n: 5500, height: h4, color: c, h: .42, thin: .45, avoid: (x, z) => nearPath(x, z, 1.2) });
+  for (const c of ['#5f7a36', '#6e8640', '#52692e']) kit.grass({ center: [MOUNT.x, MOUNT.z + 4], rx: 64, rz: 50, n: 9000, height: h4, color: c, h: .62, thin: .42, avoid: (x, z) => Math.hypot(x - SUM.x, z - SUM.z) < 6 || nearPath(x, z, .5) });
+  // 오솔길 양옆의 덤불: 가까이 지나가면 옆으로 젖혀지고 바스락거린다(풀숲을 헤치며 오른다)
+  const bushes = [], bushMat = new THREE.MeshStandardMaterial({ color: '#5a7436', roughness: 1, flatShading: true });
+  for (let i = 0; i < 90; i++) {
+    const z = rnd(SUM.z + 5, -102), x = pathX(z) + side() * rnd(.55, 2.4), sc = rnd(.45, .85);
+    const b = new THREE.Mesh(new THREE.DodecahedronGeometry(.55, 0), bushMat); b.scale.set(sc * 1.2, sc, sc * 1.2); b.position.set(x, h4(x, z) + sc * .3, z);
+    b.userData.home = b.position.clone(); b.userData.tilt = 0; scene.add(b); bushes.push(b);
+  }
+  let climbing = false, lastRustle = 0;
+  kit.onFrame((dt, t) => {
+    if (!climbing) return;
+    const cx = kit.env.camX, cz = kit.env.camZ;
+    for (const b of bushes) {
+      const dx = b.userData.home.x - cx, dz = b.userData.home.z - cz, d = Math.hypot(dx, dz);
+      const want = d < 1.9 ? (1.9 - d) / 1.9 : 0;
+      if (want > .45 && b.userData.tilt < .3 && t - lastRustle > .35) { audio.rustle && audio.rustle(); lastRustle = t; }
+      b.userData.tilt += (want - b.userData.tilt) * Math.min(1, dt * 5);
+      const k = b.userData.tilt * .7; b.rotation.set(dz / (d || 1) * k, 0, -dx / (d || 1) * k);
+      b.position.set(b.userData.home.x + dx / (d || 1) * k * .5, b.userData.home.y - k * .15, b.userData.home.z + dz / (d || 1) * k * .5);
+    }
+  });
   const tent4 = kit.tent({ at: [X4 + 4, h4(X4 + 4, 4), 4], ry: -.5 });
   const isaac = kit.figure('boy', { tint: '#a8977e', scale: .88 });
-  const iw4 = kit.walker(isaac, { height: h4, pace: 6, amp: .04, lean: .08, standLean: .03 });
-  const wood = kit.box(.25, .25, 1.1, '#5a4130', 0, 1.15, -.15, isaac); wood.rotation.x = .3;
-  const servants4 = [0, 1].map(i => { const g = person(['#463a2e', '#3c3128'][i]); return { g, w: kit.walker(g, { height: h4 }) }; });
+  const iw4 = kit.walker(isaac, { height: h4, pace: 6, amp: .04, lean: .08, standLean: .03, noRun: true });
+  const wood = kit.box(.25, .25, 1.1, '#5a4130', 0, 1.15, -.15, isaac); wood.rotation.x = .3; wood.visible = false;  // 번제 나무는 22:6부터 이삭이 진다
+  // 이삭은 나귀를 타고 간다(연출: 본문은 나귀에 안장을 지웠다고만 한다, 22:3)
+  const isaacRide = kit.figure('boy', { tint: '#a8977e', scale: .88, pose: 'seat' });
+  // 두 종(22:3)
+  const servants4 = [0, 1].map(i => { const g = kit.figure('man', { tint: ['#6a5541', '#5a4a3a'][i] }); return { g, w: kit.walker(g, { height: h4, noRun: true }) }; });
   const donkey = kit.herd('donkey', { n: 1, center: [X4, 0], rx: .1, rz: .1, height: h4, placer: () => [0, 0] });
   donkey.visible = false;
-  const SUM = v3(X4, h4(X4, MOUNT.z), MOUNT.z);
+  const dk = donkey.userData.items && donkey.userData.items[0];
+  // 나귀 등에 실은 쪼갠 나무 (22:3)
+  const pack = new THREE.Group(); { const m = kit.mat('#5a4130'); for (let i = 0; i < 7; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.045, .05, .95, 6), m); c.rotation.x = Math.PI / 2; c.position.set((i % 4 - 1.5) * .1, Math.floor(i / 4) * .09, 0); pack.add(c); } kit.box(.5, .03, .5, '#7a5a3c', 0, -.05, 0, pack); }
+  scene.add(pack); pack.visible = false;
+  const RIDE = { y: .62, back: -.08, pack: -.5, packY: .84 };  // 나귀 등 높이와 앞뒤 자리(나귀 모델에 맞춘 값)
+  let follow = null;
+  kit.onFrame(dt => {
+    if (donkey.visible) {
+      const x = donkey.position.x, z = donkey.position.z, gy = h4(x, z), ry = dk ? dk.ry : 0;
+      donkey.position.y = gy - h4(X4, 0);
+      const fx = Math.sin(ry), fz = Math.cos(ry);
+      if (isaacRide.visible) { isaacRide.position.set(x + fx * RIDE.back, gy + RIDE.y, z + fz * RIDE.back); isaacRide.rotation.y = ry; }
+      if (pack.visible) { pack.position.set(x + fx * RIDE.pack, gy + RIDE.packY, z + fz * RIDE.pack); pack.rotation.y = ry; }
+    }
+    if (follow && follow.visible) { const e = kit.env; let a = Math.atan2(-(follow.position.x - e.camX), -(follow.position.z - e.camZ)); while (a - e.camY > Math.PI) a -= Math.PI * 2; while (a - e.camY < -Math.PI) a += Math.PI * 2; e.camY += (a - e.camY) * Math.min(1, dt * 1.6); }
+  });
+  function donkeyTo(x, z, dur) {
+    if (dk) { dk.ry = Math.atan2(x - donkey.position.x, z - donkey.position.z); donkey.userData.draw(); }
+    if (donkey.userData.play) donkey.userData.play('Walk', Math.max(.6, Math.min(1.5, Math.hypot(x - donkey.position.x, z - donkey.position.z) / dur / 1.1)));
+    return kit.tween(donkey.position, { x, z }, dur).then(() => { if (donkey.userData.play) donkey.userData.play('Idle'); });
+  }
+  // 아브라함이 손에 드는 불(불씨 그릇)과 칼 (22:6). 화면의 손 자리에 붙인다
+  const firePot = new THREE.Group(); { const pot = new THREE.Mesh(new THREE.CylinderGeometry(.06, .045, .08, 10), kit.mat('#7a4a2a')); firePot.add(pot); const ember = new THREE.Mesh(new THREE.SphereGeometry(.04, 8, 6), new THREE.MeshBasicMaterial({ color: '#ff8a3a' })); ember.position.y = .04; firePot.add(ember); const L = new THREE.PointLight('#ff9a4a', 1.2, 3, 2); L.position.y = .1; firePot.add(L); }
+  const knife = new THREE.Group(); { kit.box(.022, .09, .028, '#4a3424', 0, 0, 0, knife); kit.box(.03, .2, .006, '#d8d4ca', 0, .145, 0, knife, new THREE.MeshStandardMaterial({ color: '#d8d4ca', metalness: .6, roughness: .35, emissive: '#3a3a36' })); knife.children.forEach(c => { c.rotation.z = -.35; }); }
+  scene.add(firePot, knife); firePot.visible = knife.visible = false;
+  const HELD = { fire: [-.2, -.3, -.6], knife: [.19, -.3, -.55], up: [.04, .06, -.46] };
+  const heldOf = new Map(), _hv = new THREE.Vector3(), _hq = new THREE.Quaternion();
+  function holdItem(obj, off) { if (!off) { heldOf.delete(obj); obj.visible = false; return; } heldOf.set(obj, { off: new THREE.Vector3(...off), rx: 0 }); obj.visible = true; }
+  kit.onFrame(() => { if (!heldOf.size) return; kit.camera.updateMatrixWorld(); heldOf.forEach((h, o) => { o.position.copy(kit.camera.localToWorld(_hv.copy(h.off))); o.quaternion.copy(kit.camera.quaternion).multiply(_hq.setFromAxisAngle(_hv.set(1, 0, 0), h.rx)); }); });
   const altar4 = kit.altar({ at: [SUM.x, SUM.y, SUM.z - 3] }); altar4.visible = false;
   const woodPile = kit.box(1.2, .3, .7, '#5a4130', SUM.x, SUM.y + 1.15, SUM.z - 3); woodPile.visible = false;
+  // 결박되어 단 나무 위에 놓인 이삭 (22:9): 누운 자세와 두 줄의 끈
+  const isaacBound = kit.figure('boy', { tint: '#a8977e', scale: .88 });
+  const ropes = [0, 1].map(() => { const r = kit.box(.05, .05, .4, '#8a7a5a', 0, 0, 0); r.visible = false; return r; });
   const thicket = new THREE.Group(); scene.add(thicket);
   for (let i = 0; i < 9; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(rnd(.5, .9), 8, 6), new THREE.MeshStandardMaterial({ color: '#4a5032', roughness: 1, flatShading: true })); b.position.set(SUM.x + rnd(-2.2, 2.2), SUM.y + rnd(.3, .8), SUM.z + 6 + rnd(-1, 1)); thicket.add(b); }
   const ram = kit.herd('ram', { n: 1, center: [SUM.x + .4, SUM.z + 5.4], rx: .1, rz: .1, height: h4, placer: () => [0, 0], scale: [1, 1] })  // 숫양 (창 22:13). 동물 모델이 없으면 단순한 모양;
@@ -554,13 +631,30 @@ async function world(kit, { audio, sleep }) {
   silver.position.set(HG + 2.4, hHg(HG + 2.4, -11.4), -11.4); silver.visible = false; sitesA.hebron.add(silver);
   const ST = v3(HG + 40, hHg(HG + 40, 30), 30);
   kit.tent({ at: [ST.x, ST.y, ST.z], w: 5, d: 6, h: 2.6, color: '#3a2f27' });
-  const shroud = new THREE.Group(); { const c = kit.mat('#e3dac4'); const b = new THREE.Mesh(new THREE.BoxGeometry(.5, .24, 1.6), c); b.position.y = .2; shroud.add(b); const hd = new THREE.Mesh(new THREE.SphereGeometry(.15, 10, 8), c); hd.position.set(0, .27, -.86); shroud.add(hd); kit.box(.9, .08, 2, '#5a4636', 0, .04, -.1, shroud); }
+  // 사라의 주검(23:2): 깔개 위에 여성 캐릭터를 눕히고(흰 옷) 흰 천을 가슴까지 덮는다
+  function sarahBody() {
+    const g = new THREE.Group(); kit.box(1.4, .08, 2, '#5a4636', 0, .04, -.1, g);
+    const f = kit.figure('woman', { tint: SARAI, scale: .95, visible: true }); g.add(f); g.userData.f = f;
+    return g;
+  }
+  // 사람을 눕힌다: 머리→발 방향을 headAng(atan2(x, z) 기준) 쪽으로, 몸 가운데를 (cx, cz)에. 좌표는 f.parent 기준. place에서 부른다(reset이 동작을 되돌리므로)
+  function layOn(f, cx, cy, cz, headAng, clip = 'LayToIdle') {
+    const F = f.userData.fig; if (!F) return;
+    F.play(clip, 0); F.cur.setLoop(THREE.LoopOnce); F.cur.clampWhenFinished = true; F.cur.time = clip === 'Death01' ? F.cur.getClip().duration - .01 : 0; F.cur.paused = true; F.mixer.update(0);
+    const P = f.parent, loc = n => P.worldToLocal(F.bone(n).getWorldPosition(new THREE.Vector3()));
+    const ends = () => { P.updateMatrixWorld(true); return [loc('Head'), loc('foot_l').add(loc('foot_r')).multiplyScalar(.5)]; };
+    f.rotation.y = 0; f.position.set(cx, cy, cz);
+    let [h, ft] = ends(); f.rotation.y = headAng - Math.atan2(h.x - ft.x, h.z - ft.z);
+    [h, ft] = ends(); f.position.x += cx - (h.x + ft.x) / 2; f.position.z += cz - (h.z + ft.z) / 2;
+  }
+  const layDown = g => layOn(g.userData.f, 0, .08, -.15, Math.PI, LAY_CLIP);
+  const shroud = sarahBody();
   shroud.position.set(ST.x - .5, ST.y, ST.z - .4); sitesA.hebron.add(shroud);
   { const L = new THREE.PointLight('#ffb070', 5, 8, 1.6); L.position.set(ST.x + .8, ST.y + .6, ST.z - 1.6); sitesA.hebron.add(L); kit.glow(.07, .1, 4, 2, .7, ST.x + .8, ST.y + .45, ST.z - 1.6); }
   const MC = v3(HG - 64, hHg(HG - 64, 40), 40);
   const cave = kit.tomb({ at: [MC.x, MC.y, MC.z], ry: Math.PI / 2 }); cave.userData.stone.visible = false;
   kit.trees('olive', { n: 16, place: i => { let a, r; do { a = rnd(0, 6.3); r = rnd(9, 24); } while (Math.cos(a) > .55); return [MC.x + Math.cos(a) * r, MC.z + Math.sin(a) * r]; }, height: hHg });  // 사방에 둘린 수목 (23:17)
-  const bier = shroud.clone(); bier.position.set(MC.x + 2.8, hHg(MC.x + 2.8, MC.z), MC.z); bier.rotation.y = Math.PI / 2; bier.visible = false; sitesA.hebron.add(bier);
+  const bier = sarahBody(); bier.position.set(MC.x + 2.8, hHg(MC.x + 2.8, MC.z), MC.z); bier.rotation.y = Math.PI / 2; bier.visible = false; sitesA.hebron.add(bier);
   const isaacOld = figA('man', MC.x + 4.6, MC.z - 1.7, hHg, { tint: '#3a4a6a', colors: { beard: '#2a1c12' } }); isaacOld.visible = false;
   const ishmaelOld = figA('man', MC.x + 4.6, MC.z + 1.7, hHg, { tint: '#6a4a2a', colors: { beard: '#1a120c', headcloth: '#8a6a48' } }); ishmaelOld.visible = false;
   const mourners = kit.throng({ n: 16, height: hHg, place: i => [MC.x + rnd(7, 13), MC.z + rnd(-7, 7), -Math.PI / 2 + rnd(-.3, .3)] });
@@ -570,8 +664,8 @@ async function world(kit, { audio, sleep }) {
   // 마므레 장막 (13:18, 16–18장): 장막, 사라, 하갈, 이스마엘, 상수리나무 아래 식탁
   const tentM = kit.tent({ at: [X2 - 2, h2(X2 - 2, 12.4), 12.4], w: 5.5, d: 4.4, h: 2.6, ry: Math.PI, color: '#3a2f27' });
   const altarM = kit.altar({ at: [X2 + 5, h2(X2 + 5, 7.5), 7.5] }); altarM.visible = false;
-  const sarahM = figA('woman_veil', X2 - 3.4, 9.2, h2, { tint: SARAI, scale: .95 }); sarahM.visible = false;
-  const hagarM = figA('woman_veil', X2 + 1.8, 8.4, h2, { tint: '#6b5642', scale: .95 }); hagarM.visible = false;
+  const sarahM = figA('woman', X2 - 3.4, 9.2, h2, { tint: SARAI, scale: .95 }); sarahM.visible = false;
+  const hagarM = figA('woman', X2 + 1.8, 8.4, h2, { tint: '#e4dccb', scale: .95 }); hagarM.visible = false;
   const ishmaelM = figA('boy', X2 + 2.4, 6.6, h2, { tint: '#5a4a3a', scale: .86 }); ishmaelM.visible = false;
   const mealM = new THREE.Group(); scene.add(mealM);
   { const y = h2(X2 - 6, 2.2); kit.box(1.4, .3, .8, '#5a4130', X2 - 6, y + .15, 2.2, mealM); for (let i = 0; i < 3; i++) { const b = kit.prop('prop_bread'); if (b) { b.position.set(X2 - 6.4 + i * .4, y + .31, 2.2); b.rotation.y = i * 1.3; mealM.add(b); } } const bowl = new THREE.Mesh(new THREE.CylinderGeometry(.14, .1, .1, 10), kit.mat('#e8e2d0')); bowl.position.set(X2 - 5.5, y + .35, 2.05); mealM.add(bowl); }
@@ -624,17 +718,17 @@ async function world(kit, { audio, sleep }) {
       }
       if (where === 'mamre') { sarahM.visible = hagarM.visible = ishmaelM.visible = false; altarM.visible = true; men3.forEach(m => seatFig(m.g, false)); }
       if (where === 'sheba') { sarah.visible = isaacChild.visible = true; }
-      if (where === 'summit') { kit.setEnv({ camX: X4, camZ: SUM.z + 3.2, camH: 1.65 + h4(X4, SUM.z + 3.2) }, 0); kit.groundCam(1.65); lookNow(X4, SUM.z - 3); isaac.visible = true; iw4.idle(); isaac.position.set(SUM.x + 1.2, h4(SUM.x + 1.2, SUM.z + 1.8), SUM.z + 1.8); faceTo(isaac, X4, SUM.z + 3.2); servants4.forEach(s => { s.g.visible = false; }); donkey.visible = false; altar4.visible = false; woodPile.visible = false; thicket.visible = false; ram.visible = false; }
-      if (where === 'hebronTent') { showOnly('hebron'); sitA(ST.x + .6, ST.z + .5, 1.0); lookNow(ST.x - .5, ST.z - .4); }
+      if (where === 'summit') { kit.setEnv({ camX: X4, camZ: SUM.z + 3.2, camH: 1.65 + h4(X4, SUM.z + 3.2) }, 0); kit.groundCam(1.65); lookNow(X4, SUM.z - 3); isaac.visible = true; iw4.idle(); isaac.position.set(SUM.x + 1.2, h4(SUM.x + 1.2, SUM.z + 1.8), SUM.z + 1.8); faceTo(isaac, X4, SUM.z + 3.2); wood.visible = true; climbing = false; follow = null; isaacRide.visible = pack.visible = isaacBound.visible = false; ropes.forEach(r => { r.visible = false; }); if (!heldOf.has(knife)) { holdItem(firePot, HELD.fire); holdItem(knife, HELD.knife); } servants4.forEach(s => { s.g.visible = false; }); donkey.visible = false; altar4.visible = false; woodPile.visible = false; thicket.visible = false; ram.visible = false; }
+      if (where === 'hebronTent') { showOnly('hebron'); sitA(ST.x + .6, ST.z + .5, 1.0); lookNow(ST.x - .5, ST.z - .4); layDown(shroud); }
       if (where === 'gateH') { showOnly('hebron'); standA(HG, -4.6); lookNow(HG + 2, -13); kit.setEnv({ camP: -.1 }, 0); seatFig(ephron, true); ephron.position.y = hHg(ephron.position.x, ephron.position.z) + .45; ephron.rotation.y = -Math.PI / 2; silver.visible = false; lookersA = [...hittites, ephron]; }
-      if (where === 'cave') { showOnly('hebron'); standA(MC.x + 7, MC.z + .4); lookNow(MC.x, MC.z); bier.visible = true; isaacOld.visible = ishmaelOld.visible = false; mourners.visible = false; }
+      if (where === 'cave') { showOnly('hebron'); standA(MC.x + 7, MC.z + .4); lookNow(MC.x, MC.z); bier.visible = true; layDown(bier); isaacOld.visible = ishmaelOld.visible = false; mourners.visible = false; }
       if (where === 'sheba2') { kit.setEnv({ camX: X3, camZ: 2, camH: 1.05 + h3(X3, 2) }, 0); lookNow(X3, -4); sarah.visible = false; isaacChild.visible = false; hagar.visible = ishmael.visible = false; oldServant.visible = true; oldServant.position.set(X3 + .6, h3(X3 + .6, -.5), -.5); faceTo(oldServant, X3, 2); setBase(oldServant, 'Idle_Loop'); isaacMan.visible = true; isaacMan.position.set(X3 - 2.6, h3(X3 - 2.6, -1.8), -1.8); faceTo(isaacMan, X3, 2); lookersA = [oldServant, isaacMan]; }
       lampL.intensity = 0; lampG.visible = false;
       if (where === 'haran') { C({ camX: 0, camZ: 0, camH: 1.65 + h0(0, 0) }); herds0.forEach((g, i) => { g.visible = true; g.position.copy(herdHome[i]); }); people0.visible = true; sarai.visible = true; lot.visible = true; fire0.level = 1; }
       if (where === 'tent') { C({ camX: X1 + .6, camZ: .8, camH: 1.0 + h1(X1, 0) }); lampL.intensity = 3.5; lampG.visible = true; }
       if (where === 'mamre') { C({ camX: X2, camZ: 2, camH: 1.65 + h2(X2, 2) }); men3.forEach((m, i) => { m.g.visible = true; m.g.position.set(X2 - 2 + i * 2, h2(X2 - 2 + i * 2, -3), -3); m.w.idle(); m.g.rotation.set(0, Math.PI, 0); }); }
       if (where === 'sheba') { C({ camX: X3, camZ: 2, camH: 1.65 + h3(X3, 2) }); hagar.visible = true; ishmael.visible = true; hagar.position.set(X3 + 1.6, h3(X3 + 1.6, -3.4), -3.4); ishmael.position.set(X3 + 2.6, h3(X3 + 2.6, -3.1), -3.1); hw.idle(); iw.idle(); hagar.rotation.y = Math.PI + .3; ishmael.rotation.y = Math.PI + .3; }
-      if (where === 'moriahNight') { C({ camX: X4, camZ: 6, camH: 1.65 + h4(X4, 6) }); isaac.visible = false; servants4.forEach(s => { s.g.visible = false; }); donkey.visible = false; altar4.visible = false; woodPile.visible = false; thicket.visible = false; ram.visible = false; }
+      if (where === 'moriahNight') { C({ camX: X4, camZ: 6, camH: 1.65 + h4(X4, 6) }); isaac.visible = false; isaacRide.visible = false; pack.visible = false; isaacBound.visible = false; ropes.forEach(r => { r.visible = false; }); follow = null; climbing = false; servants4.forEach(s => { s.g.visible = false; }); donkey.visible = false; altar4.visible = false; woodPile.visible = false; thicket.visible = false; ram.visible = false; }
     },
     async depart() {
       herds0.forEach((g, i) => kit.tween(g.position, { x: g.position.x * .3, z: g.position.z - 150 }, 22 + i * 2));
@@ -655,27 +749,91 @@ async function world(kit, { audio, sleep }) {
       await sleep(6000);
     },
     async setOut() {
-      tent4.visible = true; isaac.visible = true; donkey.visible = true;
-      isaac.position.set(X4 + 1.4, h4(X4 + 1.4, 1), 1); donkey.position.set(X4 - 1.8, h4(X4 - 1.8, 1.2) - h4(X4, 0), 1.2);
-      servants4.forEach((s, i) => { s.g.visible = true; s.g.position.set(X4 - 3 + i * 1.2, h4(X4 - 3 + i * 1.2, 2.2), 2.2); });
+      // 22:3 이른 아침: 나귀에 안장을 지우고 나무를 싣고, 이삭은 나귀 위에(연출), 두 종
+      tent4.visible = true; isaac.visible = false; donkey.visible = true; isaacRide.visible = true; pack.visible = true; wood.visible = false;
+      donkey.position.set(X4 + .3, 0, 1.4); if (dk) { dk.ry = Math.PI; donkey.userData.draw(); }
+      servants4.forEach((s, i) => { s.g.visible = true; s.g.position.set(X4 + (i ? -1.4 : 1.6), h4(X4 + (i ? -1.4 : 1.6), i ? 2.6 : .2), i ? 2.6 : .2); s.g.rotation.y = Math.PI; });
     },
     cycleDays(n, secs, onDay) { return kit.cycleDays(n, secs, onDay, 'night', 'day'); },
-    async approach() {
-      // 사흘째, 산이 보이는 곳까지
-      kit.setEnv({ camZ: -70, camH: 1.65 + h4(X4, -70) }, 0);
-      isaac.position.set(X4 + 1.4, h4(X4 + 1.4, -71), -71); donkey.position.set(X4 - 2, h4(X4 - 2, -69) - h4(X4, 0), -69);
-      servants4.forEach((s, i) => { s.g.position.set(X4 - 3.4 + i * 1.3, h4(X4 - 3.4 + i * 1.3, -68), -68); s.g.rotation.y = Math.PI; });
+    // 사흘 길(22:3–4): 날마다 다른 땅을 지난다. 나귀를 탄 이삭과 두 종이 앞서고, 당신은 그 곁을 걷는다
+    async journey(onDay) {
+      const legs = [['dawn', 4, -16], ['noon', -24, -44], ['day', -50, -68]];
+      for (let d = 0; d < 3; d++) {
+        const [env, z0, z1] = legs[d], dur = (z0 - z1) / 1.3;
+        if (onDay) onDay(d + 1);
+        await blinkA(async () => {
+          kit.setEnv(env, 0);
+          donkey.position.set(X4 + .3, 0, z0 - 2.4); if (dk) { dk.ry = Math.PI; donkey.userData.draw(); }
+          servants4.forEach((s, i) => { s.w.idle(); s.g.position.set(X4 + (i ? -1.5 : 1.7), h4(X4, z0), z0 - (i ? 4.2 : 1.2)); });
+          standA(X4 - 2.3, z0); lookNow(X4 + .3, z0 - 4); follow = isaacRide;
+        }, d ? 900 : 300);
+        donkeyTo(X4 + .3, z1 - 2.4, dur);
+        servants4.forEach((s, i) => s.w.go(s.g.position.clone(), v3(X4 + (i ? -1.5 : 1.7), 0, z1 - (i ? 4.2 : 1.2)), dur));
+        await kit.walkTo(X4 - 2.3, z1, dur);
+      }
+      // 사흘째에 눈을 들어 멀리 그곳을 바라본다(22:4)
+      follow = null; servants4.forEach(s => s.w.idle());
+      lookAt(MOUNT.x, MOUNT.z, 3); kit.setEnv({ camP: .1 }, 3);
     },
+    // 22:5 종들은 나귀와 함께 여기 머문다. 이삭이 나귀에서 내린다
+    async atFoot() {
+      await blinkA(async () => {  // 산기슭에 이른다
+        standA(X4 - 1.6, -99); lookNow(X4 + 1, -103); kit.setEnv({ camP: 0 }, 0);
+        donkey.position.set(X4 + 2.8, 0, -100.2); if (dk) { dk.ry = -Math.PI / 2; donkey.userData.draw(); }
+        servants4.forEach((s, i) => { s.w.idle(); s.g.position.set(X4 + 2 + i * 1.6, h4(X4 + 2 + i * 1.6, -98.4), -98.4); });
+        isaacRide.visible = false; isaac.visible = true; iw4.idle(); isaac.position.set(X4 + .6, h4(X4 + .6, -101.4), -101.4);
+      }, 900);
+      faceTo(isaac, kit.env.camX, kit.env.camZ); servants4.forEach(s => kit.faceCamera(s.g, 1.2));
+    },
+    // 22:6 번제 나무를 이삭에게 지우고, 당신은 불과 칼을 손에 든다
+    loadWood() {
+      pack.visible = false; wood.visible = true; setBase(isaac, 'Idle_Loop');
+      holdItem(firePot, HELD.fire); holdItem(knife, HELD.knife); kit.setEnv({ camP: -.35 }, 1.5); setTimeout(() => kit.setEnv({ camP: 0 }, 2), 2600);
+    },
+    // 둘이 풀숲을 헤치며 천천히 산을 오른다. 이삭이 두어 걸음 앞서 간다
     async climb() {
-      iw4.go(isaac.position.clone(), v3(SUM.x + 1.2, 0, SUM.z + 1.8), 16);
-      await kit.walkTo(X4, SUM.z + 3.2, 16);
-      kit.faceCamera(isaac, 1.2);
+      climbing = true; follow = isaac; audio.wind(.18, 3); kit.setEnv('summit', 5); kit.setEnv({ camP: .14 }, 2);
+      const speed = .75, lead = 2.6;
+      const segLen = CP.slice(1).map((p, i) => Math.hypot(p[0] - CP[i][0], p[1] - CP[i][1]));
+      // 이삭: 길을 따라 lead만큼 앞에서 시작해 꼭대기 곁에 선다
+      (async () => {
+        let pos = [CP[0][0], CP[0][1] - lead];
+        isaac.position.set(pos[0], h4(pos[0], pos[1]), pos[1]);
+        for (let i = 1; i < CP.length; i++) { const to = i === CP.length - 1 ? [SUM.x + 1.2, SUM.z + 1.8] : CP[i]; const d = Math.hypot(to[0] - pos[0], to[1] - pos[1]); await iw4.go(isaac.position.clone(), v3(to[0], 0, to[1]), d / speed); pos = to; }
+        kit.faceCamera(isaac, 1.2);
+      })();
+      standA(CP[0][0], CP[0][1] + 1.2);
+      for (let i = 1; i < CP.length; i++) await kit.walkTo(CP[i][0], CP[i][1], segLen[i - 1] / speed);
+      climbing = false; follow = null;
     },
-    build() { altar4.visible = true; woodPile.visible = true; altar4.userData.fire.level = 0; kit.focus(0, 2); kit.setEnv({ camP: -.25 }, 3); },
-    bound() { isaac.visible = false; },
-    heaven() { kit.setEnv({ camP: .55 }, 2.5); audio.chord(.6, 2); },
+    build() {
+      altar4.visible = true; woodPile.visible = true; altar4.userData.fire.level = 0; kit.focus(0, 2); kit.setEnv({ camP: -.25 }, 3);
+      holdItem(firePot); firePot.visible = true; firePot.position.set(SUM.x + 1.1, SUM.y + .04, SUM.z - 2.2); firePot.quaternion.identity();  // 불씨 그릇은 단 곁에 내려놓는다
+      wood.visible = false;
+    },
+    // 22:9 이삭을 결박하여 단 나무 위에 놓는다
+    bound() {
+      isaac.visible = false; isaacBound.visible = true;
+      layOn(isaacBound, SUM.x, SUM.y + 1.3, SUM.z - 3, Math.PI / 2);
+      const F = isaacBound.userData.fig; isaacBound.updateMatrixWorld(true);
+      const at = n => F.bone(n).getWorldPosition(new THREE.Vector3());
+      const chest = at('Head').lerp(at('pelvis'), .55), feet = at('foot_l').add(at('foot_r')).multiplyScalar(.5);
+      [chest, feet].forEach((p, i) => { ropes[i].position.set(p.x, p.y + .03, p.z); ropes[i].visible = true; });
+      kit.walkTo(SUM.x - .25, SUM.z - 1.35, 3); lookAt(SUM.x, SUM.z - 3, 3); kit.setEnv({ camP: -.32 }, 3); audio.drone(.16, 3);  // 단 앞으로 다가가 내려다본다
+    },
+    // 22:10 손을 내밀어 칼을 잡고 들어 올린다
+    raiseKnife() {
+      const h = heldOf.get(knife) || (holdItem(knife, HELD.knife), heldOf.get(knife));
+      kit.tween(h.off, { x: HELD.up[0], y: HELD.up[1], z: HELD.up[2] }, 2.2); kit.tween(h, { rx: Math.PI * .92 }, 2.2);
+      kit.setEnv({ camP: -.48 }, 2.4); audio.wind(.02, 2); kit.setEnv({ wind: 0 }, 2);
+    },
+    // 22:11 하늘에서 부르는 소리: 칼을 내리고 고개를 든다
+    heaven() {
+      const h = heldOf.get(knife); if (h) { kit.tween(h.off, { x: HELD.knife[0], y: HELD.knife[1], z: HELD.knife[2] }, 1.6); kit.tween(h, { rx: 0 }, 1.6); }
+      kit.setEnv({ camP: .55 }, 2.5); audio.chord(.6, 2);
+    },
     async ram() { thicket.visible = true; ram.visible = true; kit.setEnv({ camP: -.04 }, 2.5); await kit.focus(180, 3.5); },
-    unbind() { isaac.visible = true; isaac.position.set(SUM.x - 1.4, h4(SUM.x - 1.4, SUM.z - 1), SUM.z - 1); },
+    unbind() { isaacBound.visible = false; ropes.forEach(r => { r.visible = false; }); holdItem(knife); isaac.visible = true; setBase(isaac, 'Idle_Loop'); isaac.position.set(SUM.x - 1.7, h4(SUM.x - 1.7, SUM.z - 2.4), SUM.z - 2.4); faceTo(isaac, kit.env.camX, kit.env.camZ); },
     offer() { altar4.userData.fire.level = 1; audio.crackle(.3); kit.focus(0, 3); },
     /* --- 새 장면 (3부 구성) --- */
     // 1부
@@ -770,6 +928,7 @@ async function world(kit, { audio, sleep }) {
       hagar.visible = false; ishmael.visible = false; isaac.visible = false; donkey.visible = false;
       people0.position.set(0, 0, 0); sarai.position.set(-5.4, h0(-5.4, -2.2), -2.2); lot.position.set(3.4, h0(3.4, -3), -3);
       altar4.visible = false; woodPile.visible = false; thicket.visible = false; ram.visible = false;
+      isaacRide.visible = pack.visible = isaacBound.visible = false; ropes.forEach(r => { r.visible = false; }); holdItem(firePot); holdItem(knife); climbing = false; follow = null;
       api.place('haran');
     },
     dispose: kit.dispose
@@ -793,6 +952,7 @@ async function part1(A) {
   world.focus(0, 3);
   await verse('창 12:1', { voice: true });
   await verse('창 12:2-3', { voice: true });
+  await A.adapt([['하란의 친척', '그 나이에 어디를 간다고? 일흔다섯이야.'], ['하란의 친척', '어디로 가는지도 모른다면서?']]);  // 각색
   await choicePoint('c1');
   world.setEnv('road', 18); audio.crackle(0);
   world.depart();
@@ -816,6 +976,7 @@ async function part1(A) {
   audio.wind(.12); audio.water(.08); audio.drone(.06, 3); audio.chord(0, 2);
   await verse('창 12:10');
   await direction('강가에 종려나무가 늘어서 있다. 멀리 바로의 궁이 보인다. 곁에 아내 사래가 있다.');
+  await A.adapt([['함께 가는 종', '애굽 사람들은 이방 여인을 보면 그냥 두지 않는대요.'], ['함께 가는 종', '그래도 거기엔 곡식이 있잖아요.']]);  // 각색
   await choicePoint('a2');
   await verse('창 12:11-13');
   world.saraiTaken();
@@ -940,6 +1101,7 @@ async function part2(A) {
   await verse('창 18:1');
   world.threeMen();
   await direction('눈을 들어 보니, 맞은편에 사람 셋이 서 있다.', { auto: true, ms: 3000 });
+  await A.adapt([['장막의 종', '이 한낮에 길손이라니. 어디서 오는 사람들일까요?']]);  // 각색
   await choicePoint('a7');
   await world.runBow();
   await speakLoop({ scene: '5 · 세 사람', prompts: [{ ask: '세 사람 앞에 엎드렸습니다. 무엇이라고 말하겠습니까?', situation: '세 사람 앞에 엎드렸을 때', his: ['창 18:3-5'], hisShort: '“종을 떠나 지나가지 마옵시고… 나무 아래서 쉬소서” 했다' }], submit: '말하기', skips: ['아무 말도 하지 않는다'],
@@ -983,6 +1145,7 @@ async function part2(A) {
   await say('사라', '저 여종이랑 그 아들 내보내요. 저 종의 아들이 우리 이삭이랑 똑같이 유산을 받는 건 안 돼요.', '창 21:9-10');
   await verse('창 21:11');
   await verse('창 21:12-13', { voice: true });
+  await A.adapt([['장막의 종', '아이가 아직 어린데… 광야로요?'], ['장막의 종', '안주인 뜻이 워낙 단호하셔서…']]);  // 각색
   await choicePoint('c4');
   world.hagarGo();
   await direction('아침 해가 오른다. 하갈과 아이가 광야 쪽으로 멀어진다.', { auto: true, ms: world.stub ? 1500 : 7000 });
@@ -1002,17 +1165,19 @@ async function part3(A) {
   await choicePoint('c5');
   await verse('창 22:3');
   // 2 · 사흘 길
-  await sceneCut('2', '사흘 길', '창세기 22장 3–8절', async () => { world.setEnv('night', 0); world.place('moriahNight'); world.setOut(); });
+  await sceneCut('2', '사흘 길', '창세기 22장 3–8절', async () => { world.setEnv('dawn', 0); world.place('moriahNight'); world.setOut(); });
   clearStage();
-  await world.cycleDays(3, 10, d => showDay(d, '사흘 길'));
+  // 사흘 동안 걷는다: 마른 들 → 감람나무 언덕 → 풀밭. 이삭은 나귀를 타고 간다(연출)
+  if (world.journey) await world.journey(d => showDay(d, '사흘 길')); else await world.cycleDays(3, 10, d => showDay(d, '사흘 길'));
   await sleep(700); hideDay();
   await direction('사흘 동안 하늘은 아무 말이 없다.');
-  world.setEnv('day', 0); world.approach();
   await verse('창 22:4');
+  await world.atFoot();
   await verse('창 22:5');
+  world.loadWood();
   await verse('창 22:6');
   world.climb();
-  await direction('둘이 산을 오른다.', { auto: true, ms: world.stub ? 1500 : 6000 });
+  await direction('둘이 풀숲을 헤치며 산을 오른다. 이삭이 두어 걸음 앞서 간다.', { auto: true, ms: world.stub ? 1500 : 9000 });
   await say('이삭', '아버지.', '창 22:7');
   await direction('“그래, 내가 여기 있다.”', { auto: true, ms: 1800 });
   await speakLoop({ scene: '2 · 사흘 길', prompts: [{ who: '이삭', line: '불이랑 나무는 여기 있는데요… 번제로 드릴 어린 양은 어디 있어요?', ref: '창 22:7', ask: '무엇이라고 대답하겠습니까?', situation: '산을 오르다 이삭이 물을 때', his: ['창 22:8'], hisShort: '“번제할 어린 양은 하나님이 자기를 위하여 친히 준비하시리라” 했다' }], submit: '대답하기', skips: ['대답하지 못한다'],
@@ -1025,6 +1190,8 @@ async function part3(A) {
   await verse('창 22:9');
   world.bound();
   await choicePoint('c6');
+  world.raiseKnife();
+  await verse('창 22:10');
   world.heaven();
   await verse('창 22:11', { voice: true });
   await verse('창 22:12', { voice: true });
@@ -1053,6 +1220,7 @@ async function part3(A) {
   await verse('창 23:7');
   await verse('창 23:8-9');
   world.ephronRises();
+  await A.adapt([['성문의 헷 사람', '그냥 준다는데 받으면 그만이지.'], ['성문의 헷 사람', '받으면 빚이야. 나중에 딴소리 나와.']]);  // 각색
   await choicePoint('a8');
   await verse('창 23:12-13');
   await say('에브론', '어른, 들어 보십시오. 그 땅값은 은 사백 세겔입니다만, 어른과 저 사이에 그게 무슨 대수겠습니까? 고인을 장사하십시오.', '창 23:14-15');

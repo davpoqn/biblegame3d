@@ -18,7 +18,7 @@
     "cloth_dark": "#3a3028",
     "royal": "#5b2a5e",
     "gem": "#b0182c",
-    "dress": "#9e2430",
+    "dress": "#ece6d8",
     "sash": "#c9a23a",
     "hair": "#2a1c14",
     "fish": "#8f9a8e",
@@ -142,7 +142,7 @@
       ]
     },
     "woman": {
-      "name": "기본 여자 — 홍색 옷과 금 장신구 (삼하 1:24)",
+      "name": "기본 여자 — 흰 옷과 금 장신구 (사용자 의견 2026-10-10: 여자 옷은 웬만하면 흰색)",
       "body": "f",
       "wear": [
         "dress",
@@ -153,7 +153,7 @@
         "bracelets",
         "sandals"
       ],
-      "under": "#9e2430",
+      "under": "#e8e1d3",
       "bare": [
         "under_arm"
       ]

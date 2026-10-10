@@ -313,13 +313,13 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   function addFloor(cx, cz, w, d, y = 0, obj) { return addGround((x, z) => (!obj || shown(obj)) && Math.abs(x - cx) <= w / 2 && Math.abs(z - cz) <= d / 2 ? y : null); }
 
   /* --- 지형 --- */
-  function terrain({ height, size = 900, seg = 240, lo = '#5f4738', hi = '#b8936a', yMul = .055, grain = .3, at = [0, 0] } = {}) {
+  function terrain({ height, size = 900, seg = 240, lo = '#5f4738', hi = '#b8936a', yMul = .055, grain = .3, at = [0, 0], tint } = {}) {  // tint(x, z, y, c): 자리마다 색을 바꾼다(풀밭 등)
     const g = new THREE.PlaneGeometry(size, size, seg, seg); g.rotateX(-Math.PI / 2); g.translate(at[0], 0, at[1]);
     const p = g.attributes.position, col = new Float32Array(p.count * 3);
     const cLo = new THREE.Color(lo), cHi = new THREE.Color(hi), c = new THREE.Color();
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), z = p.getZ(i), y = height(x, z); p.setY(i, y);
-      c.copy(cLo).lerp(cHi, clamp(.5 + y * yMul + (vnoise(x * .35, z * .35) - .5) * grain, 0, 1));
+      c.copy(cLo).lerp(cHi, clamp(.5 + y * yMul + (vnoise(x * .35, z * .35) - .5) * grain, 0, 1)); if (tint) tint(x, z, y, c);
       col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
@@ -633,7 +633,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     if (n <= 3) {  // 한두 마리는 실제로 숨 쉬고 고개를 움직인다
       items.forEach(o => {
         o.obj = SkeletonUtils.clone(A.rig); o.base = o.obj.scale.x; o.obj.traverse(m => { if (m.isMesh) { m.material = mat(m.material); m.frustumCulled = false; } });
-        o.mixer = new THREE.AnimationMixer(o.obj); A.clips.Idle && o.mixer.clipAction(A.clips.Idle).play(); o.mixer.update(rnd(0, 5));
+        o.mixer = new THREE.AnimationMixer(o.obj); if (A.clips.Idle) { o.act = o.mixer.clipAction(A.clips.Idle); o.act.play(); } o.mixer.update(rnd(0, 5));
         g.add(o.obj); herdMixers.push(o);
       });
       draw = () => items.forEach(o => { o.obj.position.set(o.x, ground(o), o.z); o.obj.rotation.set(0, o.ry, 0); o.obj.scale.setScalar(o.s * o.base); o.obj.visible = o.on; });  // 모델 자체의 크기(뼈대 노드의 scale)를 지킨다
@@ -655,6 +655,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     draw(); R().add(g);
     g.userData.items = items; g.userData.draw = draw;
     g.userData.keep = frac => { const k = Math.round(items.length * frac); items.forEach((o, i) => { o.on = i < k; }); draw(); };
+    // 한두 마리만: 동작 바꾸기(Idle, Walk, Run). 나귀를 걷게 할 때 쓴다
+    g.userData.play = (name, speed = 1) => items.forEach(o => { const c = A.clips[name]; if (!o.mixer || !c) return; const a = o.mixer.clipAction(c); a.timeScale = speed; if (o.act === a) return; a.reset().play(); if (o.act) o.act.crossFadeTo(a, .35, false); o.act = a; });
     return g;
   }
   // 생선, 떡 같은 소품 (assets/chars/props.glb). 없으면 null
@@ -938,11 +940,11 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     R().add(g); return g;
   }
   // 풀밭과 갈대: 작은 잎을 흩뿌린다 (요 6:10 "잔디가 많은지라")
-  function grass({ center = [0, 0], rx = 20, rz = 20, n = 1500, height, color = '#5f7a3a', h = .35, reeds = false } = {}) {
-    const m = new THREE.InstancedMesh(new THREE.ConeGeometry(reeds ? .03 : .06, reeds ? 1.6 : h, 3), mat(color), n), d = new THREE.Object3D();
+  function grass({ center = [0, 0], rx = 20, rz = 20, n = 1500, height, color = '#5f7a3a', h = .35, reeds = false, avoid, thin = 1 } = {}) {  // avoid(x, z): 풀을 두지 않을 자리, thin: 잎 굵기 배율
+    const m = new THREE.InstancedMesh(new THREE.ConeGeometry((reeds ? .03 : .06) * thin, reeds ? 1.6 : h, 3), mat(color), n), d = new THREE.Object3D();
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()), x = center[0] + Math.cos(a) * r * rx, z = center[1] + Math.sin(a) * r * rz;
-      d.position.set(x, (height ? height(x, z) : 0) + (reeds ? .8 : h / 2), z); d.rotation.set(rnd(-.25, .25), rnd(0, 6), rnd(-.25, .25)); d.scale.setScalar(rnd(.6, 1.3)); d.updateMatrix(); m.setMatrixAt(i, d.matrix);
+      d.position.set(x, (height ? height(x, z) : 0) + (reeds ? .8 : h / 2), z); d.rotation.set(rnd(-.25, .25), rnd(0, 6), rnd(-.25, .25)); d.scale.setScalar(avoid && avoid(x, z) ? 0 : rnd(.6, 1.3)); d.updateMatrix(); m.setMatrixAt(i, d.matrix);
     }
     m.frustumCulled = false; R().add(m); return m;
   }

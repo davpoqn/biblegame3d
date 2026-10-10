@@ -523,7 +523,7 @@ async function world(kit, { audio, sleep }) {
   const jonathan = figD('man', SR.x + 2, 0, SR.z - 1.6, -.6, { tint: '#d8ccb4', colors: { mantle: '#7a2f2a', headcloth: '#e3dac4' } });
   const JM = '#7a2f2a';
   // 성읍 밖: 춤추며 노래하는 여인들 (삼상 18:6–7)
-  const dancers = Array.from({ length: 10 }, (_, i) => figD('woman', GB + (i % 5 - 2) * 1.6 + rnd(-.3, .3), 0, -10 - Math.floor(i / 5) * 1.8, 0, { colors: { dress: ['#9e2430', '#33507e', '#c9a23a', '#6a3a7a', '#2a6a5a'][i % 5] } }));
+  const dancers = Array.from({ length: 10 }, (_, i) => figD('woman', GB + (i % 5 - 2) * 1.6 + rnd(-.3, .3), 0, -10 - Math.floor(i / 5) * 1.8, 0, { colors: { dress: ['#ece6d8', '#e4dccb', '#e8e1d3', '#dcd3c0', '#d9d4cc'][i % 5], sash: ['#9e2430', '#33507e', '#c9a23a', '#6a3a7a', '#2a6a5a'][i % 5] } }));
   dancers.forEach(g => { g.position.y = hGb(g.position.x, g.position.z); });
   const welcome = kit.throng({ n: 120, height: hGb, place: i => { const s = i % 2 ? 1 : -1; return [GB + s * rnd(5.5, 14), rnd(-30, 2), s > 0 ? -Math.PI / 2 : Math.PI / 2]; } });
   const saulOutD = figD('king', GB - .6, 0, -2, Math.PI, { tint: '#4c2f2b' }); saulOutD.position.y = hGb(saulOutD.position.x, -2);
@@ -567,7 +567,7 @@ async function world(kit, { audio, sleep }) {
   { const L = new THREE.PointLight('#ffc890', 6, 13, 1.3); L.position.set(0, 3, 0); chamber.add(L); }  // 침상 위에 앉으면 몸이 침상 위에 온다
   const elderServ = [[1.6, -1.2], [2.6, 0], [.8, 1.4], [2.2, 1.8]].map(([x, z], i) => figD('man', CB.x + x, 0, CB.z + z, 0, { tint: ['#4a3d30', '#5a4636', '#3e3329', '#6a5541'][i] }));
   elderServ.forEach(g => faceTo(g, CB.x - .6, CB.z - .4));
-  const bathsheba = figD('woman', CB.x - .4, 0, CB.z + 2.6, Math.PI, { colors: { dress: '#5b2a5e' } }); bathsheba.visible = false; const bsW = kit.walker(bathsheba, {});
+  const bathsheba = figD('woman', CB.x - .4, 0, CB.z + 2.6, Math.PI, { colors: { dress: '#ece6d8' } }); bathsheba.visible = false; const bsW = kit.walker(bathsheba, {});
   const nathanC = figD('elder', CB.x + 1.6, 0, CB.z + 2.4, Math.PI, { tint: '#6e665a' }); nathanC.visible = false;
   const solomon = figD('man', CB.x + .4, 0, CB.z + 1.2, Math.PI, { tint: '#f1ece0', colors: { mantle: '#5b2a5e', beard: '#2a1c12' } }); solomon.visible = false;
   const baby = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), kit.mat('#efe6d4')); baby.scale.set(1, .7, 1.5); baby.visible = false; sitesD.chamber.add(baby);
@@ -799,6 +799,7 @@ async function part1(A) {
   await verse('삼상 16:19-20');
   await verse('삼상 16:21');
   await direction('악한 영이 다시 왕에게 내린다.', { auto: true, ms: 2400 });
+  await A.adapt([['사울의 신하', '또 시작이야. 오늘은 더 심하셔.'], ['사울의 신하', '저 아이 수금 소리면 좀 가라앉으시던데.']]);  // 각색
   await choicePoint('d1');
   await world.harpPlay();
   world.saulCalm();
@@ -814,14 +815,17 @@ async function part1(A) {
   await verse('삼상 17:22-23');
   await verse('삼상 17:4');
   world.retreat();
+  await A.adapt([['이스라엘 군사', '사십 일째야. 아침저녁으로 저러고 있어.'], ['다른 군사', '목동이 여긴 왜 왔어? 구경하러?']]);  // 각색
   await choicePoint('c2');
   world.eliab();
+  await A.adapt([['곁의 군사', '형이 저렇게까지 화낼 일인가?'], ['곁의 군사', '그래도 틀린 말은 아니지. 양 치는 아이가 전쟁터엔 왜 와.']]);  // 각색
   await choicePoint('d2');
   await speakLoop({ scene: '4 · 엘라 골짜기', prompts: [{ who: '사울', line: '네가 저 사람이랑 싸우겠다고? 넌 아직 애야. 저 사람은 어릴 때부터 싸움만 해 온 용사고.', ref: '삼상 17:33', ask: '무엇이라고 대답하겠습니까?', situation: '사울이 말릴 때', his: ['삼상 17:34-35'], hisShort: '양을 지키다 사자와 곰을 친 일을 말했다' }], submit: '대답하기', skips: ['대답하지 않는다'],
     reacts: [{ fx: 'saulLook', text: '사울과 장수들이 당신을 내려다본다. 골짜기 건너에서 고함이 들린다.' }] });
   await say('사울', '…가거라. 여호와께서 너와 함께하시길 바란다.', '삼상 17:37#2');
   world.armorOn();
   await verse('삼상 17:38');
+  await A.adapt([['사울의 신하', '왕의 군복이다. 영광인 줄 알아.'], ['사울의 신하', '…좀 크네. 걸을 수는 있겠어?']]);  // 각색
   await choicePoint('c3');
   world.armorOff();
   await verse('삼상 17:40');
@@ -871,6 +875,7 @@ async function part2(A) {
   await verse('삼상 18:10');
   world.saulTorment();
   await world.harpPlay();
+  await A.adapt([['곁의 신하', '(작게) 왕의 눈빛이 이상해…'], ['곁의 신하', '(작게) 그 여인들 노래 때문이야. 다윗은 만만이라고 했으니.']]);  // 각색
   await choicePoint('d3');
   await world.throwSpear();
   await verse('삼상 18:11');
@@ -896,6 +901,7 @@ async function part2(A) {
   world.saulEnters();
   await verse('삼상 24:3');
   await direction('어둠 속에서 부하들이 당신 귀에 속삭인다.', { auto: true, ms: 2200 });
+  await A.adapt([['다른 부하', '(속삭이며) 손대면 우리 모두 반역자가 돼요.']]);  // 각색
   await choicePoint('c4');
   await world.cutRobe();
   world.saulLeaves();
@@ -934,6 +940,7 @@ async function part3(A) {
   await verse('삼하 11:1');
   world.focus(30, 4);
   await verse('삼하 11:2');
+  await A.adapt([['곁의 신하', '군대는 다 랍바에 나가 있는데… 오늘 밤은 조용하네요.']]);  // 각색
   await choicePoint('c5');
   world.lamp(false); world.focus(0, 3);
   await direction('시간이 흐른다.', { auto: true, ms: 2200 });
@@ -973,12 +980,14 @@ async function part3(A) {
   await sceneCut('4', '감람산 길', '사무엘하 15장 13–30절', async () => { world.setEnv('weep', 0); world.place('ascent'); });
   audio.wind(.24); audio.drone(.1, 3); audio.chord(0, 2);
   await direction('아들 압살롬이 헤브론에서 스스로 왕이 되었다(삼하 15:10). 소식을 가진 사람이 숨이 차서 달려온다.');
+  await A.adapt([['함께 가는 백성', '왕이 맨발로 걸으시다니…'], ['함께 가는 백성', '압살롬 편에 붙는 게 살길이라는 사람들도 있어.']]);  // 각색
   await choicePoint('d6');
   await verse('삼하 15:13-14');
   await world.leaveCity();
   await verse('삼하 15:23');
   world.arkDown();
   await verse('삼하 15:24');
+  await A.adapt([['레위 사람', '궤가 함께 가면 하나님도 함께 가시는 거지.'], ['백성 하나', '궤를 메고 피난을 다니면 오히려 더 위험해.']]);  // 각색
   await choicePoint('d7');
   await verse('삼하 15:25-26');
   world.arkBack();
@@ -1011,6 +1020,7 @@ async function part3(A) {
   await verse('왕상 1:1');
   await verse('왕상 1:15-16');
   world.bedLook();
+  await A.adapt([['궁의 신하', '엔로겔 곁에서 잔치를 연대요. 요압 장군도 갔다던데.'], ['궁의 신하', '왕께서 너무 늙으셨어…']]);  // 각색
   await choicePoint('d8');
   world.swear();
   await verse('왕상 1:29-30');

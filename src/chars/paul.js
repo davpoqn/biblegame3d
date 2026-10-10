@@ -501,7 +501,7 @@ async function world(kit, { audio, sleep }) {
   kit.trees('tamarisk', { n: 40, place: i => { const s = i % 2 ? 1 : -1; let z; do { z = rnd(-180, 180); } while (Math.abs(z) < 12); return [F0 + 30 + s * rnd(8, 26), z]; }, height: hF });
   kit.grass({ center: [F0 + 30, 0], rx: 26, rz: 120, n: 1800, height: hF, color: '#5f7a3a' });
   kit.cityWall({ from: [F0 - 120, -60], to: [F0 + 4, -60], height: hF, towers: 10 });
-  const women = [[13.6, -2.4], [14.8, -.8], [15.2, 1.2], [14.2, 2.8], [12.4, 3.6]].map(([x, z], i) => { const g = fig('woman_veil', F0 + x, z, hF, { tint: ['#6b5642', '#4a5a6a', '#7a5a3c', '#5a4a3a', '#6a5a48'][i], pose: 'seat' }); faceTo(g, F0 + 11, .6); return g; });
+  const women = [[13.6, -2.4], [14.8, -.8], [15.2, 1.2], [14.2, 2.8], [12.4, 3.6]].map(([x, z], i) => { const g = fig('woman', F0 + x, z, hF, { tint: ['#ece6d8', '#e4dccb', '#dcd3c0', '#e8e1d3', '#d9d4cc'][i], pose: 'seat' }); faceTo(g, F0 + 11, .6); return g; });
   const lydia = fig('woman', F0 + 12.6, -2.6, hF, { colors: { dress: '#5b2a5e', sash: '#c9a23a' }, pose: 'seat' }); faceTo(lydia, F0 + 11, .6);
   const silasF = fig('man', F0 + 10, 2, hF, { tint: '#4a5a3a', colors: { tunic: '#d9ceb2' }, pose: 'seat' }); faceTo(silasF, F0 + 14, 0);
   const PR = v3(F0, 0, 600);  // 깊은 옥
@@ -537,7 +537,7 @@ async function world(kit, { audio, sleep }) {
   { const L = new THREE.PointLight('#ffc890', 6, 12, 1.3); L.position.set(0, 2.6, 0); philipH.add(L); }
   const agabus = fig('elder', PH.x, PH.z - 1.4, null, { tint: '#5a4a3a' });
   const belt = kit.box(.5, .06, .06, '#5a3d25', 0, .95, .28, agabus); belt.visible = false;
-  const friends = [[-1.8, -.4], [1.8, -.4], [-1.2, 1.2], [1.4, 1.4]].map(([x, z], i) => { const g = fig(i === 3 ? 'woman_veil' : 'man', PH.x + x, PH.z + z, null, { tint: ['#4a3d30', '#3e4a5a', '#6a5541', '#6b5642'][i] }); faceTo(g, PH.x, PH.z + .6); return g; });
+  const friends = [[-1.8, -.4], [1.8, -.4], [-1.2, 1.2], [1.4, 1.4]].map(([x, z], i) => { const g = fig(i === 3 ? 'woman' : 'man', PH.x + x, PH.z + z, null, { tint: ['#4a3d30', '#3e4a5a', '#6a5541', '#e4dccb'][i] }); faceTo(g, PH.x, PH.z + .6); return g; });
   // 가이사랴 신문소 (25:23–26:29)
   const HL = v3(A0, 0, 640);
   const hallC = kit.room({ at: [HL.x, 0, HL.z], w: 18, d: 14, h: 6, color: '#cdb88e', floor: '#9a8462', door: 0, lamps: [[-6, -5.5, 1.8], [6, -5.5, 1.8], [-6, 5, 1.8], [6, 5, 1.8]] });
@@ -546,7 +546,7 @@ async function world(kit, { audio, sleep }) {
   kit.box(9, .6, 2, '#8a6a48', HL.x, .3, HL.z - 5.4);  // 높은 자리
   const festus = fig('roman', HL.x - 2.6, HL.z - 5.4, null, { colors: { cloak: '#e8dcc0', helmet_crest: '#9b2a22' }, pose: 'seat' }); festus.position.y = .6 + .45 - .0; festus.traverse(o => { if (o.isMesh && (o.name === 'helmet' || o.name === 'helmet_crest')) o.visible = false; });
   const agrippa = fig('king', HL.x, HL.z - 5.4, null, { colors: { royal: '#5b2a5e' }, pose: 'seat' }); agrippa.position.y = 1.05;
-  const bernice = fig('woman', HL.x + 2.4, HL.z - 5.4, null, { colors: { dress: '#7a2f5a', sash: '#c9a23a' }, pose: 'seat' }); bernice.position.y = 1.05;
+  const bernice = fig('woman', HL.x + 2.4, HL.z - 5.4, null, { colors: { dress: '#ece6d8', sash: '#c9a23a' }, pose: 'seat' }); bernice.position.y = 1.05;
   [-2.6, 2.4].forEach(x => kit.box(.9, .45, .7, '#6a4a30', HL.x + x, .82, HL.z - 5.55)); kit.box(1.1, .55, .8, '#c9a23a', HL.x, .87, HL.z - 5.55);
   const officers = [[-6.2, -2], [-6.4, .6], [6.2, -1.6], [6.4, 1], [-4.6, 3.4], [4.6, 3.6]].map(([x, z], i) => { const g = fig(i < 4 ? 'roman' : 'man', HL.x + x, HL.z + z, null, { colors: i < 4 ? RMC : { mantle: '#3a4a6a' } }); faceTo(g, HL.x, HL.z); return g; });
   const guardC = fig('roman', HL.x + 1, HL.z + 2.6, null, { colors: RMC }); faceTo(guardC, HL.x, HL.z - 5);
@@ -599,7 +599,7 @@ async function world(kit, { audio, sleep }) {
   kit.box(1.6, .6, .8, '#5a4130', R0 - 2.6, .3, -2.8); [[-2.9, -2.8], [-2.3, -2.7]].forEach(([x, z]) => { const r = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .34, 8), kit.mat('#e8dcbc')); r.rotation.z = Math.PI / 2; r.position.set(R0 + x + .3, .65, z); sites.rome.add(r); });
   const guardR = fig('roman', R0 + 3, 2.6, null, { colors: RMC }); faceTo(guardR, R0, 0);
   const chainR = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, 2.4, 4), kit.mat('#5a5a58', { metalness: .6 })); chainR.rotation.z = Math.PI / 2.6; chainR.position.set(R0 + 1.6, .55, 1.5); sites.rome.add(chainR);
-  const visitors = [[-1.6, -1.2, 'man'], [0, -1.6, 'woman_veil'], [1.6, -1.2, 'man'], [-1.2, .2, 'man'], [1.2, .3, 'woman_veil'], [0, -.4, 'boy']].map(([x, z, r], i) => { const g = fig(r, R0 + x, z, null, { tint: ['#4a3d30', '#4a5a6a', '#6a5541', '#3e4a5a', '#6b5642', '#a8977e'][i], pose: 'seat', seatDrop: .45, scale: r === 'boy' ? .8 : 1 }); faceTo(g, R0, 1.8); g.visible = false; return g; });
+  const visitors = [[-1.6, -1.2, 'man'], [0, -1.6, 'woman'], [1.6, -1.2, 'man'], [-1.2, .2, 'man'], [1.2, .3, 'woman'], [0, -.4, 'boy']].map(([x, z, r], i) => { const g = fig(r, R0 + x, z, null, { tint: ['#4a3d30', '#ece6d8', '#6a5541', '#3e4a5a', '#e4dccb', '#a8977e'][i], pose: 'seat', seatDrop: .45, scale: r === 'boy' ? .8 : 1 }); faceTo(g, R0, 1.8); g.visible = false; return g; });
   kit.into(null);
   showOnly(null);
 
@@ -787,6 +787,7 @@ async function part1(A) {
   await verse('빌 3:5-6');
   await direction('당신은 날 때부터 로마 시민이다(행 22:28). 장막 만드는 일로 손수 생계를 꾸릴 줄도 안다(행 18:3).');
   await direction('요즘 성 안에서는 나사렛 예수가 그리스도라고 전하는 사람들이 늘어나고 있다(행 6:7).');
+  await A.adapt([['율법 학생', '나사렛 사람을 그리스도라니. 나무에 달린 자를?'], ['율법 학생', '가말리엘 선생님은 좀 두고 보자고 하시던데.']]);  // 각색
   await choicePoint('q1');
   // 2 · 스데반
   await sceneCut('2', '스데반', '사도행전 7장 54절–8장 3절', async () => { world.setEnv('jerusalem', 0); world.place('gate'); });
@@ -795,6 +796,7 @@ async function part1(A) {
   await world.dragOut();
   await verse('행 7:57-58');
   world.garmentsDown();
+  await A.adapt([['무리 속 사람', '신성모독이야! 끝까지 들을 필요도 없어.'], ['무리 속 사람', '그런데 저 얼굴 봐… 천사 같아.']]);  // 각색
   await choicePoint('p1');
   await world.stoning();
   await verse('행 7:59-60');
@@ -852,6 +854,7 @@ async function part1(A) {
   await world.toWall();
   audio.wind(.12); audio.drone(.1, 3);
   await verse('행 9:23-24');
+  await A.adapt([['제자', '성문마다 지키고 있대요. 낮이고 밤이고요.'], ['제자', '잠잠해질 때까지 숨어 있는 게 낫지 않을까요?']]);  // 각색
   await choicePoint('p3');
   await world.basketDown();
   await verse('행 9:25');
@@ -866,6 +869,7 @@ async function part2(A) {
   await direction('다메섹을 떠난 뒤 당신은 예루살렘에 갔지만, 제자들은 당신을 두려워했다. 바나바가 당신을 사도들에게 데려갔다(행 9:26–27). 그 뒤 바나바가 다소에 와서 당신을 찾아 안디옥으로 데려갔다(행 11:25–26).');
   await verse('행 13:1');
   await verse('행 13:2', { voice: true });
+  await A.adapt([['안디옥 교인', '바나바까지 보내면 여긴 누가 가르치지?'], ['안디옥 교인', '성령께서 하신 말씀이잖아. 보내야지.']]);  // 각색
   await choicePoint('p4');
   world.layHands();
   await verse('행 13:3');
@@ -883,6 +887,7 @@ async function part2(A) {
   await verse('행 14:11-12');
   await world.priestComes();
   await verse('행 14:13');
+  await A.adapt([['제사장 곁의 사람', '소를 끌고 와! 화관도 가져오고!'], ['무리 속 사람', '앉은뱅이가 걸었어. 신이 아니면 누가 이런 일을 해.']]);  // 각색
   await choicePoint('p5');
   world.tearClothes();
   await verse('행 14:14-15');
@@ -891,6 +896,7 @@ async function part2(A) {
   await world.stoned();
   await verse('행 14:19');
   await world.outsideCity();
+  await A.adapt([['제자', '숨을 쉬어요! 살아 있어요!'], ['제자', '움직이지 말아요, 피가…']]);  // 각색
   await choicePoint('p6');
   await world.rise();
   await verse('행 14:20');
@@ -911,6 +917,7 @@ async function part2(A) {
   await direction('여러 날 동안 점치는 귀신 들린 여종이 당신을 따라다니며 소리를 질렀다. 당신이 예수 그리스도의 이름으로 귀신을 쫓아내자, 돈벌이를 잃은 주인들이 당신과 실라를 관원들에게 끌고 갔다(행 16:16–21).');
   await verse('행 16:22-23');
   await verse('행 16:24');
+  await A.adapt([['다른 죄수', '로마 법을 어지럽힌 유대인들이래.'], ['다른 죄수', '맞을 만큼 맞았는데 뭐가 저렇게 조용해?']]);  // 각색
   await choicePoint('p7');
   world.sing();
   await verse('행 16:25');
@@ -988,6 +995,7 @@ async function part3(A) {
   await world.toBarracks();
   await verse('행 22:24');
   world.strap();
+  await A.adapt([['군사', '바짝 묶어. 왜 저렇게들 소리를 지르는지 불게 해야지.'], ['군사', '잠깐, 이 사람 말투가 좀…']]);  // 각색
   await choicePoint('p8');
   await verse('행 22:25');
   await world.tribuneComes();
@@ -1003,6 +1011,7 @@ async function part3(A) {
   await direction('당신은 가이사랴로 옮겨져 이 년 동안 갇혀 있었다(행 23:23–24:27). 새 총독 베스도가 왔다. 유대 사람들은 당신을 예루살렘으로 옮겨 오다가 길에 숨어 있다가 죽이려 했다(행 25:3).');
   world.festusAsks();
   await verse('행 25:9');
+  await A.adapt([['재판을 보던 사람', '예루살렘에 가면 길에서 죽어. 다 아는 얘기야.'], ['재판을 보던 사람', '로마 시민이니 버틸 길은 있겠지.']]);  // 각색
   await choicePoint('p9');
   await verse('행 25:10-11');
   await verse('행 25:12');
@@ -1035,6 +1044,7 @@ async function part3(A) {
   await verse('행 27:22-25');
   await direction('열나흘째 밤이 지나 날이 새어 간다.', { auto: true, ms: 2600 });
   world.dawnSea();
+  await A.adapt([['사공', '열나흘째야. 해도 별도 안 보여.'], ['사공', '먹어서 뭐 해. 어차피 다 죽을 텐데.'], ['군사', '그때 저 죄수 말을 들었어야 했어.']]);  // 각색
   await choicePoint('p10');
   world.breakBread();
   await verse('행 27:35');
