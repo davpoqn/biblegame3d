@@ -47,7 +47,7 @@ i=page.index(marker)+len(marker)
 page=page[:i]+block+'\n'+page[i:]
 # 인물 캐릭터(assets/chars)를 base64로 넣는다. 모듈 스크립트보다 앞에 둔다
 import base64
-glb={k:'data:model/gltf-binary;base64,'+base64.b64encode(open(S+f'assets/chars/{k}.glb','rb').read()).decode() for k in ('char_m','char_f','anims','props')+tuple('an_'+n for n in ('sheep','ram','goat','ox','donkey','colt','camel','pig'))}
+glb={k:'data:model/gltf-binary;base64,'+base64.b64encode(open(S+f'assets/chars/{k}.glb','rb').read()).decode() for k in ('char_m','char_f','anims','props')+tuple('an_'+n for n in ('sheep','ram','goat','ox','donkey','colt','camel','pig'))+(('jesus_head',) if os.path.exists(S+'assets/chars/jesus_head.glb') else ())}  # jesus_head: MakeHuman 얼굴(tools/chars/jesus_head.py)
 outfits=json.load(open(S+'assets/chars/outfits.json',encoding='utf8'))
 j=page.index(marker)
 page=page[:j]+'<script>window.CHAR_GLB='+json.dumps(glb)+';window.OUTFITS='+json.dumps(outfits,ensure_ascii=False)+';</script>\n'+page[j:]

@@ -66,13 +66,13 @@ x1, y1 = min(W, int(uvb[:, 0].max() * W) + 8), min(H, int(uvb[:, 1].max() * H) +
 crop = skin.crop((x0, y0, x1, y1)); cw, ch = crop.size
 uvb[:, 0] = (uvb[:, 0] * W - x0) / cw; uvb[:, 1] = (uvb[:, 1] * H - y0) / ch
 k = 1024 / max(cw, ch); crop = crop.resize((max(1, round(cw * k)), max(1, round(ch * k))), Image.LANCZOS)
-skinT = tint(crop, [.9, .77, .64])
+skinT = tint(crop, [.94, .88, .82])
 # 눈: 파란 홍채를 갈색으로
 eye = np.asarray(Image.open(RAW / 'textures/blue_eye.webp').convert('RGBA')).astype(np.float32)
 m = (eye[..., 2] - eye[..., 0]) > 28; lum = eye[..., :3].mean(-1)
 for c, (b0, s) in enumerate([(62, .62), (36, .38), (20, .2)]): eye[..., c] = np.where(m, b0 + lum * s, eye[..., c])
 eyeT = Image.fromarray(np.clip(eye, 0, 255).astype(np.uint8), 'RGBA').resize((256, 256), Image.LANCZOS)
-hairT = tint(Image.open(RAW / 'textures/long01_diffuse.webp'), [.8, .76, .72]).resize((1024, 1024), Image.LANCZOS)
+hairT = tint(Image.open(RAW / 'textures/long01_diffuse.webp'), [.95, .9, .86]).resize((1024, 1024), Image.LANCZOS)
 browT = tint(Image.open(RAW / 'textures/eyebrow001.png'), [.42, .3, .22]).resize((256, 256), Image.LANCZOS)
 beardT = tint(Image.open(RAW / 'textures/beard_sigmund_diffuse.webp'), [.5, .36, .26]).resize((512, 512), Image.LANCZOS)
 

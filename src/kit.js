@@ -36,7 +36,7 @@ async function loadFigs(GLTFLoader) {
   (await Promise.all(keys.map(k => ld.parseAsync(buf(D[k]), '')))).forEach((g, i) => { G[keys[i]] = g; });
   const animals = {};
   for (const k of keys) if (k.startsWith('an_')) animals[k.slice(3)] = prepAnimal(G[k]);
-  return { m: G.char_m, f: G.char_f, clips: Object.fromEntries(G.anims.animations.map(c => [c.name, c])), outfits: window.OUTFITS, props: G.props, animals };
+  return { m: G.char_m, f: G.char_f, clips: Object.fromEntries(G.anims.animations.map(c => [c.name, c])), outfits: window.OUTFITS, props: G.props, animals, jesusHead: G.jesus_head ? G.jesus_head.scene : null };
 }
 // 양자화된 위치·법선을 실수로 풀어 둔다 (변환 행렬을 굽기 위해)
 function floatGeo(geo) {
@@ -391,27 +391,41 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   // 예수님(연출: 성경에는 생김새가 없어 전통 그림을 따른다): 흰 옷, 붉은 겉옷, 어깨까지 오는 머리, 수염, 인자한 눈과 입
   const JESUS = { name: '예수 (연출)', body: 'm', wear: ['tunic_long', 'belt', 'sandals', 'beard'], under: '#eee9de', colors: { tunic: '#eee9de', belt: '#c8b896', beard: '#4a3122' } };
   const JESUS_RED = '#a3292a', JESUS_HAIR = '#3f2a1c';
+  const JHEAD = { y: .122, z: .136 };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준, 예전 얼굴의 눈 자리)
   function dressJesus(body) {
     body.updateMatrixWorld(true);  // 지금 동작 자세 그대로 머리·가슴 뼈에 붙인다 (skeleton.pose()는 뼈 크기가 달라진다)
     const head = body.getObjectByName('Head'), chest = body.getObjectByName('spine_03'), hp = head.getWorldPosition(new THREE.Vector3()), cp = chest.getWorldPosition(new THREE.Vector3());
     const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: .85 });
     const put = (bone, mesh, base, [x, y, z], rot, sc) => { mesh.position.set(base.x + x, base.y + y, base.z + z); if (rot) mesh.rotation.set(...rot); if (sc) mesh.scale.set(...sc); mesh.frustumCulled = false; body.add(mesh); mesh.updateMatrixWorld(true); bone.attach(mesh); return mesh; };
+    const JH = figSrc && figSrc.jesusHead;
+    if (JH) {
+      // MakeHuman으로 만든 얼굴·눈·머리카락·눈썹·수염(assets/chars/jesus_head.glb, CC0). 두 눈의 가운데를 마네킹의 눈 자리에 맞춰 머리 뼈에 붙이고, 마네킹 머리는 접어 숨긴다
+      const h = JH.clone(true), node = h.getObjectByName('jesus_head') || h.children[0], ex = (node && node.userData) || {};
+      const k = .078 / (ex.eyeDist || .065), mid = new THREE.Vector3(...(ex.eyeMid || [0, 1.816, .146]));
+      h.scale.setScalar(k); h.position.set(hp.x - mid.x * k, hp.y + JHEAD.y - mid.y * k, hp.z + JHEAD.z - mid.z * k);
+      h.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+      head.scale.setScalar(.001); head.updateMatrixWorld(true);  // 붙이기 전에 접어야 새 머리 크기가 그대로 남는다
+      body.add(h); h.updateMatrixWorld(true); head.attach(h);
+    }
     const eyeM = M('#24160f'), browM = M('#3a2618'), lipM = M('#7a4433'), skinM = M('#b4876a'), hairM = new THREE.MeshStandardMaterial({ color: JESUS_HAIR, roughness: .95, side: THREE.DoubleSide });
-    // 눈: 짙은 눈동자 위로 살짝 내려온 눈꺼풀 (웃는 눈매)
-    for (const sx of [-1, 1]) {
+    // 눈: 짙은 눈동자 위로 살짝 내려온 눈꺼풀 (웃는 눈매) — 새 머리가 없을 때만
+    if (!JH) for (const sx of [-1, 1]) {
       put(head, new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), eyeM), hp, [sx * .039, .122, .136], null, [.012, .0075, .006]);
       put(head, new THREE.Mesh(new THREE.TorusGeometry(.013, .0026, 4, 10, Math.PI), browM), hp, [sx * .039, .121, .139], [0, 0, 0], [1, .55, 1]);  // 눈꺼풀 선
       put(head, new THREE.Mesh(new THREE.BoxGeometry(.03, .0045, .006), browM), hp, [sx * .04, .142, .136], [0, 0, sx * -.12]);  // 눈썹 (안쪽이 살짝 올라간 온화한 모양)
     }
+    if (!JH) {
     put(head, new THREE.Mesh(new THREE.ConeGeometry(.012, .034, 6), skinM), hp, [0, .097, .147], [Math.PI / 2 + .35, 0, 0]);  // 코
     put(head, new THREE.Mesh(new THREE.TorusGeometry(.019, .0032, 4, 12, Math.PI * .8), lipM), hp, [0, .068, .138], [0, 0, Math.PI + Math.PI * .1]);  // 미소 짓는 입
     // 머리카락: 정수리를 덮고, 옆과 뒤로 어깨까지 내려온다. 가운데 가르마
     put(head, new THREE.Mesh(new THREE.SphereGeometry(1, 18, 10, 0, Math.PI * 2, 0, Math.PI * .5), hairM), hp, [0, .105, .03], [-.55, 0, 0], [.118, .172, .142]);  // 정수리 (이마 선은 높고 뒤는 낮게)
     put(head, new THREE.Mesh(new THREE.CylinderGeometry(.1, .118, .21, 18, 1, true, Math.PI * .3, Math.PI * 1.4), hairM), hp, [0, .005, .03], null, [1, 1, 1.05]);  // 옆과 뒤로 어깨까지 (얼굴 쪽은 트였다)
+    }
     // 붉은 겉옷: 왼쪽 어깨에서 오른쪽 허리로 비스듬히 두른 띠, 그리고 등 뒤로 늘어진 자락
     const red = new THREE.MeshStandardMaterial({ color: JESUS_RED, roughness: .9, side: THREE.DoubleSide });
     put(chest, new THREE.Mesh(new THREE.CylinderGeometry(1, 1, .3, 24, 1, true), red), cp, [0, -.06, .01], [0, 0, .62], [.215, 1, .15]);
     put(chest, new THREE.Mesh(new THREE.PlaneGeometry(.3, .62), red), cp, [.05, -.26, -.155], [.08, 0, .1]);
+    return JH ? head : null;  // 머리를 접어 둔 뼈(동작이 크기를 되돌려도 매 장면 다시 접는다)
   }
   function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3 } = {}) {
     const spec = role === 'jesus' ? (figSrc && JESUS) : figSrc && figSrc.outfits.roles[role];
@@ -441,7 +455,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
         a.reset().play(); if (F.cur && fade) F.cur.crossFadeTo(a, fade, false); else if (F.cur) F.cur.stop();
         F.cur = a;
       } };
-    if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); dressJesus(body); }
+    if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressJesus(body); }
     F.play(F.base, 0); mixer.update(Math.random() * 3);  // 여러 사람이 같은 박자로 움직이지 않게
     const bones = {}; F.bone = n => bones[n] || (bones[n] = body.getObjectByName(n));
     g.userData.fig = F; g.userData.head = body.getObjectByName('Head');
@@ -486,7 +500,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     me.head.scale.setScalar(.001); me.neck.scale.setScalar(.35); g.updateMatrixWorld(true);
   }
   const stepFigs = dt => {
-    for (const g of figs) if (shown(g)) { const F = g.userData.fig; F.mixer.update(dt); if (F.gest) applyGesture(g, F, dt); }
+    for (const g of figs) if (shown(g)) { const F = g.userData.fig; F.mixer.update(dt); if (F.hideHead) F.hideHead.scale.setScalar(.001); if (F.gest) applyGesture(g, F, dt); }
     for (const o of herdMixers) if (o.on && shown(o.obj)) o.mixer.update(dt);
   };
   // 애니메이션이 없는 몸짓을 코드로 만든다: 뼈를 인물 기준 방향(+Z 앞, +Y 위, +X 왼쪽)으로 돌린다. 오른쪽은 x를 뒤집는다
