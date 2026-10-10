@@ -15,7 +15,7 @@ kit=kit.replace("async function createKit(canvas, { presets = {}, initial = 'sta
     import('three/addons/loaders/GLTFLoader.js'), import('three/addons/utils/SkeletonUtils.js')]);""",1)
 assert 'import(\'three\')' in kit
 chars=[]
-for n in ['job','peter','david','abraham','jacob']:
+for n in ['job','peter','paul','david','abraham','jacob']:
     c=open(S+f'dist/chars/{n}.js',encoding='utf8').read()
     assert c.count('export default {')==1
     c=c.replace('export default {','return {')
