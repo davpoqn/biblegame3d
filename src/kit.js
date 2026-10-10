@@ -294,6 +294,13 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     }
   }
 
+  /* --- 장소 묶음: kit.into(group) 뒤에 만드는 것은 그 묶음에 들어간다. 장소를 숨기면 안의 것도 그리지·움직이지 않는다 --- */
+  let intoTarget = null;
+  const R = () => intoTarget || scene;
+  function into(g) { intoTarget = g || null; return g; }
+  function site(x = 0, z = 0) { const g = new THREE.Group(); g.position.set(0, 0, 0); g.userData.at = [x, z]; scene.add(g); return g; }
+  const shown = o => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
+
   /* --- 땅 높이: 지형, 바닥, 배가 알려 준다. 카메라와 내 몸이 땅속으로 들어가지 않게 쓴다 --- */
   const grounds = [];
   function groundAt(x, z) {
@@ -303,7 +310,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   }
   // 바닥 하나 더하기: kit.addGround((x, z) => 안이면 높이, 아니면 null)
   function addGround(fn) { grounds.push(fn); return fn; }
-  function addFloor(cx, cz, w, d, y = 0, obj) { return addGround((x, z) => (!obj || obj.visible) && Math.abs(x - cx) <= w / 2 && Math.abs(z - cz) <= d / 2 ? y : null); }
+  function addFloor(cx, cz, w, d, y = 0, obj) { return addGround((x, z) => (!obj || shown(obj)) && Math.abs(x - cx) <= w / 2 && Math.abs(z - cz) <= d / 2 ? y : null); }
 
   /* --- 지형 --- */
   function terrain({ height, size = 900, seg = 240, lo = '#5f4738', hi = '#b8936a', yMul = .055, grain = .3, at = [0, 0] } = {}) {
@@ -317,8 +324,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
     const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }));
-    scene.add(m);
-    addGround((x, z) => m.visible && Math.abs(x - at[0]) <= size / 2 && Math.abs(z - at[1]) <= size / 2 ? height(x, z) : null);
+    R().add(m);
+    addGround((x, z) => shown(m) && Math.abs(x - at[0]) <= size / 2 && Math.abs(z - at[1]) <= size / 2 ? height(x, z) : null);
     return m;
   }
   function disc({ r = 12, c0 = '#6d5846', c1 = '#8a7058', at = [0, 0], y = .02, height } = {}) {
@@ -331,7 +338,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       c.copy(a).lerp(b, vnoise(x * .8, z * .8)); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
-    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); m.position.set(at[0], y, at[1]); scene.add(m); return m;
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); m.position.set(at[0], y, at[1]); R().add(m); return m;
   }
   function rocks({ n = 160, height, color = '#7b6856', rMin = 4, rMax = 110, center = [0, 0], avoid, big = .08, sMin = .12, sMax = .8 } = {}) {
     const m = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), new THREE.MeshStandardMaterial({ color, roughness: 1, flatShading: true }), n);
@@ -345,14 +352,14 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       d.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3)); d.scale.set(s * rnd(.8, 1.6), s * rnd(.5, 1), s * rnd(.8, 1.4));
       d.updateMatrix(); m.setMatrixAt(i, d.matrix);
     }
-    scene.add(m); return m;
+    R().add(m); return m;
   }
-  function box(w, h, d, color, x = 0, y = 0, z = 0, parent = scene, mat) {
+  function box(w, h, d, color, x = 0, y = 0, z = 0, parent = R(), mat) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat || new THREE.MeshStandardMaterial({ color, roughness: 1 }));
     m.position.set(x, y, z); parent.add(m); return m;
   }
   const glowMat = (r, g, b) => new THREE.MeshBasicMaterial({ color: new THREE.Color(r, g, b), fog: false });
-  function glow(w, h, r, g, b, x, y, z, parent = scene) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glowMat(r, g, b)); m.position.set(x, y, z); parent.add(m); return m; }
+  function glow(w, h, r, g, b, x, y, z, parent = R()) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glowMat(r, g, b)); m.position.set(x, y, z); parent.add(m); return m; }
 
   /* --- 사람 --- */
   const standProf = [[0, 0], [.34, 0], [.31, .3], [.25, .85], [.21, 1.25], [.16, 1.4], [.06, 1.46], [0, 1.46]];
@@ -371,7 +378,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     const head = new THREE.Mesh(headGeo, skinMats[skin] || (skinMats[skin] = new THREE.MeshStandardMaterial({ color: skin, roughness: .9 }))); head.position.y = top + .1; g.add(head);
     if (hood) { const h = new THREE.Mesh(hoodGeo, mat); h.position.set(0, top + .11, -.025); g.add(h); }
     g.userData.head = head; g.userData.mat = mat;
-    g.scale.setScalar(scale); g.visible = visible; scene.add(g);
+    g.scale.setScalar(scale); g.visible = visible; R().add(g);
     return g;
   }
   // 이름 있는 인물: 옷 입은 마네킹 + 동작. person()과 같은 자리에 쓴다. role은 outfits.json의 신분, tint는 겉옷 색
@@ -438,16 +445,20 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     F.play(F.base, 0); mixer.update(Math.random() * 3);  // 여러 사람이 같은 박자로 움직이지 않게
     const bones = {}; F.bone = n => bones[n] || (bones[n] = body.getObjectByName(n));
     g.userData.fig = F; g.userData.head = body.getObjectByName('Head');
-    g.scale.setScalar(scale * .92); g.visible = visible; scene.add(g); figs.push(g);
+    g.scale.setScalar(scale * .92); g.visible = visible; R().add(g); figs.push(g);
     return g;
   }
   /* --- 내 몸 (1인칭): 아래를 보면 다리와 발, 옷자락이 보인다. 머리는 숨기고, 눈이 카메라 자리에 오게 몸을 옮긴다 --- */
-  const me = { g: null, head: null, on: true, pose: '', yaw: 0, sp: 0, lx: 0, lz: 0 };
+  const me = { g: null, head: null, on: true, pose: '', yaw: 0, sp: 0, lx: 0, lz: 0, clips: {}, clipKey: '' };  // clips: { walk: 'Walk_Carry_Loop' } 처럼 자세별 동작을 바꾼다
   function selfBody(role, opts = {}) {
+    const key = role + JSON.stringify(opts);
+    if (me.g && me.key === key) return me.g;
     if (me.g) { scene.remove(me.g); const i = figs.indexOf(me.g); if (i >= 0) figs.splice(i, 1); me.g = null; }
+    me.key = key;
     if (!role) return null;
     const g = figure(role, { ...opts, visible: true });
-    if (!g.userData.fig) { scene.remove(g); return null; }  // 캐릭터가 없으면 몸을 그리지 않는다
+    if (!g.userData.fig) { g.parent && g.parent.remove(g); return null; }  // 캐릭터가 없으면 몸을 그리지 않는다
+    scene.add(g);
     me.g = g; me.head = g.userData.fig.bone('Head'); me.neck = g.userData.fig.bone('neck_01'); me.pose = ''; me.lx = env.camX; me.lz = env.camZ; me.yaw = env.camY + Math.PI;
     return g;
   }
@@ -460,7 +471,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     me.sp += (Math.min(8, Math.hypot(vx, vz)) - me.sp) * Math.min(1, dt * 5);
     const pose = !me.on || h < .72 ? 'hide' : h < 1.38 ? 'sit' : me.sp > .35 ? 'walk' : 'stand';
     g.visible = pose !== 'hide'; if (!g.visible) return;
-    if (pose !== me.pose) { me.pose = pose; F.play(pose === 'sit' ? 'Sitting_Idle_Loop' : pose === 'walk' ? 'Walk_Loop' : 'Idle_Loop', .35); }
+    if (pose !== me.pose || me.clipKey !== (me.clips[pose] || '')) { me.pose = pose; me.clipKey = me.clips[pose] || ''; F.play(me.clips[pose] || (pose === 'sit' ? 'Sitting_Idle_Loop' : pose === 'walk' ? 'Walk_Loop' : 'Idle_Loop'), .35); }
     if (pose === 'walk' && F.cur) F.cur.timeScale = clamp(me.sp / 1.25, .6, 1.8);
     // 몸이 향하는 쪽: 이야기가 정한 방향, 걸을 때는 가는 방향 (둘러보기로는 몸이 돌지 않는다)
     let want = pose === 'walk' ? Math.atan2(vx, vz) : env.camY + Math.PI;
@@ -475,15 +486,24 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     me.head.scale.setScalar(.001); me.neck.scale.setScalar(.35); g.updateMatrixWorld(true);
   }
   const stepFigs = dt => {
-    for (const g of figs) if (g.visible) { const F = g.userData.fig; F.mixer.update(dt); if (F.gest) applyGesture(g, F, dt); }
-    for (const o of herdMixers) if (o.on && o.obj.parent && o.obj.parent.visible) o.mixer.update(dt);
+    for (const g of figs) if (shown(g)) { const F = g.userData.fig; F.mixer.update(dt); if (F.gest) applyGesture(g, F, dt); }
+    for (const o of herdMixers) if (o.on && shown(o.obj)) o.mixer.update(dt);
   };
   // 애니메이션이 없는 몸짓을 코드로 만든다: 뼈를 인물 기준 방향(+Z 앞, +Y 위, +X 왼쪽)으로 돌린다. 오른쪽은 x를 뒤집는다
   // [몸짓 안의 위치 0~1, { 뼈: 방향 }]
   const GEST = {
     dust: [[0, { upperarm: [.3, .92, .25], lowerarm: [.1, 1, .15] }], [.55, { upperarm: [.55, .75, .35], lowerarm: [-.6, .45, .25] }]],  // 티끌을 하늘로 날려 머리에 (욥 2:12)
     tear: [[0, { upperarm: [.25, -.5, .8], lowerarm: [-.8, .5, .2] }], [.45, { upperarm: [.75, -.35, .55], lowerarm: [.95, .1, .3] }]],  // 겉옷을 찢고
-    weep: [[0, { upperarm: [.2, -.45, .85], lowerarm: [-.3, .85, .4], neck: [0, .72, .7] }]]  // 얼굴을 감싸고 운다
+    weep: [[0, { upperarm: [.2, -.45, .85], lowerarm: [-.3, .85, .4], neck: [0, .72, .7] }]],  // 얼굴을 감싸고 운다
+    cross: [[0, { upperarm: [1, .16, -.05], lowerarm: [1, .22, -.05], neck: [0, .97, .2] }]],  // 십자가에 두 팔을 벌리고
+    crossDead: [[0, { upperarm: [1, .1, -.05], lowerarm: [1, .14, -.05], neck: [.15, .35, .92] }]],  // 머리를 숙이고 (요 19:30)
+    pray: [[0, { upperarm: [.18, -.55, .8], lowerarm: [-.55, .6, .58], neck: [0, .8, .6] }]],  // 두 손을 모으고
+    lift: [[0, { upperarm: [.45, .75, .5], lowerarm: [.35, .88, .3] }]],  // 손을 들어 (눅 24:50)
+    show: [[0, { upperarm: [.35, -.35, .87], lowerarm: [.3, .15, .94] }]],  // 손을 내밀어 보이신다 (요 20:20, 27)
+    reach: [[0, { upperarm_r: [-.15, .1, .98], lowerarm_r: [-.1, .05, 1], upperarm_l: [.2, -.95, .1], lowerarm_l: [.15, -.98, .1] }]],  // 오른손을 앞으로 내미신다
+    give: [[0, { upperarm: [.25, -.6, .76], lowerarm: [.1, .05, 1] }]],  // 두 손으로 건넨다
+    bow: [[0, { neck: [0, .3, .95] }]],  // 고개를 떨군다
+    carry: [[0, { upperarm_r: [-.55, .55, .62], lowerarm_r: [.55, .78, -.3], upperarm_l: [.35, .25, .9], lowerarm_l: [-.5, .65, .55] }]]  // 어깨에 진 나무를 붙든다
   };
   const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _q3 = new THREE.Quaternion();
   function aimBone(root, bone, child, dir, w) {
@@ -504,8 +524,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     const w = Math.min(1, t / .4, (G.total - t) / .6), lk = 1 - Math.exp(-dt * 7);
     g.updateMatrixWorld(true);
     for (const sd of ['l', 'r']) for (const b of ['upperarm', 'lowerarm']) {
-      const v = pose[b]; if (!v) continue;
-      const key = b + sd, cur = G.dir[key] || (G.dir[key] = new THREE.Vector3(...v)), sg = sd === 'l' ? 1 : -1;
+      const own = pose[b + '_' + sd], v = own || pose[b]; if (!v) continue;
+      const key = b + sd, sg = own ? 1 : sd === 'l' ? 1 : -1, cur = G.dir[key] || (G.dir[key] = new THREE.Vector3(v[0] * sg, v[1], v[2]));
       cur.lerp(_d.set(v[0] * sg, v[1] + (name === 'weep' ? Math.sin(clock * 15 + (sd === 'l' ? 0 : 1)) * .06 : 0), v[2]), lk);
       aimBone(g, F.bone(`${b}_${sd}`), F.bone(b === 'upperarm' ? `lowerarm_${sd}` : `hand_${sd}`), cur.clone(), w);
     }
@@ -514,8 +534,11 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   // 몸짓 순서대로 하기: kit.gesture(g, [['dust', 3], ['tear', 2.6], ['weep', 7]])
   function gesture(g, seq) {
     const F = g.userData.fig; if (!F) return;
+    if (!seq) { F.gest = null; return; }
     F.gest = { seq, t0: clock, total: seq.reduce((a, [, d]) => a + d, 0), dir: {} };
   }
+  // 몸짓을 계속 하고 있기 (끝나지 않음): kit.hold(g, 'cross'), kit.hold(g) 로 풀기
+  function hold(g, name) { gesture(g, name ? [[name, 1e7]] : null); }
   // 많은 사람을 한 번에 (무리, 군대)
   function throng({ n, place, height, colors = ['#3a3029', '#4a3c30', '#2e2925', '#5a4a3a'], scale = [.92, 1.06], pose = 'stand' }) {
     const g = new THREE.Group();
@@ -537,7 +560,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     }
     items.forEach((o, i) => { c.set(colors[i % colors.length]).multiplyScalar(rnd(.8, 1.1)); body.setColorAt(i, c); });
     draw();
-    g.add(body, head); scene.add(g);
+    g.add(body, head); R().add(g);
     g.userData.items = items; g.userData.draw = draw;
     return g;
   }
@@ -609,11 +632,11 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     let draw;
     if (n <= 3) {  // 한두 마리는 실제로 숨 쉬고 고개를 움직인다
       items.forEach(o => {
-        o.obj = SkeletonUtils.clone(A.rig); o.obj.traverse(m => { if (m.isMesh) { m.material = mat(m.material); m.frustumCulled = false; } });
+        o.obj = SkeletonUtils.clone(A.rig); o.base = o.obj.scale.x; o.obj.traverse(m => { if (m.isMesh) { m.material = mat(m.material); m.frustumCulled = false; } });
         o.mixer = new THREE.AnimationMixer(o.obj); A.clips.Idle && o.mixer.clipAction(A.clips.Idle).play(); o.mixer.update(rnd(0, 5));
         g.add(o.obj); herdMixers.push(o);
       });
-      draw = () => items.forEach(o => { o.obj.position.set(o.x, ground(o), o.z); o.obj.rotation.set(0, o.ry, 0); o.obj.scale.setScalar(o.s); o.obj.visible = o.on; });
+      draw = () => items.forEach(o => { o.obj.position.set(o.x, ground(o), o.z); o.obj.rotation.set(0, o.ry, 0); o.obj.scale.setScalar(o.s * o.base); o.obj.visible = o.on; });  // 모델 자체의 크기(뼈대 노드의 scale)를 지킨다
     } else {  // 무리는 세 가지 굳힌 자세를 한꺼번에 그린다
       const tmp = new THREE.Color(), base = new THREE.Object3D();
       const buckets = A.poses.map((parts, p) => {
@@ -629,7 +652,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
         b.meshes.forEach(m => { m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
       });
     }
-    draw(); scene.add(g);
+    draw(); R().add(g);
     g.userData.items = items; g.userData.draw = draw;
     g.userData.keep = frac => { const k = Math.round(items.length * frac); items.forEach((o, i) => { o.on = i < k; }); draw(); };
     return g;
@@ -676,7 +699,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       });
       meshes.forEach(m => { m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
     }
-    draw(); scene.add(g);
+    draw(); R().add(g);
     g.userData.items = items; g.userData.draw = draw;
     // 일부만 남기기 (0~1)
     g.userData.keep = frac => { const k = Math.round(items.length * frac); items.forEach((o, i) => { o.on = i < k; }); draw(); };
@@ -686,7 +709,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   /* --- 불 (모닥불, 숯불, 제단 불) --- */
   const fires = [];
   function fire(pos, { logs = true, ring = true, level = 0, useEnv = false, smoke = false, coals = false, size = 1, light = 7 } = {}) {
-    const g = new THREE.Group(); g.position.set(pos[0], pos[1] || .05, pos[2]); scene.add(g);
+    const g = new THREE.Group(); g.position.set(pos[0], pos[1] || .05, pos[2]); R().add(g);
     if (logs) { const logM = new THREE.MeshStandardMaterial({ color: '#2a1d14', roughness: 1 }); [0, 1.2, 2.3].forEach(a => { const l = new THREE.Mesh(new THREE.CylinderGeometry(.05, .06, .72, 6), logM); l.rotation.set(Math.PI / 2 - .2, a, 0); l.position.y = .07; l.scale.setScalar(size); g.add(l); }); }
     if (ring) { const sm = new THREE.MeshStandardMaterial({ color: '#5b5048', roughness: 1, flatShading: true }); for (let i = 0; i < 9; i++) { const s = new THREE.Mesh(new THREE.DodecahedronGeometry(.09 * size, 0), sm); const a = i / 9 * Math.PI * 2; s.position.set(Math.cos(a) * .42 * size, .04, Math.sin(a) * .42 * size); g.add(s); } }
     let coalMat = null;
@@ -698,7 +721,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   function stepFires(dt) {
     fires.forEach(f => {
       const amt = (f.useEnv ? env.fire : 1) * f.level;
-      if (!f.g.visible || amt < .02) { f.L.intensity = 0; if (f.coalMat) f.coalMat.color.setRGB(.05, .03, .02); return; }
+      if (!shown(f.g) || amt < .02) { f.L.intensity = 0; if (f.coalMat) f.coalMat.color.setRGB(.05, .03, .02); return; }
       const p = f.g.position, s = f.size;
       if (f.coals) {
         f.coalMat.color.setRGB(2.2 * amt * (.8 + Math.sin(clock * 3) * .2), .55 * amt, .12 * amt);
@@ -751,7 +774,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
           float dd = length(uCam - vW); float f = 1. - exp(-uFogD * uFogD * dd * dd); col = mix(col, uFog, f);
           gl_FragColor = vec4(col, 1.); }`
     }));
-    scene.add(m); waters.push({ m, u }); return m;
+    R().add(m); waters.push({ m, u }); return m;
   }
   const floaters = [];
   // 물 위에 뜬 것 (배): 물결 따라 오르내리고 흔들린다
@@ -766,11 +789,11 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     if (az <= hl) return Math.abs(lx) < hw;
     const e = (az - hl) / (BOAT_END + m), q = lx / hw; return e * e + q * q < 1;
   }
-  function boatAt(x, z, m = 0) { for (const b of boats) { if (!b.visible || !b.parent) continue; const [lx, lz] = boatLocal(b, x, z); if (insideBoat(b, lx, lz, m)) return b; } return null; }
+  function boatAt(x, z, m = 0) { for (const b of boats) { if (!shown(b)) continue; const [lx, lz] = boatLocal(b, x, z); if (insideBoat(b, lx, lz, m)) return b; } return null; }
   // 배 안에 들어온 점을 가까운 뱃전 밖으로 밀어낸다 (고기, 물보라)
   function outsideBoats(v, m = .25) {
     for (const b of boats) {
-      if (!b.visible) continue;
+      if (!shown(b)) continue;
       const [lx, lz] = boatLocal(b, v.x, v.z); if (!insideBoat(b, lx, lz, m)) continue;
       const nx = (lx >= 0 ? 1 : -1) * (BOAT_HW + m + .02), c = Math.cos(b.rotation.y), s = Math.sin(b.rotation.y);
       v.x = b.position.x + nx * c + lz * s; v.z = b.position.z - nx * s + lz * c;
@@ -790,13 +813,13 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     const rail = new THREE.MeshStandardMaterial({ color: '#3a2c21', roughness: 1 });
     [-1, 1].forEach(s => { const r = new THREE.Mesh(new THREE.BoxGeometry(.08, .1, len), rail); r.position.set(s * 1.13, .58, 0); g.add(r); });
     g.userData.len = len; boats.push(g);
-    scene.add(g); return g;
+    R().add(g); return g;
   }
   function net({ w = 3, d = 2, color = '#8a7b62', at = [0, 0, 0] } = {}) {
     const g = new THREE.PlaneGeometry(w, d, 10, 8); g.rotateX(-Math.PI / 2);
     const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, Math.sin(p.getX(i) * 3) * .04 + Math.cos(p.getZ(i) * 4) * .03);
     const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color, roughness: 1, wireframe: true, transparent: true, opacity: .85 }));
-    m.position.set(at[0], at[1], at[2]); scene.add(m); return m;
+    m.position.set(at[0], at[1], at[2]); R().add(m); return m;
   }
 
   /* --- 장막 --- */
@@ -807,7 +830,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 1, side: THREE.DoubleSide });
     const body = new THREE.Mesh(geo, mat); g.add(body);
     if (open) { const door = new THREE.Mesh(new THREE.PlaneGeometry(w * .3, h * .55), new THREE.MeshBasicMaterial({ color: '#0a0806' })); door.position.set(0, h * .28, d / 2 + .01); g.add(door); g.userData.door = door; }
-    scene.add(g); return g;
+    R().add(g); return g;
   }
 
   /* --- 돌 제단 --- */
@@ -819,9 +842,145 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       s.position.set(Math.cos(a) * w * .38, .16 + y * h / 3, Math.sin(a) * w * .3); s.scale.set(rnd(.9, 1.3), rnd(.7, 1), rnd(.9, 1.2)); s.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3)); g.add(s);
     }
     const top = new THREE.Mesh(new THREE.CylinderGeometry(w * .45, w * .5, .2, 10), m); top.position.y = h; g.add(top);
-    scene.add(g);
+    R().add(g);
     g.userData.fire = fire([at[0], at[1] + h + .1, at[2]], { ring: false, smoke: true, size: 1.4, light: 10 });
     return g;
+  }
+
+  /* --- 마을과 건물, 나무, 십자가, 무덤 (여러 인물이 같이 쓴다) --- */
+  const MAT = {};
+  const mat = (c, o) => { const k = c + (o ? JSON.stringify(o) : ''); return MAT[k] || (MAT[k] = new THREE.MeshStandardMaterial({ color: c, roughness: 1, ...(o || {}) })); };
+  // 흙벽돌 집: 앞(+z)에 문, 평평한 지붕, 바깥 계단(지붕으로). 안에서도 벽이 보인다
+  function house({ at = [0, 0, 0], w = 5, d = 4, h = 2.8, ry = 0, color = '#a48a69', door = true, stairs = false, roof = true, win = true } = {}) {
+    const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry;
+    const m = mat(color), t = .3, dw = 1.05;
+    box(w, h, t, null, 0, h / 2, -d / 2, g, m); box(t, h, d, null, -w / 2, h / 2, 0, g, m); box(t, h, d, null, w / 2, h / 2, 0, g, m);
+    if (door) { box((w - dw) / 2, h, t, null, -(w + dw) / 4, h / 2, d / 2, g, m); box((w - dw) / 2, h, t, null, (w + dw) / 4, h / 2, d / 2, g, m); box(dw, h - 2, t, null, 0, 2 + (h - 2) / 2, d / 2, g, m); }
+    else box(w, h, t, null, 0, h / 2, d / 2, g, m);
+    if (win) [-1, 1].forEach(sx => box(.5, .4, .05, '#1a130e', sx * w * .28, h * .66, d / 2 + .16, g));
+    if (roof) { box(w + .3, .22, d + .3, null, 0, h + .11, 0, g, mat('#6e5a44')); box(w + .3, .35, .12, null, 0, h + .38, d / 2 + .1, g, m); }
+    if (stairs) for (let i = 0; i < 9; i++) box(.75, .32, .32, null, w / 2 + .38, (i + .5) * h / 9, d / 2 - .4 - i * (d - .8) / 9, g, m);
+    R().add(g); return g;
+  }
+  // 집이 늘어선 마을: kit.village({ center, n, r, height, avoid })
+  function village({ center = [0, 0], n = 12, rMin = 8, rMax = 40, height, avoid, colors = ['#a48a69', '#9a8062', '#b09574', '#8f7558'], seed = 1 } = {}) {
+    const g = new THREE.Group(); R().add(g); const prev = intoTarget; intoTarget = g;
+    for (let i = 0, tries = 0; i < n && tries < n * 20; tries++) {
+      const a = hash2(i + seed, tries) * Math.PI * 2, r = rMin + hash2(tries + seed, i * 3) * (rMax - rMin), x = center[0] + Math.cos(a) * r, z = center[1] + Math.sin(a) * r;
+      if (avoid && avoid(x, z)) continue;
+      const w = 3.5 + hash2(i, 7) * 3, d = 3 + hash2(i, 9) * 2.5, h = 2.4 + hash2(i, 11) * 1.2;
+      house({ at: [x, height ? height(x, z) : 0, z], w, d, h, ry: Math.atan2(center[0] - x, center[1] - z) + (hash2(i, 13) - .5) * .5, color: colors[i % colors.length], stairs: i % 3 === 0 });
+      i++;
+    }
+    intoTarget = prev; return g;
+  }
+  // 안이 보이는 방: 바닥·벽·천장·등잔. 바닥을 땅으로 알려 준다
+  function room({ at = [0, 0, 0], w = 10, d = 8, h = 3.6, color = '#4a3d33', floor = '#3a2f27', lamps = [], ceiling = true, door = null } = {}) {
+    const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]);
+    const m = mat(color);
+    box(w, .1, d, floor, 0, -.05, 0, g);
+    box(w, h, .3, null, 0, h / 2, -d / 2, g, m); box(.3, h, d, null, -w / 2, h / 2, 0, g, m); box(.3, h, d, null, w / 2, h / 2, 0, g, m);
+    if (door != null && door !== false) { const dw = 1.2; box((w - dw) / 2, h, .3, null, -(w + dw) / 4 + door, h / 2, d / 2, g, m); box((w - dw) / 2, h, .3, null, (w + dw) / 4 + door, h / 2, d / 2, g, m); box(dw, h - 2.1, .3, null, door, 2.1 + (h - 2.1) / 2, d / 2, g, m); }
+    else box(w, h, .3, null, 0, h / 2, d / 2, g, m);
+    if (ceiling) box(w, .3, d, null, 0, h, 0, g, m);
+    g.userData.lights = lamps.map(([x, z, y = .6]) => { glow(.07, .1, 4, 2, .7, x, y - .1, z, g); const L = new THREE.PointLight('#ffb070', 3, 9, 2); L.position.set(x, y, z); g.add(L); return L; });
+    R().add(g); addFloor(at[0], at[2], w, d, at[1], g); return g;
+  }
+  // 성벽: from → to, 망대와 성가퀴
+  function cityWall({ from, to, h = 9, t = 2.4, color = '#b7a07c', towers = 40, height } = {}) {
+    const g = new THREE.Group(), m = mat(color, { flatShading: true });
+    const dx = to[0] - from[0], dz = to[1] - from[1], L = Math.hypot(dx, dz), ry = Math.atan2(dx, dz), n = Math.max(1, Math.round(L / 12));
+    for (let i = 0; i < n; i++) {
+      const k = (i + .5) / n, x = from[0] + dx * k, z = from[1] + dz * k, y = height ? height(x, z) : 0;
+      const seg = new THREE.Mesh(new THREE.BoxGeometry(t, h + 3, L / n + .05), m); seg.position.set(x, y + (h + 3) / 2 - 3, z); seg.rotation.y = ry; g.add(seg);
+      for (let j = 0; j < 4; j++) { const b = new THREE.Mesh(new THREE.BoxGeometry(t * .5, .9, .9), m); const kk = (i + (j + .5) / 4) / n; b.position.set(from[0] + dx * kk, y + h + .45, from[1] + dz * kk); b.rotation.y = ry; g.add(b); }
+      if (towers && i % Math.max(1, Math.round(towers / 12)) === 0) { const tw = new THREE.Mesh(new THREE.BoxGeometry(t * 2.2, h + 6, t * 2.2), m); tw.position.set(x, y + (h + 6) / 2 - 3, z); tw.rotation.y = ry; g.add(tw); }
+    }
+    R().add(g); return g;
+  }
+  // 성전 (헤롯 성전): 넓은 단, 주랑, 흰 돌과 금빛 성소
+  function temple({ at = [0, 0, 0], ry = 0, s = 1 } = {}) {
+    const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry; g.scale.setScalar(s);
+    const stone = mat('#d9ccb0', { flatShading: true }), white = mat('#efe8d8'), gold = mat('#c9a23a', { metalness: .4, roughness: .45 });
+    box(120, 14, 90, null, 0, 7, 0, g, stone);  // 성전 산의 단
+    for (let i = 0; i < 24; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 9, 8), white); c.position.set(-57 + i * 5, 18.5, 44); g.add(c); }  // 주랑
+    box(120, 1.2, 6, null, 0, 23.6, 43, g, white);
+    box(40, 8, 40, null, 0, 18, -5, g, stone);  // 안뜰
+    box(22, 26, 30, null, 0, 35, -8, g, white);  // 성소
+    box(30, 30, 4, null, 0, 37, 8, g, white);  // 현관
+    box(31, 1.4, 5, null, 0, 52.7, 8, g, gold); box(23, 1.2, 31, null, 0, 48.6, -8, g, gold);
+    box(8, 14, .5, '#3a2a1c', 0, 29, 10.3, g);  // 들어가는 문
+    R().add(g); return g;
+  }
+  // 나무: 감람나무, 종려나무, 무화과나무, 위성류. 같은 종류는 한꺼번에 그린다
+  const TREE = {
+    olive: { trunk: '#5a4a3a', leaf: '#7b8a63', h: 3.2, crown: [[0, 3.2, 0, 1.7], [.9, 2.8, .4, 1.1], [-.8, 2.9, -.3, 1.2]] },
+    fig: { trunk: '#6a5a48', leaf: '#4f6b34', h: 2.6, crown: [[0, 2.8, 0, 1.9], [1, 2.4, .5, 1.2], [-1, 2.5, -.4, 1.2]] },
+    palm: { trunk: '#7a6248', leaf: '#5d7a3c', h: 8, palm: true },
+    tamarisk: { trunk: '#5e4e3e', leaf: '#8a9470', h: 4, crown: [[0, 4.2, 0, 2], [.8, 3.6, .6, 1.4]] },
+    bare: { trunk: '#5a4a3a', leaf: '#5a4a3a', h: 2.6, crown: [[0, 2.7, 0, .5], [.6, 2.4, .3, .35], [-.5, 2.3, -.2, .3]] }  // 잎이 없는 (마른) 나무
+  };
+  function trees(kind, { n = 20, place, height, s = [.8, 1.25] } = {}) {
+    const T = TREE[kind], g = new THREE.Group(), d = new THREE.Object3D(), pts = [];
+    for (let i = 0; i < n; i++) { const [x, z] = place(i); pts.push([x, height ? height(x, z) : 0, z, rnd(s[0], s[1]), rnd(0, 6.3)]); }
+    const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(T.palm ? .16 : .2, T.palm ? .24 : .32, T.h, 7), mat(T.trunk), n);
+    pts.forEach(([x, y, z, sc, r], i) => { d.position.set(x, y + T.h * sc / 2, z); d.rotation.set(T.palm ? .08 : .1, r, 0); d.scale.setScalar(sc); d.updateMatrix(); trunk.setMatrixAt(i, d.matrix); });
+    g.add(trunk);
+    if (T.palm) {
+      const fr = new THREE.InstancedMesh(new THREE.ConeGeometry(.35, 3.6, 4), mat(T.leaf, { side: THREE.DoubleSide }), n * 9);
+      pts.forEach(([x, y, z, sc, r], i) => { for (let j = 0; j < 9; j++) { const a = r + j / 9 * Math.PI * 2; d.position.set(x + Math.sin(a) * 1.4 * sc, y + T.h * sc + .2, z + Math.cos(a) * 1.4 * sc); d.rotation.set(Math.cos(a) * 1.25, 0, -Math.sin(a) * 1.25); d.scale.set(sc, sc, .25 * sc); d.updateMatrix(); fr.setMatrixAt(i * 9 + j, d.matrix); } });
+      g.add(fr);
+    } else {
+      const cr = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), mat(T.leaf, { flatShading: true }), n * T.crown.length);
+      pts.forEach(([x, y, z, sc, r], i) => T.crown.forEach(([cx, cy, cz, cs], j) => { d.position.set(x + (cx * Math.cos(r) + cz * Math.sin(r)) * sc, y + cy * sc, z + (cz * Math.cos(r) - cx * Math.sin(r)) * sc); d.rotation.set(r, r * 2, 0); d.scale.set(cs * sc, cs * sc * .72, cs * sc); d.updateMatrix(); cr.setMatrixAt(i * T.crown.length + j, d.matrix); }));
+      g.add(cr); g.userData.crown = cr;
+    }
+    R().add(g); return g;
+  }
+  // 풀밭과 갈대: 작은 잎을 흩뿌린다 (요 6:10 "잔디가 많은지라")
+  function grass({ center = [0, 0], rx = 20, rz = 20, n = 1500, height, color = '#5f7a3a', h = .35, reeds = false } = {}) {
+    const m = new THREE.InstancedMesh(new THREE.ConeGeometry(reeds ? .03 : .06, reeds ? 1.6 : h, 3), mat(color), n), d = new THREE.Object3D();
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()), x = center[0] + Math.cos(a) * r * rx, z = center[1] + Math.sin(a) * r * rz;
+      d.position.set(x, (height ? height(x, z) : 0) + (reeds ? .8 : h / 2), z); d.rotation.set(rnd(-.25, .25), rnd(0, 6), rnd(-.25, .25)); d.scale.setScalar(rnd(.6, 1.3)); d.updateMatrix(); m.setMatrixAt(i, d.matrix);
+    }
+    m.frustumCulled = false; R().add(m); return m;
+  }
+  // 십자가: 세로 기둥, 가로 들보, 죄패 (요 19:19). userData.hang = 매달린 사람이 설 자리
+  function cross({ at = [0, 0, 0], h = 4.2, ry = 0, titulus = false } = {}) {
+    const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry;
+    const wood = mat('#4d3a28', { flatShading: true });
+    box(.22, h + .6, .2, null, 0, (h + .6) / 2 - .6, 0, g, wood); box(2.1, .2, .2, null, 0, h - .55, 0, g, wood);
+    if (titulus) { box(.75, .32, .04, '#c9bea3', 0, h - .05, .12, g); }
+    box(.3, .06, .22, null, 0, h - 1.92, .14, g, wood);  // 발판 (두 팔이 가로 들보에 닿는 높이)
+    g.userData.hang = new THREE.Vector3(0, h - 1.89, .16);
+    R().add(g); return g;
+  }
+  // 바위 무덤: 바위벽에 판 굴과 굴리는 돌 (요 20:1, 막 16:4). 안으로 들어갈 수 있는 방이다 (앞이 +z)
+  function tomb({ at = [0, 0, 0], ry = 0 } = {}) {
+    const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry;
+    const rock = mat('#9a8a74', { flatShading: true }), inner = mat('#6e6252');
+    box(4.2, 5, 1, null, -3.2, 2.5, 0, g, rock); box(4.2, 5, 1, null, 3.2, 2.5, 0, g, rock); box(2.2, 2.6, 1, null, 0, 3.7, 0, g, rock);  // 앞벽과 문 (너비 2.2, 높이 2.4)
+    box(1, 2.8, 5, null, -1.7, 1.4, -3, g, inner); box(1, 2.8, 5, null, 1.7, 1.4, -3, g, inner); box(4.4, 2.8, 1, null, 0, 1.4, -5.4, g, inner); box(4.4, .8, 6, null, 0, 3.2, -3, g, inner);  // 안쪽 방
+    box(4, 6, 7, null, -4.4, 3, -3.4, g, rock); box(4, 6, 7, null, 4.4, 3, -3.4, g, rock); box(12, 2.6, 7.4, null, 0, 4.8, -3.4, g, rock);  // 바깥 바위 덩어리
+    box(1, .6, 3.6, '#8a7b66', .75, .3, -3.2, g);  // 시체를 뉘던 자리
+    const L = new THREE.PointLight('#d8c8a8', 1.2, 7, 2); L.position.set(0, 2, -1.2); g.add(L);
+    const stone = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, .45, 18), mat('#8c7d68', { flatShading: true })); stone.rotation.x = Math.PI / 2; stone.position.set(0, 1.4, .8); g.add(stone);
+    g.userData.stone = stone; g.userData.shelf = new THREE.Vector3(.75, .62, -3.2);
+    R().add(g);
+    addGround((x, z) => { if (!shown(g)) return null; const p = g.worldToLocal(new THREE.Vector3(x, 0, z)); return Math.abs(p.x) < 1.2 && p.z < .6 && p.z > -4.9 ? at[1] : null; });
+    return g;
+  }
+  // 수염 없는 단순한 닭 (눅 22:60): 몸, 볏, 꼬리
+  function rooster({ at = [0, 0, 0], ry = 0 } = {}) {
+    const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry;
+    const body = new THREE.Mesh(new THREE.SphereGeometry(.13, 10, 8), mat('#7a3d1e')); body.scale.set(1, .9, 1.3); body.position.y = .3; g.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), mat('#8a4a24')); head.position.set(0, .48, .12); g.add(head);
+    const comb = new THREE.Mesh(new THREE.BoxGeometry(.015, .06, .08), mat('#b0181c')); comb.position.set(0, .55, .12); g.add(comb);
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(.018, .05, 4), mat('#c9a23a')); beak.rotation.x = Math.PI / 2; beak.position.set(0, .47, .19); g.add(beak);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(.09, .3, 5), mat('#1e2a1e')); tail.position.set(0, .42, -.18); tail.rotation.x = -.7; g.add(tail);
+    [-.05, .05].forEach(x => box(.015, .2, .015, '#c9a23a', x, .1, 0, g));
+    g.userData.head = head; R().add(g); return g;
   }
 
   /* --- 시점: 마우스나 손가락으로 끌어서 둘러본다 (움직이지는 않는다). 가만히 두면 천천히 이야기의 방향으로 돌아온다 --- */
@@ -867,7 +1026,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     renderer.toneMappingExposure = env.exposure * (1.15 + dark * .35);
     ashU.uTime.value = clock; ashU.uAmt.value = env.ash; ashU.uWind.value = env.wind; ashU.uTint.value.copy(env.fog).multiplyScalar(1.5).addScalar(.06); ashU.uCam.value.copy(camera.position);
     let bn = 0;
-    for (const b of boats) { if (bn >= 4 || !b.visible || !b.parent) continue; waters[0] && waters.forEach(({ u }) => { u.uBoat.value[bn].set(b.position.x, b.position.z, Math.cos(b.rotation.y), Math.sin(b.rotation.y)); u.uBoatL.value[bn] = b.userData.len / 2; }); bn++; }
+    for (const b of boats) { if (bn >= 4 || !shown(b)) continue; waters[0] && waters.forEach(({ u }) => { u.uBoat.value[bn].set(b.position.x, b.position.z, Math.cos(b.rotation.y), Math.sin(b.rotation.y)); u.uBoatL.value[bn] = b.userData.len / 2; }); bn++; }
     waters.forEach(({ u }) => {
       u.uBoatN.value = bn;
       u.uTime.value = clock; u.uAmp.value = env.waves; u.uTop.value.copy(env.top); u.uHorizon.value.copy(env.horizon); u.uSun.value.copy(env.sun);
@@ -920,7 +1079,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     walkTo(x, z, dur, { eye = 1.65 } = {}) { camGround.on = true; camGround.eye = eye; return setEnv({ camX: x, camZ: z }, dur); },
     groundAt, addGround, addFloor, boatAt, outsideBoats,
     waveH: (x, z) => waveH(x, z, env.waves),
-    terrain, disc, rocks, box, glow, glowMat, person, figure, gesture, selfBody, get self() { return me; }, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
+    terrain, disc, rocks, box, glow, glowMat, person, figure, gesture, hold, selfBody, mat, house, village, room, cityWall, temple, trees, grass, cross, tomb, rooster, get self() { return me; }, into, site, shown, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
     reset() {
       for (const k in tw) delete tw[k];
       tweens.length = 0; cyc = null; camWater.on = false; camGround.on = false; tLookX = tLookY = 0;
