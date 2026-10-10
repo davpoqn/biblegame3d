@@ -19,6 +19,7 @@ python3 tools/build.py                                  # → dist/
 python3 tools/bundle.py                                 # → single/index.html (여섯 인물)
 python3 tools/bundle.py paul                            # → single/paul.html (한 인물, 허브 링크 붙음)
 python3 tools/site.py                                   # → _site/index.html (웹사이트용 문서 틀을 씌움)
+python3 tools/icon/render.py                            # → assets/icon/ (사이트 아이콘 다시 만들기)
 tools/check.sh                                          # 문법 검사
 python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
 ```
