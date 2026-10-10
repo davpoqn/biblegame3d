@@ -52,10 +52,10 @@ body:not(.playing) .hud-title{visibility:hidden}
 .chapter-name{font:300 clamp(2.6rem,9vw,5rem)/1.05 var(--f-display);margin:0;text-wrap:balance}
 .chapter-sub{font:400 .85rem var(--f-ui);color:var(--dust);letter-spacing:.06em}
 
-#title-screen{position:fixed;inset:0;z-index:6;display:grid;align-content:end;padding-inline:var(--gutter);padding-block:96px calc(env(safe-area-inset-bottom,0px) + clamp(28px,8vh,84px));background:linear-gradient(to top,rgba(12,10,9,.92) 0%,rgba(12,10,9,.55) 42%,rgba(12,10,9,0) 75%);overflow-y:auto}
+#title-screen{position:fixed;inset:0;z-index:6;display:grid;align-content:end;align-content:safe end;padding-inline:var(--gutter);padding-block:96px calc(env(safe-area-inset-bottom,0px) + clamp(28px,8vh,84px));background:linear-gradient(to top,rgba(12,10,9,.92) 0%,rgba(12,10,9,.55) 42%,rgba(12,10,9,0) 75%);overflow-y:auto}
 .title-block{max-width:42rem;display:grid;gap:1.15rem;min-width:0}
 .eyebrow{font:500 .74rem var(--f-ui);letter-spacing:.22em;color:var(--dust);margin:0}
-h1{font:300 clamp(3rem,11vw,6.4rem)/.98 var(--f-display);margin:0;letter-spacing:-.015em;text-wrap:balance}
+h1{font:300 clamp(3rem,min(11vw,12vh),6.4rem)/.98 var(--f-display);margin:0;letter-spacing:-.015em;text-wrap:balance}
 h1 .comma{color:var(--ember)}
 .lede{font:400 clamp(1rem,2.5vw,1.14rem)/1.85 var(--f-verse);margin:0;max-width:33em;color:var(--bone)}
 .meta{display:flex;flex-wrap:wrap;gap:.35rem 1.2rem;font-size:.78rem;color:var(--dust);letter-spacing:.03em;margin:0;padding:0;list-style:none}
@@ -65,6 +65,25 @@ h1 .comma{color:var(--ember)}
 .btn-ghost{background:transparent;color:var(--bone);border:1px solid var(--line);border-radius:2px;padding:.85rem 1.2rem;font-size:.95rem;cursor:pointer}
 .btn-ghost:hover{border-color:var(--dust)}
 .notice{font-size:.8rem;color:var(--ember);margin:0}
+/* 휴대폰 세로: 내용이 화면보다 길면 시작 버튼이 아래에 붙어 늘 보이게 */
+@media (max-width:620px){
+  #title-screen{--pb:calc(env(safe-area-inset-bottom,0px) + clamp(28px,8vh,84px))}
+  #title-screen .start-row{position:sticky;bottom:calc(-1 * var(--pb));z-index:1;margin-inline:calc(-1 * var(--gutter));padding:.9rem var(--gutter) var(--pb);margin-bottom:calc(-1 * var(--pb));background:linear-gradient(to top,var(--night) 60%,rgba(12,10,9,0))}
+}
+/* 넓은 가로 화면(노트북·모니터): 두 단으로 놓아 낮은 화면에서도 위가 잘리지 않게. 왼쪽 제목·정보·시작, 오른쪽 인물·부·소개 */
+@media (min-width:960px) and (min-aspect-ratio:4/3){
+  #title-screen{padding-top:80px}
+  #title-screen .title-block{max-width:78rem;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);column-gap:clamp(2.5rem,5vw,5.5rem);align-items:start;
+    grid-template-areas:"eye pick" "h1 part" "h1 lede" "meta lede" "start lede" "notice lede"}
+  #title-screen .eyebrow{grid-area:eye;align-self:end}
+  #title-screen h1{grid-area:h1}
+  #title-screen .picker{grid-area:pick}
+  #title-screen .part-picker{grid-area:part}
+  #title-screen .lede{grid-area:lede}
+  #title-screen .meta{grid-area:meta}
+  #title-screen .start-row{grid-area:start}
+  #title-screen #gl-notice{grid-area:notice}
+}
 
 #stage{position:fixed;left:0;right:0;bottom:0;z-index:5;padding-inline:var(--gutter);padding-block:120px calc(env(safe-area-inset-bottom,0px) + clamp(20px,6vh,56px));background:linear-gradient(to top,rgba(10,8,7,.86) 0%,rgba(10,8,7,.6) 45%,rgba(10,8,7,0) 100%);pointer-events:none}
 .stage-inner{max-width:42rem;display:grid;gap:.85rem;justify-items:start;pointer-events:auto;max-height:min(68vh,40rem);overflow-y:auto;scrollbar-width:thin;min-width:0;padding:5px;margin-inline:-5px}
