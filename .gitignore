@@ -5,3 +5,4 @@ chk/
 serve/
 __pycache__/
 assets/chars/build/
+_site/

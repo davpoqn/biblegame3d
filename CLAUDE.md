@@ -7,6 +7,7 @@
 - 성경 본문은 개역한글(1961)만 쓴다. `data/krv_holybible.jsonl`에서 빌드할 때 넣고, 손으로 옮겨 치지 않는다. 쉬운성경은 쓰지 않는다.
 - 시작, 과정, 마무리가 모두 성경과 일치해야 한다. 본문에 없는 이름과 사건은 넣지 않는다. 게임을 위해 쓴 문장에는 '연출' 표시를 붙인다.
 - 게시는 반드시 한 장짜리 HTML(`tools/bundle.py`)로 한다. 여러 파일로 게시하면 휴대폰 앱에서 인물이 뜨지 않는다.
+- **웹사이트**: https://davpoqn.github.io/biblegame3d/ — main에 push하면 GitHub Actions(`.github/workflows/pages.yml`)가 빌드해서 자동으로 다시 게시한다. 인물별 링크는 주소 끝에 `#peter`, `#paul`처럼 붙인다.
 - **이 저장소는 공개다.** 너진똑 스크립트 같은 남의 저작물, API 키, 개인 정보를 올리지 않는다. 너진똑 자료는 사용자의 비공개 저장소에 따로 있다.
 - 일레븐랩스 API 키는 사용자 PC에서만 쓴다. 받지도 않고, 저장소에 넣지도 않는다.
 
@@ -17,6 +18,7 @@ npm install
 python3 tools/build.py                                  # → dist/
 python3 tools/bundle.py                                 # → single/index.html (여섯 인물)
 python3 tools/bundle.py paul                            # → single/paul.html (한 인물, 허브 링크 붙음)
+python3 tools/site.py                                   # → _site/index.html (웹사이트용 문서 틀을 씌움)
 tools/check.sh                                          # 문법 검사
 python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
 ```

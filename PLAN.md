@@ -52,6 +52,11 @@
     - 베드로 https://claude.ai/artifact/JZWkfJz8M4E5ux83HjxBX1 · 바울 https://claude.ai/artifact/P2CBJUk7dRJCAFiTi5fn21 · 다윗 https://claude.ai/artifact/UHrvCUST6DiAdnJbFBY1dt · 아브라함 https://claude.ai/artifact/Aogecp9rxGT3eXuuHhhbJ2 · 야곱 https://claude.ai/artifact/YQnYVxXRfyxYjFoJ6hh8m3 · 욥 https://claude.ai/artifact/7WHsGWfCCtPHZnPuVYPJKd
   - 남은 한계: 세로 화면은 시야가 좁아 손이 화면에 잘 들어오지 않는다(바울은 든 것을 화면의 손 자리에 붙여 보여 주고, 다른 인물은 아래를 보면 무릎·다리가 보인다).
 - **전체 확장 작업 끝남** (2026-10-10).
+- **웹사이트 게시** (2026-10-10): https://davpoqn.github.io/biblegame3d/
+  - GitHub Pages(소스: GitHub Actions). main에 push하면 `.github/workflows/pages.yml`이 `build.py` → `bundle.py` → `site.py`를 돌려 `_site/index.html`을 올린다.
+  - `tools/site.py`: 한 장짜리 HTML에 문서 틀(doctype, `charset=utf-8`, viewport, 설명)을 씌운다. 아티팩트는 틀을 붙여 주지만 일반 웹서버는 아니라서, 틀 없이 올리면 한글이 깨지고 스크립트가 멈춘다.
+  - 첫 화면에서 인물을 고르고 시작한다. 주소 끝에 `#peter`, `#paul`, `#david`, `#abraham`, `#jacob`, `#job`을 붙이면 그 인물이 골라진 채로 열린다.
+  - 사이트는 누구나 볼 수 있다(아티팩트는 비공개). 앱·스팀과 엔진 이전(Godot)은 나중에 정한다. 지금은 이야기와 그래픽 완성도를 높인다.
 - **다음 작업: 사용자가 새 버전을 해 보고 주는 의견을 반영한다.**
 
 ## 3. 지켜야 할 원칙 (사용자가 확정한 것)

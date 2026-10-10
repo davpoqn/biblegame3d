@@ -1,0 +1,40 @@
+# main에 push하면 게임을 빌드해서 GitHub Pages에 올린다 → https://davpoqn.github.io/biblegame3d/
+# 사이트는 tools/bundle.py가 만든 한 장짜리 HTML(여섯 인물)이다. 인물별 링크는 주소 끝에 #peter, #paul 처럼 붙인다.
+name: 웹사이트 게시
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: 빌드
+        run: |
+          python3 tools/build.py
+          python3 tools/bundle.py
+          python3 tools/site.py
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
