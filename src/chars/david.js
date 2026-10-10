@@ -52,7 +52,67 @@ const V = /*KRV*/{
   '삼하 18:31': '2SA 18:31',
   '삼하 18:32#2': '2SA 18:32 ~ 구스 사람이 대답하되 내 주 왕의 원수와 일어나서 왕을 대적하는 자들은 다 그 소년과 같이 되기를 원하나이다',
   '삼하 18:33': '2SA 18:33',
-  '왕상 2:10-11': '1KI 2:10-11'
+  '왕상 2:10-11': '1KI 2:10-11',
+  '삼상 16:14': '1SA 16:14',
+  '삼상 16:15-16': '1SA 16:15-16',
+  '삼상 16:18': '1SA 16:18',
+  '삼상 16:19-20': '1SA 16:19-20',
+  '삼상 16:21': '1SA 16:21',
+  '삼상 16:23': '1SA 16:23',
+  '삼상 17:17-18': '1SA 17:17-18',
+  '삼상 17:20': '1SA 17:20',
+  '삼상 17:22-23': '1SA 17:22-23',
+  '삼상 17:28': '1SA 17:28',
+  '삼상 17:29': '1SA 17:29',
+  '삼상 17:51': '1SA 17:51',
+  '삼상 17:52': '1SA 17:52',
+  '삼상 17:55': '1SA 17:55',
+  '삼상 17:57': '1SA 17:57',
+  '삼상 17:58': '1SA 17:58',
+  '삼상 17:58#1': '1SA 17:58 ~ 사울이 그에게 묻되 소년이여 누구의 아들이뇨',
+  '삼상 18:1': '1SA 18:1',
+  '삼상 18:3-4': '1SA 18:3-4',
+  '삼상 18:5': '1SA 18:5',
+  '삼상 18:6': '1SA 18:6',
+  '삼상 18:7': '1SA 18:7',
+  '삼상 18:8-9': '1SA 18:8-9',
+  '삼상 18:10': '1SA 18:10',
+  '삼상 18:11': '1SA 18:11',
+  '삼상 20:35-36': '1SA 20:35-36',
+  '삼상 20:37-38': '1SA 20:37-38',
+  '삼상 20:40': '1SA 20:40',
+  '삼상 20:41': '1SA 20:41',
+  '삼상 20:42': '1SA 20:42',
+  '삼하 2:1': '2SA 2:1',
+  '삼하 2:4#1': '2SA 2:4 ~ 유다 사람들이 와서 거기서 다윗에게 기름을 부어 유다 족속의 왕을 삼았더라',
+  '삼하 5:1-2': '2SA 5:1-2',
+  '삼하 5:3': '2SA 5:3',
+  '삼하 5:4-5': '2SA 5:4-5',
+  '삼하 12:15': '2SA 12:15',
+  '삼하 12:16-17': '2SA 12:16-17',
+  '삼하 12:18': '2SA 12:18',
+  '삼하 12:19': '2SA 12:19',
+  '삼하 12:20': '2SA 12:20',
+  '삼하 12:21': '2SA 12:21',
+  '삼하 12:22-23': '2SA 12:22-23',
+  '삼하 12:24-25': '2SA 12:24-25',
+  '삼하 15:13-14': '2SA 15:13-14',
+  '삼하 15:13': '2SA 15:13',
+  '삼하 15:23': '2SA 15:23',
+  '삼하 15:24': '2SA 15:24',
+  '삼하 15:25-26': '2SA 15:25-26',
+  '삼하 15:30': '2SA 15:30',
+  '삼하 22:1': '2SA 22:1',
+  '삼하 22:2-3': '2SA 22:2-3',
+  '삼하 23:1-2': '2SA 23:1-2',
+  '왕상 1:1': '1KI 1:1',
+  '왕상 1:15-16': '1KI 1:15-16',
+  '왕상 1:17-18': '1KI 1:17-18',
+  '왕상 1:29-30': '1KI 1:29-30',
+  '왕상 1:31': '1KI 1:31',
+  '왕상 1:39-40': '1KI 1:39-40',
+  '왕상 2:1-3': '1KI 2:1-3',
+  '왕상 2:12': '1KI 2:12'
 }/*KRV*/;
 const PARTIAL_LIST = /*PARTIAL*/[]/*PARTIAL*/;
 
@@ -109,7 +169,67 @@ const P = {
   '삼하 18:31': '그때 구스 사람이 도착하여 말했다. “내 주 임금님께 알려 드릴 소식이 있습니다. 오늘 여호와께서 임금님께 맞서던 모든 원수를 갚아 주셨습니다.”',
   '삼하 18:32#2': '…구스 사람이 대답했다. “내 주 임금님의 원수들과 임금님을 해치려고 일어나는 자들은 모두 그 젊은이처럼 되기를 바랍니다.”',
   '삼하 18:33': '왕은 마음이 몹시 아파 성문 위 다락방으로 올라가 울었다. 올라가면서 이렇게 말했다. “내 아들 압살롬아, 내 아들, 내 아들 압살롬아! 내가 너 대신 죽었더라면… 압살롬아, 내 아들아, 내 아들아!”',
-  '왕상 2:10-11': '다윗은 조상들과 함께 잠들어 다윗 성에 묻혔다. 다윗이 이스라엘을 다스린 기간은 사십 년이었다. 헤브론에서 칠 년, 예루살렘에서 삼십삼 년을 다스렸다.'
+  '왕상 2:10-11': '다윗은 조상들과 함께 잠들어 다윗 성에 묻혔다. 다윗이 이스라엘을 다스린 기간은 사십 년이었다. 헤브론에서 칠 년, 예루살렘에서 삼십삼 년을 다스렸다.',
+  '삼상 16:14': '여호와의 영이 사울에게서 떠나고, 여호와께서 보내신 악한 영이 그를 괴롭혔다.',
+  '삼상 16:15-16': '사울의 신하들이 그에게 말했다. “보십시오, 하나님께서 보내신 악한 영이 임금님을 괴롭히고 있습니다. 저희 주인께서 앞에서 모시는 신하들에게 명령하셔서, 수금을 잘 타는 사람을 찾게 하십시오. 하나님께서 보내신 악한 영이 임금님께 내릴 때 그가 수금을 타면 임금님께서 나으실 것입니다.”',
+  '삼상 16:18': '젊은이 가운데 하나가 대답했다. “제가 베들레헴 사람 이새의 아들을 보았는데, 수금을 탈 줄 알고, 용기와 무예가 있으며, 말을 잘하고 잘생긴 사람입니다. 여호와께서 그와 함께 계십니다.”',
+  '삼상 16:19-20': '사울은 이새에게 사람을 보내 “양 치는 네 아들 다윗을 나에게 보내라” 하고 일렀다. 이새는 빵과 포도주 한 가죽 부대와 염소 새끼 한 마리를 나귀에 실어, 아들 다윗 편에 사울에게 보냈다.',
+  '삼상 16:21': '다윗이 사울에게 와서 그 앞에 섰다. 사울은 그를 무척 사랑하여 자기의 무기를 드는 사람으로 삼았다.',
+  '삼상 16:23': '하나님께서 보내신 악한 영이 사울에게 내릴 때마다, 다윗이 수금을 들고 손으로 탔다. 그러면 사울은 마음이 시원해지고 나아졌으며, 악한 영은 그에게서 떠나갔다.',
+  '삼상 17:17-18': '이새가 아들 다윗에게 말했다. “이 볶은 곡식 한 에바와 빵 열 덩이를 가지고 진으로 빨리 가서 네 형들에게 주어라. 이 치즈 열 덩이는 천부장에게 가져다주고, 형들이 잘 있는지 살펴보고 소식을 가지고 오너라.”',
+  '삼상 17:20': '다윗은 아침 일찍 일어나 양 떼를 지키는 사람에게 맡기고, 이새가 시킨 대로 짐을 지고 길을 떠났다. 진에 이르니 마침 군대가 싸우러 나가며 함성을 지르고 있었다.',
+  '삼상 17:22-23': '다윗은 짐을 짐 지키는 사람에게 맡기고 싸움터로 달려가 형들에게 안부를 물었다. 그가 형들과 이야기하고 있을 때, 블레셋 진에서 가드 사람 골리앗이 나와 전과 같은 말을 했다. 다윗도 그 말을 들었다.',
+  '삼상 17:28': '큰형 엘리압은 다윗이 사람들과 이야기하는 것을 듣고 화를 내며 말했다. “너는 무엇 하러 여기에 내려왔느냐? 들에 있는 몇 마리 양은 누구에게 맡겼느냐? 나는 네 교만하고 고약한 속셈을 안다. 너는 싸움 구경을 하러 왔구나.”',
+  '삼상 17:29': '다윗이 말했다. “제가 무엇을 했다고 그러십니까? 물어보지도 못합니까?”',
+  '삼상 17:51': '다윗은 달려가 블레셋 사람을 밟고 서서, 그의 칼을 칼집에서 뽑아 그를 죽이고 그 칼로 그의 머리를 베었다. 블레셋 사람들은 자기네 용사가 죽은 것을 보고 달아났다.',
+  '삼상 17:52': '이스라엘과 유다 사람들은 일어나 함성을 지르며 블레셋 사람들을 가이와 에그론 성문까지 뒤쫓았다.',
+  '삼상 17:55': '사울은 다윗이 블레셋 사람에게 나가는 것을 보고 군사령관 아브넬에게 물었다. “아브넬아, 저 소년이 누구의 아들이냐?” 아브넬이 대답했다. “임금님, 임금님의 살아 계심을 두고 맹세하지만, 저는 모릅니다.”',
+  '삼상 17:57': '다윗이 블레셋 사람을 죽이고 돌아오자, 아브넬이 그를 사울 앞으로 데려갔다. 다윗의 손에는 블레셋 사람의 머리가 들려 있었다.',
+  '삼상 17:58': '사울이 그에게 물었다. “젊은이, 너는 누구의 아들이냐?” 다윗이 대답했다. “저는 임금님의 종, 베들레헴 사람 이새의 아들입니다.”',
+  '삼상 17:58#1': '사울이 그에게 물었다. “젊은이, 너는 누구의 아들이냐?”…',
+  '삼상 18:1': '다윗이 사울과 이야기를 마쳤을 때, 요나단의 마음이 다윗의 마음과 하나가 되어, 요나단은 다윗을 자기 목숨처럼 사랑했다.',
+  '삼상 18:3-4': '요나단은 다윗을 자기 목숨처럼 사랑하여 그와 언약을 맺었다. 그리고 자기가 입고 있던 겉옷을 벗어 다윗에게 주고, 군복과 칼과 활과 허리띠까지 주었다.',
+  '삼상 18:5': '다윗은 사울이 보내는 곳마다 나가서 지혜롭게 일을 해냈다. 사울은 그를 군대의 지휘관으로 삼았고, 온 백성과 사울의 신하들도 모두 그 일을 좋게 여겼다.',
+  '삼상 18:6': '다윗이 블레셋 사람을 죽이고 군대와 함께 돌아올 때, 이스라엘의 모든 성읍에서 여인들이 나와 노래하고 춤추며, 소고와 꽹과리를 치면서 사울 왕을 맞이했다.',
+  '삼상 18:7': '여인들은 춤추며 서로 화답하여 노래했다. “사울이 죽인 사람은 천천이요, 다윗이 죽인 사람은 만만이라네.”',
+  '삼상 18:8-9': '사울은 이 말을 듣고 몹시 불쾌하고 화가 나서 말했다. “다윗에게는 만만을 돌리고 나에게는 천천만 돌리는구나. 이제 그가 더 얻을 것은 나라밖에 없겠구나.” 그날부터 사울은 다윗을 의심의 눈으로 지켜보았다.',
+  '삼상 18:10': '이튿날 하나님께서 보내신 악한 영이 사울에게 세게 내리니, 그가 집 안에서 미친 듯이 날뛰었다. 다윗은 여느 때처럼 손으로 수금을 타고 있었는데, 그때 사울의 손에는 창이 들려 있었다.',
+  '삼상 18:11': '사울은 ‘다윗을 벽에 박아 버리겠다’ 하고 그 창을 던졌다. 그러나 다윗은 그 앞에서 두 번이나 몸을 피했다.',
+  '삼상 20:35-36': '아침에 요나단은 어린 종 하나를 데리고 다윗과 약속한 시간에 들로 나갔다. 그가 종에게 “달려가서 내가 쏘는 화살을 찾아라” 하고, 종이 달려가자 그 너머로 화살을 쏘았다.',
+  '삼상 20:37-38': '종이 요나단이 쏜 화살이 떨어진 곳에 이르렀을 때, 요나단이 종의 뒤에서 외쳤다. “화살이 네 앞쪽에 있지 않느냐?” 요나단이 또 외쳤다. “지체하지 말고 어서 달려라.” 요나단의 종은 화살을 주워 주인에게 돌아왔다.',
+  '삼상 20:40': '요나단은 자기 무기를 종에게 주며 “이것을 가지고 성으로 가거라” 하고 말했다.',
+  '삼상 20:41': '종이 떠나자, 다윗이 바위 남쪽에서 일어나 땅에 엎드려 세 번 절했다. 두 사람은 서로 입을 맞추고 함께 울었는데, 다윗이 더 많이 울었다.',
+  '삼상 20:42': '요나단이 다윗에게 말했다. “평안히 가게. 우리 두 사람은 여호와의 이름으로 맹세하며 ‘여호와께서 영원히 나와 너 사이에, 내 자손과 네 자손 사이에 계실 것이다’ 하지 않았는가?” 다윗은 일어나 떠나고, 요나단은 성으로 돌아갔다.',
+  '삼하 2:1': '그 뒤에 다윗이 여호와께 여쭈었다. “제가 유다의 한 성읍으로 올라가도 되겠습니까?” 여호와께서 “올라가거라” 하셨다. 다윗이 “어디로 가야 합니까?” 하고 여쭈니, “헤브론으로 가거라” 하셨다.',
+  '삼하 2:4#1': '유다 사람들이 와서 거기서 다윗에게 기름을 부어, 그를 유다 집안의 왕으로 세웠다.',
+  '삼하 5:1-2': '이스라엘의 모든 지파가 헤브론으로 다윗을 찾아와서 말했다. “보십시오, 우리는 임금님의 혈육입니다. 전에 사울이 우리의 왕이었을 때에도 이스라엘을 이끌고 싸움에 나갔다 돌아오신 분은 임금님이셨습니다. 그리고 여호와께서 임금님께 ‘너는 내 백성 이스라엘의 목자가 되고, 이스라엘의 통치자가 될 것이다’ 하고 말씀하셨습니다.”',
+  '삼하 5:3': '이스라엘의 모든 장로가 헤브론으로 왕을 찾아오자, 다윗 왕은 헤브론에서 여호와 앞에서 그들과 언약을 맺었다. 그들은 다윗에게 기름을 부어 이스라엘의 왕으로 세웠다.',
+  '삼하 5:4-5': '다윗은 서른 살에 왕이 되어 사십 년 동안 다스렸다. 헤브론에서 칠 년 여섯 달 동안 유다를 다스렸고, 예루살렘에서 삼십삼 년 동안 온 이스라엘과 유다를 다스렸다.',
+  '삼하 12:15': '나단이 자기 집으로 돌아갔다. 여호와께서 우리아의 아내가 다윗에게 낳아 준 아이를 치시니, 아이가 몹시 앓았다.',
+  '삼하 12:16-17': '다윗은 아이를 위하여 하나님께 간구하며 금식했다. 그는 안으로 들어가 밤새도록 맨땅에 엎드려 있었다. 궁의 원로들이 곁에 와서 그를 일으키려 했지만, 왕은 듣지 않았고 그들과 함께 음식도 먹지 않았다.',
+  '삼하 12:18': '이레째 되는 날 아이가 죽었다. 그러나 다윗의 신하들은 아이가 죽었다는 말을 왕에게 차마 하지 못했다. 그들은 “아이가 살아 있을 때에도 우리가 말씀드려도 듣지 않으셨는데, 아이가 죽었다고 어떻게 말씀드리겠는가? 왕께서 몸을 상하실지도 모른다” 하고 생각했다.',
+  '삼하 12:19': '다윗은 신하들이 서로 수군거리는 것을 보고 아이가 죽은 줄 알았다. 그가 신하들에게 “아이가 죽었느냐?” 하고 묻자, 그들이 “죽었습니다” 하고 대답했다.',
+  '삼하 12:20': '그러자 다윗은 땅에서 일어나 몸을 씻고 기름을 바르고 옷을 갈아입은 뒤, 여호와의 집에 들어가 경배했다. 그리고 왕궁으로 돌아와 음식을 차리게 하여 먹었다.',
+  '삼하 12:21': '신하들이 왕에게 물었다. “아이가 살아 있을 때에는 금식하며 우시더니, 아이가 죽자 일어나서 음식을 드시니 어찌 된 일입니까?”',
+  '삼하 12:22-23': '다윗이 대답했다. “아이가 살아 있을 때 내가 금식하며 운 것은, 혹시 여호와께서 나를 불쌍히 여기셔서 아이를 살려 주실지 누가 알겠느냐 하고 생각했기 때문이다. 그러나 이제 아이가 죽었는데 무엇 때문에 금식하겠느냐? 내가 그 아이를 다시 돌아오게 할 수 있겠느냐? 나는 그에게로 가겠지만, 그는 나에게로 돌아오지 못한다.”',
+  '삼하 12:24-25': '다윗이 아내 밧세바를 위로하고 그와 동침하니, 그가 아들을 낳았다. 다윗은 그 이름을 솔로몬이라 했다. 여호와께서 그 아이를 사랑하셔서 예언자 나단을 보내 그 이름을 여디디야라 하셨다. 여호와께서 사랑하신다는 뜻이다.',
+  '삼하 15:13-14': '한 사람이 다윗에게 와서 “이스라엘 사람들의 마음이 모두 압살롬에게로 기울었습니다” 하고 알렸다. 그러자 다윗은 예루살렘에 함께 있는 모든 신하에게 말했다. “일어나 피하자. 그러지 않으면 우리 가운데 아무도 압살롬에게서 벗어나지 못할 것이다. 서둘러 떠나자. 그가 곧 들이닥쳐 우리를 해치고 칼로 이 성을 칠지도 모른다.”',
+  '삼하 15:13': '한 사람이 다윗에게 와서 “이스라엘 사람들의 마음이 모두 압살롬에게로 기울었습니다” 하고 알렸다.',
+  '삼하 15:23': '온 땅 사람들이 큰 소리로 울었고, 모든 백성이 앞서 건너갔다. 왕도 기드론 시내를 건넜고, 건너간 모든 백성은 광야 길로 향했다.',
+  '삼하 15:24': '사독도 하나님의 언약궤를 멘 모든 레위 사람과 함께 와서, 하나님의 궤를 내려놓았다. 아비아달도 올라와 백성이 모두 성에서 나올 때까지 기다렸다.',
+  '삼하 15:25-26': '왕이 사독에게 말했다. “하나님의 궤를 성으로 도로 메어 가시오. 내가 여호와께 은혜를 입으면, 그분이 나를 다시 데려오셔서 그 궤와 그분이 계신 곳을 보게 하실 것이오. 그러나 그분께서 ‘나는 너를 기뻐하지 않는다’ 하시면, 나는 여기 있으니 그분이 좋게 여기시는 대로 나에게 하시기를 바랄 뿐이오.”',
+  '삼하 15:30': '다윗은 머리를 가리고 맨발로 울면서 감람산 길로 올라갔다. 그와 함께 가는 백성도 모두 머리를 가리고 울면서 올라갔다.',
+  '삼하 22:1': '여호와께서 다윗을 모든 원수의 손과 사울의 손에서 건져 주신 날, 다윗은 이 노래로 여호와께 아뢰었다.',
+  '삼하 22:2-3': '“여호와는 나의 반석, 나의 요새, 나를 건지시는 분. 나의 하나님은 내가 피할 바위, 나의 방패, 나의 구원의 뿔, 나의 높은 망대, 나의 피난처, 나의 구원자이십니다. 주께서 나를 폭력에서 구원하셨습니다.”',
+  '삼하 23:1-2': '이것은 다윗의 마지막 말이다. 이새의 아들 다윗이 말한다. 높이 세워진 사람, 야곱의 하나님께 기름 부음 받은 사람, 이스라엘의 노래 잘하는 사람이 말한다. “여호와의 영이 나를 통하여 말씀하시니, 그 말씀이 내 혀에 있다.”',
+  '왕상 1:1': '다윗 왕은 나이가 많아 늙었다. 이불을 덮어도 몸이 따뜻해지지 않았다.',
+  '왕상 1:15-16': '밧세바가 침실로 들어가 왕에게 나아갔다. 왕은 몹시 늙어서 수넴 여자 아비삭이 시중들고 있었다. 밧세바가 몸을 굽혀 왕에게 절하자, 왕이 “무슨 일이오?” 하고 물었다.',
+  '왕상 1:17-18': '밧세바가 왕에게 말했다. “내 주 임금님, 임금님께서 전에 임금님의 하나님 여호와를 두고 이 여종에게 ‘네 아들 솔로몬이 반드시 나를 이어 왕이 되어 내 왕좌에 앉을 것이다’ 하고 맹세하셨습니다. 그런데 지금 아도니야가 왕이 되었는데도, 내 주 임금님께서는 그것을 모르고 계십니다.”',
+  '왕상 1:29-30': '왕이 맹세하며 말했다. “내 목숨을 온갖 어려움에서 건져 주신 살아 계신 여호와를 두고 맹세하오. 내가 전에 이스라엘의 하나님 여호와를 두고 당신에게 ‘당신의 아들 솔로몬이 반드시 나를 이어 왕이 되고, 나를 대신하여 내 왕좌에 앉을 것이다’ 하고 맹세한 그대로, 오늘 그렇게 하겠소.”',
+  '왕상 1:31': '밧세바는 얼굴을 땅에 대고 왕에게 절하며 말했다. “내 주 다윗 왕께서 영원히 사시기를 바랍니다.”',
+  '왕상 1:39-40': '제사장 사독이 성막에서 기름 뿔을 가져다가 솔로몬에게 기름을 부었다. 사람들이 나팔을 불자 온 백성이 “솔로몬 왕 만세!” 하고 외쳤다. 온 백성이 그를 따라 올라오며 피리를 불고 크게 기뻐하니, 그 소리에 땅이 갈라질 듯했다.',
+  '왕상 2:1-3': '다윗은 죽을 날이 가까워지자 아들 솔로몬에게 당부했다. “나는 이제 세상 모든 사람이 가는 길로 간다. 너는 굳세고 대장부답게 되어라. 네 하나님 여호와의 명령을 지켜 그분의 길로 걷고, 모세의 율법에 기록된 대로 그분의 법률과 계명과 율례와 증거를 지켜라. 그러면 네가 무엇을 하든지, 어디로 가든지 잘될 것이다.”',
+  '왕상 2:12': '솔로몬이 아버지 다윗의 왕좌에 앉으니, 그의 나라가 매우 굳게 섰다.'
 };
 
 const CHOICES = {
@@ -121,7 +241,7 @@ const CHOICES = {
       { key: 'stay', label: '가지 않겠다고 한다', ask: '심부름 온 사람에게 무엇이라고 말하겠습니까?' }],
     react: { fx: 'runnerLook', text: '심부름 온 사람이 숨을 고르며 당신을 본다.' },
     hisKey: 'go', hisRefs: ['삼상 16:12'], hisShort: '불려 와서 사무엘 앞에 섰다' },
-  c2: { scene: '2 · 엘라 골짜기', situation: '골리앗 앞에서 온 이스라엘이 두려워할 때', question: '군사들이 모두 물러선다. 당신은?',
+  c2: { scene: '4 · 엘라 골짜기', situation: '골리앗 앞에서 온 이스라엘이 두려워할 때', question: '군사들이 모두 물러선다. 당신은?',
     heard: { who: '골리앗', line: '오늘 내가 이스라엘 군대를 실컷 모욕했다. 나랑 붙을 놈 하나 내보내 봐!', ref: '삼상 17:10-11' },
     options: [
       { key: 'step', label: '저 사람과 싸우겠다고 나선다', ask: '사울과 군사들 앞에서 무엇이라고 말하겠습니까?' },
@@ -129,26 +249,26 @@ const CHOICES = {
       { key: 'brothers', label: '형들 곁에 붙어 선다', react: { fx: 'armyLook', text: '형들이 당신을 흘겨본다.' } }],
     react: { fx: 'armyLook', text: '주위의 군사들이 당신을 돌아본다. 아무도 웃지 않는다.' },
     hisKey: 'step', hisRefs: ['삼상 17:26', '삼상 17:32'], hisShort: '“주의 종이 가서 저 블레셋 사람과 싸우리이다” 했다' },
-  c3: { scene: '2 · 엘라 골짜기', situation: '사울의 군복과 갑옷을 입었을 때', question: '갑옷이 무겁다. 당신은?',
+  c3: { scene: '4 · 엘라 골짜기', situation: '사울의 군복과 갑옷을 입었을 때', question: '갑옷이 무겁다. 당신은?',
     options: [
       { key: 'off', label: '익숙하지 않다며 벗는다', react: { fx: 'saulLook', text: '사울이 말없이 갑옷을 받아 든다.' } },
       { key: 'keep', label: '그대로 입고 나간다', react: { fx: 'saulLook', text: '투구 아래로 땀이 흐른다.' } },
       { key: 'sword', label: '칼만 차고 나간다', react: { fx: 'saulLook', text: '칼집이 무릎에 부딪친다.' } }],
     hisKey: 'off', hisRefs: ['삼상 17:39'], hisShort: '“익숙치 못하므로” 곧 벗었다' },
-  c4: { scene: '3 · 엔게디', situation: '사울이 혼자 굴에 들어왔을 때', question: '사울이 바로 앞에 있다. 당신은?',
+  c4: { scene: '5 · 엔게디', situation: '사울이 혼자 굴에 들어왔을 때', question: '사울이 바로 앞에 있다. 당신은?',
     heard: { who: '부하들', line: '보세요, 오늘이에요. 여호와께서 원수를 손에 넘겨주겠다, 마음대로 하라고 하신 그날이 오늘이라고요.', ref: '삼상 24:4#1' },
     options: [
       { key: 'robe', label: '그의 겉옷 자락만 몰래 벤다', react: { fx: 'menLook', text: '부하들이 숨을 죽인다.' } },
       { key: 'strike', label: '그를 친다', react: { fx: 'menLook', text: '부하들이 숨을 죽인다.' } },
       { key: 'still', label: '아무것도 하지 않는다', react: { fx: 'menLook', text: '부하들이 서로를 쳐다본다.' } }],
     hisKey: 'robe', hisRefs: ['삼상 24:4', '삼상 24:5-6'], hisShort: '옷자락만 베고, 그마저 마음이 찔렸다' },
-  c5: { scene: '4 · 지붕 위', situation: '저녁, 왕궁 지붕에서 한 여인을 보았을 때', question: '당신은?',
+  c5: { scene: '1 · 지붕 위', situation: '저녁, 왕궁 지붕에서 한 여인을 보았을 때', question: '당신은?',
     options: [
       { key: 'send', label: '사람을 보내 누구인지 알아본다', react: { fx: 'city', text: '신하 하나가 계단을 내려간다.' } },
       { key: 'away', label: '눈을 돌리고 지붕에서 내려간다', react: { fx: 'city', text: '성 안에 등불이 하나둘 켜진다.' } },
       { key: 'war', label: '랍바 전장의 소식을 묻는다', react: { fx: 'city', text: '성 안에 등불이 하나둘 켜진다.' } }],
     hisKey: 'send', hisRefs: ['삼하 11:3-4'], hisShort: '사람을 보내 알아보고, 데려오게 했다' },
-  c6: { scene: '5 · 나단', situation: '“당신이 그 사람이라”는 말을 들었을 때', question: '당신은?',
+  c6: { scene: '2 · 나단', situation: '“당신이 그 사람이라”는 말을 들었을 때', question: '당신은?',
     options: [
       { key: 'confess', label: '여호와께 죄를 지었다고 말한다', react: { fx: 'nathanLook', text: '나단이 당신을 본다.' } },
       { key: 'excuse', label: '왕의 일이라며 변명한다', ask: '무엇이라고 변명하겠습니까?' },
@@ -156,13 +276,74 @@ const CHOICES = {
     react: { fx: 'nathanLook', text: '나단은 아무 대답 없이 당신을 본다.' },
     heard: { who: '나단', ref: '삼하 12:7', quiet: true },
     hisKey: 'confess', hisRefs: ['삼하 12:13'], hisShort: '“내가 여호와께 죄를 범하였노라” 했다' },
-  c7: { scene: '6 · 두 문 사이', situation: '두 번째 사람이 소식을 전할 때', question: '당신은?',
+  c7: { scene: '5 · 두 문 사이', situation: '두 번째 사람이 소식을 전할 때', question: '당신은?',
     heard: { who: '구스 사람', line: '왕의 원수들, 왕을 해치려고 일어나는 자들은 전부 그 젊은이처럼 되면 좋겠습니다.', ref: '삼하 18:32#2' },
     options: [
       { key: 'weep', label: '문루로 올라가 운다', react: { fx: 'climb', text: '계단이 길다.' } },
       { key: 'victory', label: '승리를 선포한다', react: { fx: 'watch', text: '파수꾼이 고개를 돌린다.' } },
       { key: 'sit', label: '그 자리에 말없이 앉아 있다', react: { fx: 'watch', text: '성문 아래로 바람이 지나간다.' } }],
-    hisKey: 'weep', hisRefs: ['삼하 18:33'], hisShort: '문루에 올라가 “내 아들 압살롬아” 하며 울었다' }
+    hisKey: 'weep', hisRefs: ['삼하 18:33'], hisShort: '문루에 올라가 “내 아들 압살롬아” 하며 울었다' },
+  d1: { scene: '3 · 사울 앞에서', situation: '악한 영이 사울을 괴롭힐 때', question: '왕이 머리를 감싸 쥐고 신음한다. 당신 손에 수금이 있다. 당신은?',
+    options: [
+      { key: 'play', label: '수금을 탄다', react: { fx: 'harp', text: '줄이 울린다. 방 안이 조용해진다.' } },
+      { key: 'call', label: '신하들을 부른다', react: { fx: 'saulLookD', text: '신하들이 문가에서 머뭇거린다.' } },
+      { key: 'pray', label: '왕을 위해 무언가 말한다', ask: '무엇이라고 말하겠습니까?' }],
+    react: { fx: 'saulLookD', text: '왕이 고개를 든다.' },
+    hisKey: 'play', hisRefs: ['삼상 16:23'], hisShort: '수금을 취하여 손으로 탔다' },
+  d2: { scene: '4 · 엘라 골짜기', situation: '큰형 엘리압이 화를 낼 때', question: '형들 앞에서 망신을 당했다. 당신은?',
+    heard: { who: '큰형 엘리압', line: '너 여기 왜 왔어? 들에 있는 양 몇 마리는 누구한테 맡기고? 네 속셈 다 알아. 싸움 구경하러 왔지?', ref: '삼상 17:28' },
+    options: [
+      { key: 'answer', label: '“제가 뭘 했다고요?” 하고 다른 사람에게 다시 묻는다', react: { fx: 'armyLook', text: '군사들이 당신 쪽으로 고개를 돌린다.' } },
+      { key: 'fight', label: '형에게 맞서 따진다', ask: '형에게 무엇이라고 말하겠습니까?' },
+      { key: 'leave', label: '짐을 챙겨 집으로 돌아간다', react: { fx: 'armyLook', text: '골짜기 건너에서 또 그 목소리가 들린다.' } }],
+    react: { fx: 'armyLook', text: '엘리압이 고개를 돌린다.' },
+    hisKey: 'answer', hisRefs: ['삼상 17:29'], hisShort: '“내가 무엇을 하였나이까 어찌 이유가 없으리이까” 하고 다른 사람에게 다시 물었다' },
+  d3: { scene: '3 · 사울의 창', situation: '사울이 창을 든 채 당신을 노려볼 때', question: '수금을 타는데, 왕의 손에 창이 들려 있다. 당신은?',
+    options: [
+      { key: 'dodge', label: '몸을 피한다', react: { fx: 'spear', text: '창날이 귀 옆을 스친다.' } },
+      { key: 'keep', label: '그대로 수금을 탄다', react: { fx: 'spear', text: '창날이 귀 옆을 스친다. 몸이 저절로 비켜섰다.' } },
+      { key: 'speak', label: '왕에게 무언가 말한다', ask: '무엇이라고 말하겠습니까?' }],
+    react: { fx: 'spear', text: '창이 날아온다.' },
+    hisKey: 'dodge', hisRefs: ['삼상 18:11'], hisShort: '그 앞에서 두 번 피했다' },
+  d4: { scene: '4 · 에셀 바위', situation: '요나단이 “화살이 네 앞쪽에 있지 않느냐” 하고 외친 뒤 혼자 남았을 때', question: '떠나야 한다는 신호다. 요나단이 혼자 서 있다. 당신은?',
+    heard: { who: '요나단', line: '화살이 네 앞쪽에 있지 않느냐? 지체하지 말고 어서 달려라!', ref: '삼상 20:37-38' },
+    options: [
+      { key: 'bow', label: '바위 뒤에서 나와 땅에 엎드려 절한다', react: { fx: 'jonathan', text: '요나단이 달려온다.' } },
+      { key: 'hide', label: '들키지 않게 그대로 숨어 있는다', react: { fx: 'jonathan', text: '요나단이 바위 쪽을 본다. 그가 기다린다.' } },
+      { key: 'with', label: '함께 떠나자고 말한다', ask: '요나단에게 무엇이라고 말하겠습니까?' }],
+    react: { fx: 'jonathan', text: '요나단이 다가온다.' },
+    hisKey: 'bow', hisRefs: ['삼상 20:41'], hisShort: '바위 남편에서 일어나 땅에 엎드려 세 번 절하고, 함께 울었다' },
+  d5: { scene: '3 · 첫아이', situation: '신하들의 수군거림으로 아이가 죽은 줄 알았을 때', question: '이레 동안 엎드려 있었다. 아이가 죽었다. 당신은?',
+    heard: { who: '신하들', line: '…돌아가셨어요.', ref: '삼하 12:19' },
+    options: [
+      { key: 'rise', label: '일어나 씻고 여호와의 집에 가서 경배한다', react: { fx: 'servantsLook', text: '신하들이 서로 얼굴을 본다.' } },
+      { key: 'stay', label: '그대로 땅에 엎드려 있는다', react: { fx: 'servantsLook', text: '등잔불이 꺼질 듯 흔들린다.' } },
+      { key: 'cry', label: '소리 내어 운다', react: { fx: 'servantsLook', text: '신하들이 고개를 숙인다.' } }],
+    react: { fx: 'servantsLook', text: '신하들이 고개를 숙인다.' },
+    hisKey: 'rise', hisRefs: ['삼하 12:20'], hisShort: '땅에서 일어나 몸을 씻고 옷을 갈아입은 뒤 여호와의 전에 들어가 경배하고, 돌아와 먹었다' },
+  d6: { scene: '4 · 감람산 길', situation: '“이스라엘의 마음이 다 압살롬에게 돌아갔다”는 소식을 들었을 때', question: '아들이 왕이 되겠다며 군대를 모았다. 당신은?',
+    heard: { who: '소식을 가져온 사람', line: '이스라엘 사람들 마음이 다 압살롬에게 넘어갔습니다!', ref: '삼하 15:13' },
+    options: [
+      { key: 'flee', label: '성을 떠나 피하자고 한다', react: { fx: 'crowdD', text: '신하들이 짐을 꾸린다. 울음소리가 성안에 번진다.' } },
+      { key: 'fight', label: '성을 지키며 맞서 싸우자고 한다', react: { fx: 'crowdD', text: '신하들이 서로를 쳐다본다.' } },
+      { key: 'meet', label: '압살롬을 만나 이야기하겠다고 한다', ask: '신하들에게 무엇이라고 말하겠습니까?' }],
+    react: { fx: 'crowdD', text: '신하들이 서로를 쳐다본다.' },
+    hisKey: 'flee', hisRefs: ['삼하 15:13-14'], hisShort: '“일어나 도망하자… 빨리 가자” 했다' },
+  d7: { scene: '4 · 감람산 길', situation: '사독이 하나님의 궤를 메고 따라나왔을 때', question: '레위 사람들이 궤를 당신 곁에 내려놓는다. 당신은?',
+    options: [
+      { key: 'back', label: '궤를 성으로 도로 메어 가라고 한다', ask: '사독에게 무엇이라고 말하겠습니까?' },
+      { key: 'take', label: '궤를 앞세우고 함께 간다', react: { fx: 'crowdD', text: '레위 사람들이 다시 궤를 멘다.' } },
+      { key: 'kneel', label: '궤 앞에 엎드린다', react: { fx: 'crowdD', text: '백성이 걸음을 멈춘다.' } }],
+    react: { fx: 'crowdD', text: '사독이 당신을 본다.' },
+    hisKey: 'back', hisRefs: ['삼하 15:25-26'], hisShort: '“하나님의 궤를 성으로 도로 메어 가라… 선히 여기시는 대로 내게 행하시옵소서” 했다' },
+  d8: { scene: '6 · 마지막 날', situation: '밧세바가 “아도니야가 왕이 되었다”고 알릴 때', question: '이불을 덮어도 몸이 차다. 밧세바가 엎드려 있다. 당신은?',
+    heard: { who: '밧세바', line: '임금님, 솔로몬이 뒤를 이어 왕좌에 앉을 거라고 맹세하셨잖아요. 그런데 지금 아도니야가 왕이 됐는데, 임금님은 모르고 계세요.', ref: '왕상 1:17-18' },
+    options: [
+      { key: 'swear', label: '솔로몬이 왕이 되리라고 맹세한다', ask: '밧세바에게 무엇이라고 맹세하겠습니까?' },
+      { key: 'rest', label: '이제 다 놓고 쉬고 싶다고 한다', react: { fx: 'bedLook', text: '밧세바가 고개를 든다.' } },
+      { key: 'call', label: '아도니야를 부르라고 한다', react: { fx: 'bedLook', text: '나단이 문가에서 기다린다.' } }],
+    react: { fx: 'bedLook', text: '밧세바가 고개를 든다.' },
+    hisKey: 'swear', hisRefs: ['왕상 1:29-30'], hisShort: '“네 아들 솔로몬이 정녕 나를 이어 왕이 되리라… 오늘날 그대로 행하리라” 하고 맹세했다' }
 };
 
 const presets = {
@@ -174,7 +355,12 @@ const presets = {
   roof: { top: '#1f2a52', horizon: '#d98f5f', sun: '#ff9e66', fog: '#5f4c4a', fogD: .006, sunEl: 1, sunAz: -70, stars: .35, storm: .05, sunI: 1.3, hemiI: .45, ash: 0, wind: .1, waves: 0, camH: 7.65, camP: -.05, exposure: 1.08, fire: 0, sing: 0, shake: 0 },
   hall: { top: '#0a0807', horizon: '#120d0b', sun: '#000000', fog: '#0a0807', fogD: .03, sunEl: -20, stars: 0, storm: 0, sunI: 0, hemiI: .1, ash: 0, wind: 0, waves: 0, camH: 1.15, camP: -.02, exposure: 1.3, fire: 0, sing: 0, shake: 0 },
   gate: { top: '#4f6c9f', horizon: '#dcc39c', sun: '#ffe7c4', fog: '#9b8b78', fogD: .0045, sunEl: 22, sunAz: -30, stars: 0, storm: .15, sunI: 2.2, hemiI: .75, ash: .02, wind: .18, waves: 0, camH: 1.05, camP: .0, exposure: 1, fire: 0, sing: 0, shake: 0 },
-  gateDusk: { top: '#252c4f', horizon: '#b97b57', sun: '#ff9a62', fog: '#5d4c48', fogD: .006, sunEl: 1, sunAz: -30, stars: .3, storm: .1, sunI: 1.1, hemiI: .4, ash: .02, wind: .2, waves: 0, camH: 6.4, camP: -.12, exposure: 1.05, fire: 0, sing: 0, shake: 0 }
+  gateDusk: { top: '#252c4f', horizon: '#b97b57', sun: '#ff9a62', fog: '#5d4c48', fogD: .006, sunEl: 1, sunAz: -30, stars: .3, storm: .1, sunI: 1.1, hemiI: .4, ash: .02, wind: .2, waves: 0, camH: 6.4, camP: -.12, exposure: 1.05, fire: 0, sing: 0, shake: 0 },
+  palace: { top: '#0b0908', horizon: '#1a1410', sun: '#000000', fog: '#14100c', fogD: .014, sunEl: -20, stars: 0, storm: 0, sunI: 0, hemiI: .4, ash: 0, wind: 0, waves: 0, camP: -.02, exposure: 1.3, fire: 0, sing: 0, shake: 0 },
+  road: { top: '#5a80b8', horizon: '#ecd3a8', sun: '#fff0d4', fog: '#bba584', fogD: .004, sunEl: 30, sunAz: 40, stars: 0, storm: .06, sunI: 2.6, hemiI: .85, ash: .02, wind: .16, waves: 0, camP: 0, exposure: 1, fire: 0, sing: 0, shake: 0 },
+  morningD: { top: '#4f6ea6', horizon: '#f0c896', sun: '#ffdcae', fog: '#a8987e', fogD: .0034, sunEl: 8, sunAz: -60, stars: 0, storm: .05, sunI: 2.2, hemiI: .7, ash: 0, wind: .12, waves: 0, camP: 0, exposure: 1, fire: 0, sing: 0, shake: 0 },
+  night: { top: '#04060c', horizon: '#141826', sun: '#9fb3d9', fog: '#0e1018', fogD: .012, sunEl: 30, sunAz: 120, stars: .8, storm: 0, sunI: .15, hemiI: .32, ash: 0, wind: .05, waves: 0, camP: 0, exposure: 1.25, fire: 0, sing: 0, shake: 0 },
+  weep: { top: '#3a4660', horizon: '#a89480', sun: '#e8d4b4', fog: '#7a6c60', fogD: .005, sunEl: 14, sunAz: -70, stars: 0, storm: .3, sunI: 1.5, hemiI: .6, ash: .04, wind: .2, waves: .05, camP: 0, exposure: 1.05, fire: 0, sing: 0, shake: 0 }
 };
 
 async function world(kit, { audio, sleep }) {
@@ -294,6 +480,125 @@ async function world(kit, { audio, sleep }) {
   const gateFolk = kit.throng({ n: 10, place: i => [X4 + rnd(-2.2, 2.2), rnd(1.5, 5), Math.PI * (i % 2 ? 1 : .9)], colors: ['#3e3329', '#4b3c2f'] });
   const runners = [0, 1].map(i => { const g = kit.person(['#47392c', '#2b2420'][i]); return { g, w: kit.walker(g, { height: h4 }) }; });
 
+  /* ===== 새 장소: 기브아 사울의 집, 에셀 바위, 헤브론, 다윗 성 침실, 감람산 길 (3부 구성) ===== */
+  const sitesD = {};
+  const siteD = name => { const g = kit.site(); sitesD[name] = g; kit.into(g); return g; };
+  const showOnly = name => { for (const k in sitesD) sitesD[k].visible = k === name; };
+  const eyeD = (x, z, e = 1.65) => kit.groundAt(x, z) + e;
+  const standD = (x, z, e = 1.65) => { kit.setEnv({ camX: x, camZ: z, camH: eyeD(x, z, e) }, 0); kit.groundCam(e); };
+  const sitD = (x, z, e = 1.05) => { kit.setEnv({ camX: x, camZ: z, camH: eyeD(x, z, e) }, 0); };
+  function yawTo(x, z) { const e = kit.env; let a = Math.atan2(-(x - e.camX), -(z - e.camZ)); while (a - e.camY > Math.PI) a -= Math.PI * 2; while (a - e.camY < -Math.PI) a += Math.PI * 2; return a; }
+  const lookAt = (x, z, dur = 2) => kit.setEnv({ camY: yawTo(x, z) }, dur), lookNow = (x, z) => kit.setEnv({ camY: yawTo(x, z) }, 0);
+  const faceTo = (g, x, z) => { g.rotation.y = Math.atan2(x - g.position.x, z - g.position.z); };
+  const setBase = (g, c) => { const F = g.userData.fig; if (F) { F.base = c; F.play(c, .3); } };
+  const playD = (g, c) => { const F = g.userData.fig; if (F) F.play(c, .3); };
+  const figD = (role, x, y, z, ry = 0, o = {}) => { const g = kit.figure(role, { visible: true, ...o }); g.position.set(x, y, z); g.rotation.y = ry; return g; };
+  async function blinkD(fn, ms = 700) { const ex = kit.env.exposure; await kit.setEnv({ exposure: 0 }, ms / 1000); await fn(); await kit.setEnv({ exposure: ex }, ms / 1000); }
+  let lookersD = [];
+  const lookAllD = arr => arr.forEach((g, i) => setTimeout(() => g.visible && kit.faceCamera(g, 1.1), i * 120));
+  // 수금 (손에 드는 작은 현악기)
+  const lyre = new THREE.Group(); { const w = kit.mat('#7a5230'); [-1, 1].forEach(s => { const a = new THREE.Mesh(new THREE.BoxGeometry(.03, .34, .03), w); a.position.set(s * .1, .17, 0); a.rotation.z = -s * .18; lyre.add(a); }); const t = new THREE.Mesh(new THREE.BoxGeometry(.3, .03, .03), w); t.position.y = .33; lyre.add(t); const b = new THREE.Mesh(new THREE.BoxGeometry(.24, .08, .06), w); lyre.add(b); for (let i = 0; i < 6; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(.003, .28, .003), kit.mat('#e8dcc0')); s.position.set(-.06 + i * .024, .17, .02); lyre.add(s); } }
+  lyre.visible = false; scene.add(lyre);
+  function holdLyre(on) { lyre.visible = on; const h = kit.self.g && kit.self.g.userData.fig.bone('hand_l'); if (on && h) { h.add(lyre); lyre.position.set(0, .1, .05); lyre.rotation.set(0, 0, Math.PI / 2); lyre.scale.setScalar(1 / .92); } else if (!on && lyre.parent) lyre.parent.remove(lyre); }
+
+  // 기브아, 사울의 집 (삼상 16:14–23, 18:1–11)
+  const GB = 7500;
+  siteD('gibeah');
+  const hGb = (x, z) => { const lx = x - GB; return 2 * (vnoise(lx * .02, z * .02) - .5) + 16 * smooth(150, 280, Math.hypot(lx, z)); };
+  kit.terrain({ height: hGb, size: 600, seg: 120, at: [GB, 0], lo: '#6a5a42', hi: '#b8a27a', yMul: .03 });
+  kit.village({ center: [GB, -64], n: 26, rMin: 12, rMax: 60, height: hGb, avoid: (x, z) => Math.abs(x - GB) < 6 || (z > -36 && Math.abs(x - GB) < 18), seed: 31 });
+  kit.trees('olive', { n: 30, place: i => { let x; do { x = rnd(-120, 120); } while (Math.abs(x) < 20); return [GB + x, rnd(30, 120)]; }, height: hGb });
+  const SR = v3(GB, 0, 400);  // 사울의 방
+  const saulRoom = kit.room({ at: [SR.x, SR.y, SR.z], w: 12, d: 10, h: 4.4, color: '#5a4636', floor: '#3e3126', door: 0, lamps: [[-4, -3.6, 1.6], [4, -3.6, 1.6], [0, 3.6, 1.6]] });
+  [-3, 3].forEach(x => [-2, 2].forEach(z => kit.box(.5, 4.4, .5, '#6a5440', SR.x + x, 2.2, SR.z + z)));
+  { const L = new THREE.PointLight('#ffc890', 9, 16, 1.3); L.position.set(SR.x, 3.2, SR.z); saulRoom.add(L); L.position.set(0, 3.2, 0); }  // 방 전체를 비추는 등잔 불빛
+  kit.box(2, .5, 1.4, '#4a3828', SR.x, .25, SR.z - 4); kit.box(2, 1.6, .3, '#4a3828', SR.x, 1.05, SR.z - 4.6);  // 왕의 자리
+  kit.box(.5, .42, .45, '#4a3828', SR.x, .21, SR.z + .85);  // 다윗이 앉는 걸상
+  const saulD = figD('king', SR.x, .5, SR.z - 3.8, 0, { tint: '#4c2f2b', pose: 'seat' });
+  const SPEAR_REST = () => { spearD.position.set(SR.x + .75, 1.25, SR.z - 3.7); spearD.rotation.set(-Math.PI / 2 + .12, 0, 0); };
+  const spearStuck = [];
+  const spearD = new THREE.Group(); { const s = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, 2.4, 6), kit.mat('#4a3626')); s.rotation.x = Math.PI / 2; spearD.add(s); const t = new THREE.Mesh(new THREE.ConeGeometry(.05, .25, 6), kit.mat('#9a9a92', { metalness: .5 })); t.rotation.x = Math.PI / 2; t.position.z = 1.3; spearD.add(t); }
+  spearD.visible = false; sitesD.gibeah.add(spearD);
+  const courtiers = [[-4.4, -1.4], [4.4, -1.2], [-4.6, 1.6]].map(([x, z], i) => figD('man', SR.x + x, 0, SR.z + z, Math.atan2(-x, -3.8 - z), { tint: ['#4a3d30', '#5a4636', '#3e3329'][i] }));
+  const jonathan = figD('man', SR.x + 2, 0, SR.z - 1.6, -.6, { tint: '#d8ccb4', colors: { mantle: '#7a2f2a', headcloth: '#e3dac4' } });
+  const JM = '#7a2f2a';
+  // 성읍 밖: 춤추며 노래하는 여인들 (삼상 18:6–7)
+  const dancers = Array.from({ length: 10 }, (_, i) => figD('woman', GB + (i % 5 - 2) * 1.6 + rnd(-.3, .3), 0, -10 - Math.floor(i / 5) * 1.8, 0, { colors: { dress: ['#9e2430', '#33507e', '#c9a23a', '#6a3a7a', '#2a6a5a'][i % 5] } }));
+  dancers.forEach(g => { g.position.y = hGb(g.position.x, g.position.z); });
+  const welcome = kit.throng({ n: 120, height: hGb, place: i => { const s = i % 2 ? 1 : -1; return [GB + s * rnd(5.5, 14), rnd(-30, 2), s > 0 ? -Math.PI / 2 : Math.PI / 2]; } });
+  const saulOutD = figD('king', GB - .6, 0, -2, Math.PI, { tint: '#4c2f2b' }); saulOutD.position.y = hGb(saulOutD.position.x, -2);
+  const armyD = kit.throng({ n: 60, height: hGb, place: i => { let x, z; do { x = rnd(-4.5, 4.5); z = rnd(-1, 18); } while (Math.hypot(x - 2.4, z + 4) < 3 || Math.hypot(x + .6, z + 2) < 1.2); return [GB + x, z, Math.PI]; }, colors: ['#4a3d30', '#584736', '#3c332a'] });
+  let danceOn = false;
+  kit.onFrame((dt, t) => { if (!danceOn) return; dancers.forEach((g, i) => { g.position.y = hGb(g.position.x, g.position.z) + Math.max(0, Math.sin(t * 6 + i)) * .12; g.rotation.y = Math.sin(t * 2 + i) * .6; }); });
+  kit.into(null);
+
+  // 에셀 바위 (삼상 20:18–42)
+  const EZ = 9000;
+  siteD('ezel');
+  const hEz = (x, z) => { const lx = x - EZ; return 1.6 * (vnoise(lx * .03, z * .03) - .5) + 3 * smooth(20, 60, Math.hypot(lx, z)) * vnoise(lx * .01, z * .01) + 14 * smooth(140, 260, Math.hypot(lx, z)); };
+  kit.terrain({ height: hEz, size: 560, seg: 120, at: [EZ, 0], lo: '#5f6a3a', hi: '#a8a070', yMul: .04 });
+  kit.grass({ center: [EZ, -10], rx: 60, rz: 60, n: 1800, height: hEz, color: '#6a7a3a' });
+  for (let i = 0; i < 7; i++) { const b = kit.box(rnd(1.2, 2.2), rnd(1.2, 2.2), rnd(1.4, 2.4), null, EZ - 3 + rnd(-1, .6), hEz(EZ - 3, 0) + .7, rnd(-1.2, 1.6), undefined, kit.mat('#8a7e6a', { flatShading: true })); b.rotation.set(rnd(-.3, .3), rnd(0, 3), rnd(-.3, .3)); }  // 에셀 바위
+  kit.trees('tamarisk', { n: 24, place: i => [EZ + rnd(-90, 90), rnd(-120, -40)], height: hEz });
+  const EZC = [EZ - .2, 2.2];  // 다윗이 숨어 앉은 자리
+  const jonE = figD('man', EZ + 1, 0, -26, 0, { tint: '#d8ccb4', colors: { mantle: JM, headcloth: '#e3dac4' } }); jonE.position.y = hEz(jonE.position.x, -26); const jonW = kit.walker(jonE, { height: hEz });
+  const lad = figD('boy', EZ + 2, 0, -25, 0, { scale: .78, tint: '#b8a47e' }); lad.position.y = hEz(lad.position.x, -25); const ladW = kit.walker(lad, { height: hEz });
+  const arrows = [0, 1, 2].map(() => { const a = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .7, 4), kit.mat('#5a4030')); a.visible = false; sitesD.ezel.add(a); return a; });
+  kit.into(null);
+
+  // 헤브론 (삼하 2:1–4, 5:1–5)
+  const HB = 10500;
+  siteD('hebron');
+  const hHb = (x, z) => { const lx = x - HB; return 2.2 * (vnoise(lx * .02, z * .02) - .5) + 18 * smooth(150, 280, Math.hypot(lx, z)); };
+  kit.terrain({ height: hHb, size: 600, seg: 120, at: [HB, 0], lo: '#6a5a42', hi: '#b49c76', yMul: .03 });
+  kit.village({ center: [HB, -44], n: 36, rMin: 20, rMax: 80, height: hHb, avoid: (x, z) => Math.hypot(x - HB, z + 4) < 28, seed: 41 });
+  kit.trees('olive', { n: 40, place: i => [HB + rnd(-140, 140), rnd(20, 120)], height: hHb });
+  const hebElders = Array.from({ length: 8 }, (_, i) => { const a = -1.1 + i * .31, g = figD('elder', HB + Math.sin(a) * 3, 0, -4 - Math.cos(a) * 3, 0, { tint: ['#e8e0d0', '#5b4a3a', '#3a4a6a', '#6a5a48'][i % 4] }); g.position.y = hHb(g.position.x, g.position.z); return g; });
+  hebElders.forEach(g => faceTo(g, HB, -4));
+  const hebCrowd = kit.throng({ n: 220, height: hHb, place: i => { const a = rnd(-1.6, 1.6), r = rnd(9, 24); return [HB + Math.sin(a) * r, -4 - Math.cos(a) * r, -a]; } });
+  kit.into(null);
+
+  // 다윗 성 침실 (삼하 12:15–25, 왕상 1–2)
+  const CB = v3(X3 + 60, 0, 140);
+  siteD('chamber');
+  const chamber = kit.room({ at: [CB.x, CB.y, CB.z], w: 9, d: 8, h: 3.8, color: '#5e4c3c', floor: '#3e3228', door: 0, lamps: [[-3, -3, .8], [3, -3, .8]] });
+  kit.box(2.2, .5, 1.2, '#7a6650', CB.x - 2.2, .25, CB.z - 1.8); kit.box(2.2, .14, 1.2, '#d8cfba', CB.x - 2.2, .57, CB.z - 1.8);  // 침상
+  kit.addFloor(CB.x - 2.2, CB.z - 1.8, 2.2, 1.2, .64, sitesD.chamber);
+  { const L = new THREE.PointLight('#ffc890', 6, 13, 1.3); L.position.set(0, 3, 0); chamber.add(L); }  // 침상 위에 앉으면 몸이 침상 위에 온다
+  const elderServ = [[1.6, -1.2], [2.6, 0], [.8, 1.4], [2.2, 1.8]].map(([x, z], i) => figD('man', CB.x + x, 0, CB.z + z, 0, { tint: ['#4a3d30', '#5a4636', '#3e3329', '#6a5541'][i] }));
+  elderServ.forEach(g => faceTo(g, CB.x - .6, CB.z - .4));
+  const bathsheba = figD('woman', CB.x - .4, 0, CB.z + 2.6, Math.PI, { colors: { dress: '#5b2a5e' } }); bathsheba.visible = false; const bsW = kit.walker(bathsheba, {});
+  const nathanC = figD('elder', CB.x + 1.6, 0, CB.z + 2.4, Math.PI, { tint: '#6e665a' }); nathanC.visible = false;
+  const solomon = figD('man', CB.x + .4, 0, CB.z + 1.2, Math.PI, { tint: '#f1ece0', colors: { mantle: '#5b2a5e', beard: '#2a1c12' } }); solomon.visible = false;
+  const baby = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), kit.mat('#efe6d4')); baby.scale.set(1, .7, 1.5); baby.visible = false; sitesD.chamber.add(baby);
+  kit.into(null);
+
+  // 감람산 길 (삼하 15:13–30)
+  const AS = 12000;
+  siteD('ascent');
+  const hAs = (x, z) => { const lx = x - AS; return -6 * Math.exp(-(lx * lx) / 60) + 30 * smooth(0, 140, lx) + 3 * (vnoise(lx * .02, z * .02) - .5) + 8 * smooth(-40, -160, lx) + 14 * smooth(240, 360, Math.hypot(lx, z)); };
+  kit.terrain({ height: hAs, size: 700, seg: 150, at: [AS + 40, 0], lo: '#6a5a42', hi: '#b8a27a', yMul: .015 });
+  kit.water({ y: hAs(AS, 0) + .5, size: 14, seg: 4, at: [AS, 0], deep: '#2a4a40' });  // 기드론 시내
+  kit.cityWall({ from: [AS - 90, -80], to: [AS - 90, 80], height: hAs });
+  kit.village({ center: [AS - 140, 0], n: 40, rMin: 10, rMax: 50, height: hAs, seed: 51 });
+  kit.trees('olive', { n: 120, place: i => { let x, z; do { x = AS + rnd(10, 220); z = rnd(-100, 100); } while (Math.abs(z - (x - AS) * .05) < 6); return [x, z]; }, height: hAs });
+  const refugees = kit.throng({ n: 160, height: hAs, place: i => { const x = AS + rnd(-30, 120), s = i % 2 ? 1 : -1; return [x, (x - AS) * .05 + s * rnd(1.6, 4.5), Math.PI / 2 + rnd(-.3, .3)]; }, colors: ['#4a3d30', '#5a4a3a', '#3a3029', '#6a5541', '#2e2925'] });
+  const ark = new THREE.Group(), arkBody = new THREE.Group(); ark.add(arkBody); { const gold = kit.mat('#c9a23a', { metalness: .45, roughness: .4 }); const b = new THREE.Mesh(new THREE.BoxGeometry(1.1, .65, .65), gold); b.position.y = 1.2; arkBody.add(b); [-1, 1].forEach(s => { const p = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 2.6, 6), kit.mat('#8a6a2a')); p.rotation.z = Math.PI / 2; p.position.set(0, 1.05, s * .4); arkBody.add(p); const c = new THREE.Mesh(new THREE.ConeGeometry(.12, .4, 4), gold); c.position.set(s * .32, 1.75, 0); arkBody.add(c); }); }
+  kit.onFrame(() => { if (sitesD.ascent.visible) ark.position.y = hAs(ark.position.x, ark.position.z); });
+  ark.position.set(AS + 8, hAs(AS + 8, 2), 2); sitesD.ascent.add(ark);
+  const levites = [[-1, .5], [1, .5], [-1, -.5], [1, -.5]].map(([dx, dz]) => figD('man', AS + 8 + dx, 0, 2 + dz * 1.2, -Math.PI / 2, { tint: '#ece6d8', colors: { mantle: '#d8cfba', headcloth: '#ece6d8' } }));
+  levites.forEach(g => { g.position.y = hAs(g.position.x, g.position.z); });
+  const zadok = figD('elder', AS + 9.6, 0, 3.4, -Math.PI / 2, { tint: '#f1ece0', colors: { mantle: '#3a4a6a', headcloth: '#f1ece0' } }); zadok.position.y = hAs(zadok.position.x, 3.4);
+  const servantsAs = [[-2, 2.6], [2, 2.4], [-1.4, -2.4], [1.8, -2.2]].map(([dx, dz], i) => figD('man', AS + 16 + dx, 0, 1 + dz, -Math.PI / 2, { tint: ['#4a3d30', '#5a4636', '#3e3329', '#6a5541'][i] }));
+  servantsAs.forEach(g => { g.position.y = hAs(g.position.x, g.position.z); });
+  kit.into(null);
+  showOnly(null);
+  // 엘라 진의 형 셋 (17:13), 사울 곁의 아브넬 (17:55)
+  const elahBros = [[4.4, .4], [5.4, 1.6], [4.2, 2.6]].map(([x, z], i) => { const g = figD('man', X1 + x, h1(X1 + x, z), z, 0, { tint: ['#4a3b2e', '#5a4636', '#3e3329'][i], colors: { tunic: '#8a7a60' } }); g.visible = false; return g; });
+  const abner = figD('man', X1 - 3.4, h1(X1 - 3.4, -.6), -.6, .9, { tint: '#5d3a2a', colors: { tunic: '#8c6a3c' } }); abner.visible = false;
+  const ROLE_D = { field: 'boy', yard: 'boy', harp: 'boy', elah: 'boy', saulTent: 'boy', jonathan: 'boy', women: 'shepherd', spear: 'shepherd', ezel: 'shepherd', cave: 'shepherd', hebron: 'shepherd', roof: 'king', hall: 'king', sick: 'king', ascent: 'king', gate: 'king', deathbed: 'king' };
+  const SELF_OPTS = { boy: { tint: '#c4b591' }, shepherd: { tint: '#b9a888', colors: { mantle: '#6b4f35' } }, king: { tint: '#2f4a6a' } };
+
   // 기름 부음: 머리 위에서 흘러내리는 빛
   let oilUntil = -1;
   kit.onFrame((dt, t) => {
@@ -307,6 +612,21 @@ async function world(kit, { audio, sleep }) {
   const api = {
     stub: false, setEnv: kit.setEnv, focus: kit.focus,
     place(where) {
+      showOnly(null); kit.groundCam(null); elahBros.forEach(g => { g.visible = false; }); abner.visible = false; spearStuck.forEach(p => p.parent && p.parent.remove(p)); spearStuck.length = 0; lyre.visible = false; holdLyre(false); kit.self.clips = {};
+      { const r = ROLE_D[where] || 'boy'; if (where === 'ascent') kit.selfBody('man', { tint: '#3a3029', colors: { mantle: '#2a2420', sandal: '#a97d5d', headcloth: '#3a3029' } }); else kit.selfBody(r, SELF_OPTS[r]); }
+      if (where === 'harp' || where === 'spear' || where === 'jonathan') {
+        showOnly('gibeah'); sitD(SR.x, SR.z + .6, where === 'jonathan' ? 1.62 : 1.05); if (where === 'jonathan') kit.groundCam(1.62); lookNow(SR.x, SR.z - 3.8);
+        saulD.visible = where !== 'jonathan'; jonathan.visible = where === 'jonathan'; spearD.visible = where === 'spear'; SPEAR_REST(); courtiers.forEach(g => { g.visible = true; });
+        if (where === 'jonathan') { jonathan.position.set(SR.x + .3, 0, SR.z - 1.4); faceTo(jonathan, SR.x, SR.z + .6); jonathan.traverse(o => { if (o.isMesh && o.name === 'mantle') o.visible = true; }); }
+        lookersD = [saulD, ...courtiers];
+      }
+      if (where === 'women') { showOnly('gibeah'); standD(GB + 2.4, -4); lookNow(GB, -16); danceOn = true; lookersD = dancers; }
+      else danceOn = false;
+      if (where === 'ezel') { showOnly('ezel'); sitD(EZC[0], EZC[1], .95); lookNow(EZ + 1, -26); jonW.idle(); ladW.idle(); jonE.visible = lad.visible = true; jonE.position.set(EZ + 1, hEz(EZ + 1, -26), -26); lad.position.set(EZ + 2, hEz(EZ + 2, -25), -25); arrows.forEach(a => { a.visible = false; }); lookersD = [jonE]; }
+      if (where === 'hebron') { showOnly('hebron'); standD(HB, -4); lookNow(HB, -12); lookersD = hebElders; }
+      if (where === 'sick') { showOnly('chamber'); kit.setEnv({ camX: CB.x - .8, camZ: CB.z - .2, camH: .42, camP: .12 }, 0); lookNow(CB.x + 2, CB.z); bathsheba.visible = nathanC.visible = solomon.visible = baby.visible = false; elderServ.forEach(g => { g.visible = true; }); lookersD = elderServ; }
+      if (where === 'deathbed') { showOnly('chamber'); kit.setEnv({ camX: CB.x - 2.2, camZ: CB.z - 1.9, camH: .64 + 1, camP: -.05 }, 0); lookNow(CB.x, CB.z + 2.6); bathsheba.visible = true; bsW.idle(); bathsheba.position.set(CB.x - .9, 0, CB.z - .4); faceTo(bathsheba, CB.x - 2.2, CB.z - 1.8); nathanC.visible = false; solomon.visible = false; baby.visible = false; elderServ.forEach((g, i) => { g.visible = i < 2; }); lookersD = [bathsheba, ...elderServ]; }
+      if (where === 'ascent') { showOnly('ascent'); standD(AS - 4, -.6); lookNow(AS + 60, 3); kit.hold(zadok); arkBody.position.y = 0; ark.position.set(AS + 8, 0, 2); levites.forEach((g, i) => { g.visible = true; g.position.set(AS + 8 + [-1, 1, -1, 1][i], 0, 2 + [.6, .6, -.6, -.6][i]); g.position.y = hAs(g.position.x, g.position.z); g.rotation.y = -Math.PI / 2; }); zadok.visible = true; zadok.position.set(AS + 9.6, hAs(AS + 9.6, 3.4), 3.4); zadok.rotation.y = -Math.PI / 2; lookersD = [...servantsAs, zadok]; }
       wins.forEach(w => { w.visible = where === 'roof'; });
       flock.visible = where === 'field';
       if (where === 'field') kit.setEnv(Object.assign(at(0, 0), { camH: 1.65 + h0(0, 0) }), 0);
@@ -363,7 +683,61 @@ async function world(kit, { audio, sleep }) {
       kit.focus(0, 2); await sleep(5000);
     },
     async climb() { await kit.setEnv('gateDusk', 6); },
+    /* --- 새 장면 (3부 구성) --- */
+    saulTorment() { playD(saulD, 'Idle_No_Loop'); kit.setEnv({ shake: .04 }, 1); audio.drone(.16, 2); },
+    async harpPlay() { holdLyre(true); kit.self.clips = { sit: 'Sitting_Talking_Loop' }; audio.chord(.35, 2); kit.setEnv({ camP: -.25 }, 1.2); await sleep(2600); kit.setEnv({ camP: -.02 }, 1.2); },
+    saulCalm() { setBase(saulD, 'Sitting_Idle_Loop'); kit.setEnv({ shake: 0 }, 2); audio.drone(.04, 3); audio.chord(.1, 4); },
+    async toCamp() { kit.setEnv({ camZ: 1, camX: X1 + 1.6, camH: 1.65 + h1(X1 + 1.6, 1) }, 0); elahBros.forEach(g => { g.visible = true; kit.faceCamera(g, 0); }); lookAt(elahBros[0].position.x, elahBros[0].position.z, 1.6); await sleep(900); },
+    eliab() { kit.faceCamera(elahBros[0], .8); playD(elahBros[0], 'Idle_Talking_Loop'); setTimeout(() => playD(elahBros[0], 'Idle_Loop'), 5000); },
+    afterGoliath() { kit.setEnv({ camP: -.1 }, 2); },
+    async saulTent() { await blinkD(async () => { kit.setEnv({ camX: X1 - 1.2, camZ: 1.2, camH: 1.65 + h1(X1 - 1.2, 1.2) }, 0); lookNow(X1 - 2.9, -1.2); kit.faceCamera(saul, .1); abner.visible = true; kit.faceCamera(abner, .1); }); },
+    covenant() { jonathan.traverse(o => { if (o.isMesh && o.name === 'mantle') o.visible = false; }); kit.selfBody('man', { tint: '#d8ccb4', colors: { mantle: JM, headcloth: '#e3dac4' } }); kit.setEnv({ camP: -.6 }, 1.4); setTimeout(() => kit.setEnv({ camP: -.02 }, 1.6), 3200); },
+    womenSing() { audio.chord(.3, 2); lookAt(GB, -10, 2); },
+    saulGlare() { kit.faceCamera(saulOutD, 1); lookAt(saulOutD.position.x, saulOutD.position.z, 1.6); audio.drone(.14, 2); },
+    async throwSpear() {
+      for (let k = 0; k < 2; k++) {
+        const c = kit.camera.position, from = v3(SR.x + .6, 1.5, SR.z - 3.4), to = v3(c.x + (k ? -.7 : .8), c.y + .1, SR.z + 4.9);
+        spearD.visible = true; spearD.position.copy(from); spearD.lookAt(to); audio.whoosh(.6);
+        kit.setEnv({ camX: SR.x + (k ? .5 : -.5) }, .35);
+        await kit.tween(spearD.position, { x: to.x, y: to.y, z: to.z }, .5); audio.thud();
+        if (!k) { await sleep(900); const p = spearD.clone(); p.position.copy(spearD.position); sitesD.gibeah.add(p); spearStuck.push(p); }
+      }
+      holdLyre(false);
+    },
+    async arrowsFly() {
+      await ladW.go(lad.position.clone(), v3(EZ + 3, 0, -2), 5);
+      for (let i = 0; i < 3; i++) { const a = arrows[i]; a.visible = true; a.position.set(EZ + 1.4, hEz(EZ, -26) + 1.5, -25.4); a.rotation.set(Math.PI / 2 - .3, 0, 0); kit.tween(a.position, { z: 8 + i * 1.6, y: hEz(EZ, 9) + .2 }, 1.6); audio.whoosh(.4); await sleep(600); }
+    },
+    async ladBack() { await ladW.go(lad.position.clone(), v3(EZ + 1.6, 0, -25), 5); arrows.forEach(a => { a.visible = false; }); },
+    async ladGoes() { await ladW.go(lad.position.clone(), v3(EZ + 40, 0, -90), 10); lad.visible = false; },
+    async bowThree() { const [x, z] = EZC; lookAt(jonE.position.x, jonE.position.z, 1); kit.setEnv({ camH: eyeD(x, z, 1.62) }, 1.2); await sleep(1200); for (let i = 0; i < 3; i++) { await kit.setEnv({ camH: eyeD(x, z, .5), camP: -.7 }, .8); await kit.setEnv({ camH: eyeD(x, z, .95), camP: -.2 }, .8); } jonW.go(jonE.position.clone(), v3(x + .1, 0, z - 1.3), 7); await kit.setEnv({ camH: eyeD(x, z, 1.62), camP: 0 }, 1.4); kit.groundCam(1.62); },
+    weepTogether() { kit.faceCamera(jonE, .6); kit.hold(jonE, 'weep'); setTimeout(() => kit.hold(jonE), 7000); audio.chord(.2, 3); },
+    async jonLeaves() { kit.hold(jonE); await jonW.go(jonE.position.clone(), v3(EZ + 30, 0, -100), 12); },
+    askLord() { kit.setEnv({ camP: .35 }, 2); audio.chord(.2, 3); },
+    anointKing() { oilUntil = kit.clock + 5; audio.chord(.5, 2); lookAllD(hebElders); kit.setEnv({ camP: -.25 }, 2); setTimeout(() => kit.setEnv({ camP: 0 }, 2), 4000); },
+    allTribes() { hebCrowd.userData.items.forEach(o => { o.ry += Math.PI * .02; }); hebCrowd.userData.draw(); audio.chord(.3, 4); lookAt(HB, -16, 3); },
+    whisper() { elderServ.forEach((g, i) => setTimeout(() => faceTo(g, CB.x + 1.6 + (i % 2 ? .6 : -.6), CB.z + .4), i * 300)); },
+    async riseWash() { await blinkD(async () => { kit.setEnv({ camX: CB.x - .6, camZ: CB.z + .8, camH: 1.62, camP: 0 }, 0); kit.groundCam(1.62); lookNow(CB.x + 2, CB.z); }, 1200); },
+    async solomonBorn() { await blinkD(async () => { bathsheba.visible = true; bathsheba.position.set(CB.x - 2.2, .2, CB.z - 1.1); bathsheba.rotation.y = 0; setBase(bathsheba, 'Sitting_Idle_Loop'); baby.visible = true; baby.position.set(CB.x - 1.8, .72, CB.z - 1.9); kit.setEnv({ camX: CB.x - 1.6, camZ: CB.z + .6 }, 0); lookNow(CB.x - 2.2, CB.z - 1.8); }); },
+    async newsAbsalom() { await sleep(400); },
+    async leaveCity() { kit.groundCam(1.65); await kit.walkTo(AS + 4, .2, 6); lookAt(AS + 8, 2, 1.6); },
+    arkDown() { kit.faceCamera(zadok, 1.2); levites.forEach(g => kit.faceCamera(g, 1.2)); kit.tween(arkBody.position, { y: -.85 }, 1.6); },
+    async arkBack() { kit.tween(arkBody.position, { y: 0 }, 1.2); levites.forEach(g => { const w = kit.walker(g, { height: hAs }); w.go(g.position.clone(), v3(g.position.x - 40, 0, g.position.z), 14); }); const zw = kit.walker(zadok, { height: hAs }); zw.go(zadok.position.clone(), v3(zadok.position.x - 40, 0, 3.4), 14); kit.tween(ark.position, { x: ark.position.x - 40 }, 14); },
+    ascend() { lookAt(AS + 120, 6, 2); kit.walkTo(AS + 70, 3.4, 30); },
+    bedLook() { kit.faceCamera(bathsheba, 1); },
+    swear() { setBase(bathsheba, 'Fixing_Kneeling'); },
+    trumpets() { audio.chord(.6, 1); setTimeout(() => audio.chord(.25, 4), 2600); audio.whoosh(2); },
+    async solomonComes() { solomon.visible = true; solomon.position.set(CB.x - 1, 0, CB.z - .2); faceTo(solomon, CB.x - 2.2, CB.z - 1.8); setBase(solomon, 'Fixing_Kneeling'); lookAt(CB.x - 1, CB.z - .2, 1.6); },
+    lastLight() { kit.setEnv({ exposure: .6 }, 6); audio.chord(.3, 6); },
     react(kind) {
+      if (kind === 'look') lookAllD(lookersD);
+      if (kind === 'harp') { audio.chord(.4, 1.5); setTimeout(() => audio.chord(.12, 4), 2000); }
+      if (kind === 'saulLookD') kit.faceCamera(saulD, 1);
+      if (kind === 'spear') { audio.whoosh(.5); }
+      if (kind === 'jonathan') kit.faceCamera(jonE, 1.2);
+      if (kind === 'servantsLook') lookAllD(elderServ);
+      if (kind === 'crowdD') { lookAllD(servantsAs); audio.wind(.3, 1); }
+      if (kind === 'bedLook') kit.faceCamera(bathsheba, 1);
       if (kind === 'sheep') { audio.water(0); }
       if (kind === 'runnerLook') kit.faceCamera(runner, 1);
       if (kind === 'armyLook') { kit.faceCamera(saul, 1.2); }
@@ -398,33 +772,54 @@ function stub({ audio, sleep }) {
   };
 }
 
-async function story(A) {
-  const { world, audio, sleep, verse, direction, sceneCut, choicePoint, speakLoop } = A;
-
-  // 1 · 들 — 아버지의 양 떼
-  await sceneCut('1', '들', '사무엘상 16장', async () => { world.setEnv('dusk', 0); world.place('field'); world.focus(0, 0); });
+/* ---------- 1부 · 목동과 거인 ---------- */
+async function part1(A) {
+  const { world, audio, sleep, verse, direction, sceneCut, choicePoint, speakLoop, say } = A;
+  // 1 · 들
+  await sceneCut('1', '들', '사무엘상 16장 1–11절', async () => { world.setEnv('dusk', 0); world.place('field'); world.focus(0, 0); });
   audio.wind(.14); audio.drone(.04); audio.chord(.08, 4);
   await direction('해 질 녘 들판. 아버지의 양 떼가 당신 곁에서 풀을 뜯는다. 형들은 모두 집으로 불려 갔다.');
   world.callRunner();
   await direction('집 쪽에서 누군가 달려온다.', { auto: true, ms: 7000 });
   await choicePoint('c1');
-  await sceneCut('1', '이새의 집', '사무엘상 16장 12–13절', async () => { world.setEnv('lamp', 0); world.place('yard'); world.focus(0, 0); });
+  // 2 · 이새의 집
+  await sceneCut('2', '이새의 집', '사무엘상 16장 12–13절', async () => { world.setEnv('lamp', 0); world.place('yard'); world.focus(0, 0); });
   await direction('마당에 형 일곱이 서 있다. 늙은 선지자가 당신을 본다.', { auto: true, ms: 2800 });
   await verse('삼상 16:12');
   world.anoint();
   await sleep(world.stub ? 800 : 5200);
   await verse('삼상 16:13');
-
-  // 2 · 엘라 골짜기
-  await sceneCut('2', '엘라 골짜기', '사무엘상 17장', async () => { world.setEnv('valley', 0); world.place('elah'); world.focus(0, 0); });
+  // 3 · 사울 앞에서
+  await sceneCut('3', '사울 앞에서', '사무엘상 16장 14–23절', async () => { world.setEnv('palace', 0); world.place('harp'); });
+  audio.wind(0, 2); audio.drone(.1, 3); audio.chord(0, 2);
+  await verse('삼상 16:14');
+  world.saulTorment();
+  await say('사울의 신하들', '임금님, 하나님께서 보내신 악한 영이 임금님을 괴롭히고 있습니다. 수금 잘 타는 사람을 찾으라고 명령해 주십시오. 그 사람이 타면 나으실 겁니다.', '삼상 16:15-16');
+  await say('젊은 신하 하나', '베들레헴 사람 이새의 아들을 봤는데요, 수금을 탈 줄 알고, 용감하고, 말도 잘하고, 잘생겼어요. 여호와께서 그와 함께 계십니다.', '삼상 16:18');
+  await verse('삼상 16:19-20');
+  await verse('삼상 16:21');
+  await direction('악한 영이 다시 왕에게 내린다.', { auto: true, ms: 2400 });
+  await choicePoint('d1');
+  await world.harpPlay();
+  world.saulCalm();
+  await verse('삼상 16:23');
+  // 4 · 엘라 골짜기
+  await sceneCut('4', '엘라 골짜기', '사무엘상 17장 12–54절', async () => { world.setEnv('valley', 0); world.place('elah'); world.focus(0, 0); });
   audio.chord(0, 3); audio.wind(.22); audio.drone(.1, 3);
+  await direction('형 셋은 사울을 따라 싸움터에 나갔다. 블레셋 사람이 사십 일 동안 아침저녁으로 나와 싸움을 걸었다(삼상 17:13–16).');
+  await say('아버지 이새', '이 볶은 곡식이랑 빵 열 덩이 가지고 진으로 얼른 가서 형들한테 주어라. 치즈 열 덩이는 천부장께 드리고. 형들이 잘 있는지 보고 소식 가지고 와.', '삼상 17:17-18');
+  await verse('삼상 17:20');
+  await world.toCamp();
   world.goliathOut();
+  await verse('삼상 17:22-23');
   await verse('삼상 17:4');
   world.retreat();
   await choicePoint('c2');
-  await speakLoop({ scene: '2 · 엘라 골짜기', prompts: [{ who: '사울', line: '네가 저 사람이랑 싸우겠다고? 넌 아직 애야. 저 사람은 어릴 때부터 싸움만 해 온 용사고.', ref: '삼상 17:33', ask: '무엇이라고 대답하겠습니까?', situation: '사울이 말릴 때', his: ['삼상 17:34-35'], hisShort: '양을 지키다 사자와 곰을 친 일을 말했다' }], submit: '대답하기', skips: ['대답하지 않는다'],
+  world.eliab();
+  await choicePoint('d2');
+  await speakLoop({ scene: '4 · 엘라 골짜기', prompts: [{ who: '사울', line: '네가 저 사람이랑 싸우겠다고? 넌 아직 애야. 저 사람은 어릴 때부터 싸움만 해 온 용사고.', ref: '삼상 17:33', ask: '무엇이라고 대답하겠습니까?', situation: '사울이 말릴 때', his: ['삼상 17:34-35'], hisShort: '양을 지키다 사자와 곰을 친 일을 말했다' }], submit: '대답하기', skips: ['대답하지 않는다'],
     reacts: [{ fx: 'saulLook', text: '사울과 장수들이 당신을 내려다본다. 골짜기 건너에서 고함이 들린다.' }] });
-  await A.say('사울', '…가거라. 여호와께서 너와 함께하시길 바란다.', '삼상 17:37#2');
+  await say('사울', '…가거라. 여호와께서 너와 함께하시길 바란다.', '삼상 17:37#2');
   world.armorOn();
   await verse('삼상 17:38');
   await choicePoint('c3');
@@ -433,16 +828,69 @@ async function story(A) {
   world.descend();
   await direction('언덕을 내려간다. 등 뒤의 군대가 조용하다.', { auto: true, ms: world.stub ? 1500 : 9000 });
   await verse('삼상 17:42');
-  await speakLoop({ scene: '2 · 엘라 골짜기', prompts: [{ who: '골리앗', line: '내가 개냐? 막대기 들고 나오게? 이리 와 봐. 네 살점을 새랑 들짐승 밥으로 던져 주마.', ref: '삼상 17:43-44', ask: '골리앗이 자기 신들의 이름으로 당신을 저주한다. 무엇이라고 외치겠습니까?', situation: '골리앗이 저주할 때', his: ['삼상 17:45', '삼상 17:46-47'], hisShort: '“나는 만군의 여호와의 이름으로 네게 가노라” 했다' }], submit: '외치기', skips: ['외치지 않는다'],
+  await speakLoop({ scene: '4 · 엘라 골짜기', prompts: [{ who: '골리앗', line: '내가 개냐? 막대기 들고 나오게? 이리 와 봐. 네 살점을 새랑 들짐승 밥으로 던져 주마.', ref: '삼상 17:43-44', ask: '골리앗이 자기 신들의 이름으로 당신을 저주한다. 무엇이라고 외치겠습니까?', situation: '골리앗이 저주할 때', his: ['삼상 17:45', '삼상 17:46-47'], hisShort: '“나는 만군의 여호와의 이름으로 네게 가노라” 했다' }], submit: '외치기', skips: ['외치지 않는다'],
     reacts: [{ fx: 'echo', text: '당신의 목소리가 골짜기에 울린다. 양쪽 언덕이 숨을 죽인다.' }] });
   await world.charge();
   await verse('삼상 17:48');
   await world.sling();
   await verse('삼상 17:49');
   await verse('삼상 17:50');
+  world.afterGoliath();
+  await verse('삼상 17:51');
+  await verse('삼상 17:52');
+  // 5 · 사울 앞에서 (17:55–58)
+  await verse('삼상 17:55');
+  await world.saulTent();
+  await verse('삼상 17:57');
+  await verse('삼상 17:58#1', { voice: false });
+  await speakLoop({ scene: '4 · 엘라 골짜기', prompts: [{ who: '사울', ref: '삼상 17:58#1', quiet: true, ask: '왕이 당신이 누구의 아들이냐고 묻습니다. 무엇이라고 대답하겠습니까?', situation: '“소년이여 누구의 아들이뇨” 하고 물을 때', his: ['삼상 17:58'], hisShort: '“나는 주의 종 베들레헴 사람 이새의 아들이니이다” 했다' }], submit: '대답하기', skips: ['대답하지 않는다'],
+    reacts: [{ fx: 'saulLook', text: '사울이 오래 당신을 본다.' }] });
+}
 
-  // 3 · 엔게디
-  await sceneCut('3', '엔게디', '사무엘상 24장', async () => { world.setEnv('cave', 0); world.place('cave'); world.focus(0, 0); });
+/* ---------- 2부 · 쫓기는 사람 ---------- */
+async function part2(A) {
+  const { world, audio, sleep, verse, direction, sceneCut, choicePoint, speakLoop, say } = A;
+  // 1 · 요나단
+  await sceneCut('1', '요나단', '사무엘상 18장 1–5절', async () => { world.setEnv('palace', 0); world.place('jonathan'); });
+  audio.wind(0, 2); audio.drone(.05, 3); audio.chord(.06, 4);
+  await verse('삼상 18:1');
+  world.covenant();
+  await verse('삼상 18:3-4');
+  await verse('삼상 18:5');
+  // 2 · 여인들의 노래
+  await sceneCut('2', '성읍 어귀', '사무엘상 18장 6–9절', async () => { world.setEnv('road', 0); world.place('women'); });
+  audio.wind(.14); audio.chord(.2, 3);
+  await verse('삼상 18:6');
+  world.womenSing();
+  await say('춤추는 여인들', '사울은 천천을 죽이고, 다윗은 만만을 죽였다네!', '삼상 18:7');
+  world.saulGlare();
+  await verse('삼상 18:8-9');
+  // 3 · 사울의 창
+  await sceneCut('3', '사울의 창', '사무엘상 18장 10–11절', async () => { world.setEnv('palace', 0); world.place('spear'); });
+  audio.chord(0, 2); audio.drone(.14, 3);
+  await verse('삼상 18:10');
+  world.saulTorment();
+  await world.harpPlay();
+  await choicePoint('d3');
+  await world.throwSpear();
+  await verse('삼상 18:11');
+  // 4 · 에셀 바위
+  await sceneCut('4', '에셀 바위', '사무엘상 20장 18–42절', async () => { world.setEnv('morningD', 0); world.place('ezel'); });
+  audio.wind(.16); audio.drone(.04, 3); audio.chord(.04, 4);
+  await direction('사울은 당신을 죽이려 한다. 요나단이 아버지의 뜻을 알아보고 신호를 주기로 했다. 화살이 “네 이편에 있다” 하면 돌아오고, “네 앞편에 있다” 하면 떠나야 한다(삼상 20:18–22). 당신은 에셀 바위 곁에 숨어 있다.');
+  await verse('삼상 20:35-36');
+  await world.arrowsFly();
+  await choicePoint('d4');
+  await world.ladBack();
+  await verse('삼상 20:40');
+  await world.ladGoes();
+  await world.bowThree();
+  world.weepTogether();
+  await verse('삼상 20:41');
+  await verse('삼상 20:42');
+  await world.jonLeaves();
+  // 5 · 엔게디
+  await sceneCut('5', '엔게디', '사무엘상 24장', async () => { world.setEnv('cave', 0); world.place('cave'); world.focus(0, 0); });
   audio.wind(.06); audio.drone(.14, 3);
   await verse('삼상 24:2');
   world.saulEnters();
@@ -455,14 +903,33 @@ async function story(A) {
   world.setEnv('desert', 6);
   await world.callOut();
   await verse('삼상 24:8');
-  await speakLoop({ scene: '3 · 엔게디', prompts: [{ ask: '사울이 돌아본다. 무엇이라고 말하겠습니까?', situation: '굴 밖에서 사울이 돌아볼 때', his: ['삼상 24:11'], hisShort: '“겉옷자락만 베었은즉 나의 손에 악이나 죄과가 없는 줄을 아실찌니이다” 했다' }], submit: '말하기', skips: ['아무 말도 하지 않는다'],
+  await speakLoop({ scene: '5 · 엔게디', prompts: [{ ask: '사울이 돌아본다. 무엇이라고 말하겠습니까?', situation: '굴 밖에서 사울이 돌아볼 때', his: ['삼상 24:11'], hisShort: '“겉옷자락만 베었은즉 나의 손에 악이나 죄과가 없는 줄을 아실찌니이다” 했다' }], submit: '말하기', skips: ['아무 말도 하지 않는다'],
     reacts: [{ fx: 'saulTurn', text: '사울이 오래 당신을 본다. 그의 군사들이 웅성거린다.' }] });
-  await A.say('사울', '내 아들 다윗아… 이게 네 목소리냐?', '삼상 24:16-17');
+  await say('사울', '내 아들 다윗아… 이게 네 목소리냐?', '삼상 24:16-17');
   await direction('사울이 소리 내어 운다.', { auto: true, ms: 2200 });
-  await A.say('사울', '나는 너를 괴롭혔는데 너는 나한테 잘해 줬구나. 네가 나보다 옳다.', '삼상 24:16-17');
+  await say('사울', '나는 너를 괴롭혔는데 너는 나한테 잘해 줬구나. 네가 나보다 옳다.', '삼상 24:16-17');
+  // 6 · 헤브론
+  await sceneCut('6', '헤브론', '사무엘하 2장 1–4절, 5장 1–5절', async () => { world.setEnv('morningD', 0); world.place('hebron'); });
+  audio.wind(.12); audio.chord(.06, 4);
+  await direction('사울과 요나단이 길보아 산에서 블레셋과 싸우다 죽었다(삼상 31장). 당신은 소식을 듣고 옷을 찢고 울었다(삼하 1장).');
+  world.askLord();
+  await speakLoop({ scene: '6 · 헤브론', prompts: [{ ask: '이제 어디로 가야 할지 모릅니다. 여호와께 무엇을 여쭙겠습니까?', situation: '사울이 죽은 뒤', his: ['삼하 2:1'], hisShort: '“내가 유다 한 성으로 올라가리이까… 어디로 가리이까” 하고 여쭈었다' }], submit: '여쭙기', skips: ['여쭙지 않는다'],
+    reacts: [{ fx: 'look', text: '바람이 언덕을 넘는다.' }] });
+  await verse('삼하 2:1');
+  world.anointKing();
+  await verse('삼하 2:4#1');
+  await direction('칠 년 반이 지났다.', { auto: true, ms: 2200 });
+  world.allTribes();
+  await say('이스라엘 모든 지파', '보십시오, 우리는 임금님의 혈육입니다. 사울이 왕이었을 때에도 이스라엘을 이끌고 싸움에 나가셨던 분은 임금님이셨습니다.', '삼하 5:1-2');
+  await verse('삼하 5:3');
+  await verse('삼하 5:4-5');
+}
 
-  // 4 · 지붕 위
-  await sceneCut('4', '지붕 위', '사무엘하 11장', async () => { world.setEnv('roof', 0); world.place('roof'); world.focus(0, 0); world.lamp(true); });
+/* ---------- 3부 · 왕의 죄와 눈물 ---------- */
+async function part3(A) {
+  const { world, audio, sleep, verse, direction, sceneCut, choicePoint, speakLoop, say } = A;
+  // 1 · 지붕 위
+  await sceneCut('1', '지붕 위', '사무엘하 11장', async () => { world.setEnv('roof', 0); world.place('roof'); world.focus(0, 0); world.lamp(true); });
   audio.drone(.06, 3); audio.wind(.1); audio.chord(.05, 4);
   await verse('삼하 11:1');
   world.focus(30, 4);
@@ -470,50 +937,104 @@ async function story(A) {
   await choicePoint('c5');
   world.lamp(false); world.focus(0, 3);
   await direction('시간이 흐른다.', { auto: true, ms: 2200 });
-  await A.say('그 여인이 보낸 사람', '전하랍니다. “제가 임신했습니다.”', '삼하 11:5');
+  await say('그 여인이 보낸 사람', '전하랍니다. “제가 임신했습니다.”', '삼하 11:5');
   await verse('삼하 11:14-15');
   audio.drone(.18, 4);
   await verse('삼하 11:17');
   await verse('삼하 11:26-27');
-
-  // 5 · 나단
-  await sceneCut('5', '나단', '사무엘하 12장', async () => { world.setEnv('hall', 0); world.place('hall'); world.focus(0, 0); });
+  // 2 · 나단
+  await sceneCut('2', '나단', '사무엘하 12장 1–13절', async () => { world.setEnv('hall', 0); world.place('hall'); world.focus(0, 0); });
   audio.wind(0, 2); audio.drone(.08, 3); audio.crackle(.05);
-  await A.say('나단', '왕이시여, 한 성에 두 사람이 있었습니다. 하나는 부자, 하나는 가난한 사람이었죠. 부자는 양이랑 소가 셀 수 없이 많았고요.', '삼하 12:1-2');
-  await A.say('나단', '가난한 사람은 돈 주고 사서 키운 어린 암양 한 마리가 전부였습니다. 자식들이랑 같이 키우고, 자기 먹는 걸 나눠 먹이고, 자기 잔으로 마시게 하고, 품에 안고 재웠어요. 딸 같았죠. 그런데 그 부자한테 손님이 오니까, 자기 양이랑 소는 아깝다고 안 잡고, 그 가난한 사람의 양을 빼앗아다 잡아서 손님상에 올렸답니다.', '삼하 12:3-4');
-  await speakLoop({ scene: '5 · 나단', prompts: [{ who: '나단', ref: '삼하 12:3-4', quiet: true, ask: '나단이 당신을 본다. 그 부자를 어떻게 해야 하겠습니까?', situation: '나단이 부자 이야기를 마쳤을 때', his: ['삼하 12:5-6'], hisShort: '“이 일을 행한 사람은 마땅히 죽을 자라” 했다' }], submit: '판결하기', skips: ['말하지 않는다'],
+  await say('나단', '왕이시여, 한 성에 두 사람이 있었습니다. 하나는 부자, 하나는 가난한 사람이었죠. 부자는 양이랑 소가 셀 수 없이 많았고요.', '삼하 12:1-2');
+  await say('나단', '가난한 사람은 돈 주고 사서 키운 어린 암양 한 마리가 전부였습니다. 자식들이랑 같이 키우고, 자기 먹는 걸 나눠 먹이고, 자기 잔으로 마시게 하고, 품에 안고 재웠어요. 딸 같았죠. 그런데 그 부자한테 손님이 오니까, 자기 양이랑 소는 아깝다고 안 잡고, 그 가난한 사람의 양을 빼앗아다 잡아서 손님상에 올렸답니다.', '삼하 12:3-4');
+  await speakLoop({ scene: '2 · 나단', prompts: [{ who: '나단', ref: '삼하 12:3-4', quiet: true, ask: '나단이 당신을 본다. 그 부자를 어떻게 해야 하겠습니까?', situation: '나단이 부자 이야기를 마쳤을 때', his: ['삼하 12:5-6'], hisShort: '“이 일을 행한 사람은 마땅히 죽을 자라” 했다' }], submit: '판결하기', skips: ['말하지 않는다'],
     reacts: [{ fx: 'nathanLook', text: '나단이 아무 말 없이 당신을 본다.' }] });
   await verse('삼하 12:7', { voice: true });
   await verse('삼하 12:9', { voice: true });
   await choicePoint('c6');
-
-  // 6 · 두 문 사이
-  await sceneCut('6', '두 문 사이', '사무엘하 18장', async () => { world.setEnv('gate', 0); world.place('gate'); world.focus(0, 0); });
+  await verse('삼하 12:13');
+  // 3 · 첫아이
+  await sceneCut('3', '첫아이', '사무엘하 12장 15–25절', async () => { world.setEnv('night', 0); world.place('sick'); });
+  audio.drone(.12, 3); audio.chord(0, 2); audio.crackle(.04);
+  await verse('삼하 12:15');
+  await verse('삼하 12:16-17');
+  await direction('이레가 지났다.', { auto: true, ms: 2600 });
+  world.whisper();
+  await verse('삼하 12:18');
+  await choicePoint('d5');
+  await world.riseWash();
+  await verse('삼하 12:20');
+  await say('신하들', '아이가 살아 있을 때는 금식하고 우시더니, 이제 일어나서 드시니 어떻게 된 일입니까?', '삼하 12:21');
+  await speakLoop({ scene: '3 · 첫아이', prompts: [{ who: '신하들', ref: '삼하 12:21', quiet: true, ask: '신하들이 묻습니다. 무엇이라고 대답하겠습니까?', situation: '“어찜이니이까” 하고 물을 때', his: ['삼하 12:22-23'], hisShort: '“내가 다시 돌아오게 할 수 있느냐 나는 저에게로 가려니와 저는 내게로 돌아오지 아니하리라” 했다' }], submit: '대답하기', skips: ['대답하지 않는다'],
+    reacts: [{ fx: 'servantsLook', text: '신하들이 고개를 숙인다.' }] });
+  await world.solomonBorn();
+  await verse('삼하 12:24-25');
+  // 4 · 감람산 길
+  await sceneCut('4', '감람산 길', '사무엘하 15장 13–30절', async () => { world.setEnv('weep', 0); world.place('ascent'); });
+  audio.wind(.24); audio.drone(.1, 3); audio.chord(0, 2);
+  await direction('아들 압살롬이 헤브론에서 스스로 왕이 되었다(삼하 15:10). 소식을 가진 사람이 숨이 차서 달려온다.');
+  await choicePoint('d6');
+  await verse('삼하 15:13-14');
+  await world.leaveCity();
+  await verse('삼하 15:23');
+  world.arkDown();
+  await verse('삼하 15:24');
+  await choicePoint('d7');
+  await verse('삼하 15:25-26');
+  world.arkBack();
+  world.ascend();
+  await verse('삼하 15:30');
+  await direction('맨발에 돌이 밟힌다. 아무도 고개를 들지 않는다.', { auto: true, ms: 4000 });
+  // 5 · 두 문 사이
+  await sceneCut('5', '두 문 사이', '사무엘하 18장', async () => { world.setEnv('gate', 0); world.place('gate'); world.focus(0, 0); });
   audio.crackle(0); audio.wind(.18); audio.drone(.1, 3);
   await direction('아들 압살롬과의 싸움이 벌어지는 날. 당신은 성문에 앉아 소식을 기다린다.');
   world.runnersCome();
   await verse('삼하 18:24');
   await direction('먼저 온 사람이 왕 앞에 얼굴을 땅에 대고 엎드린다. 사독의 아들 아히마아스다.', { auto: true, ms: 2600 });
-  await A.say('아히마아스', '평안하십시오! 왕의 하나님 여호와를 찬양합니다. 왕께 맞서던 자들을 다 넘겨주셨습니다!', '삼하 18:28');
-  await speakLoop({ scene: '6 · 두 문 사이', prompts: [{ ask: '엎드린 아히마아스에게 무엇을 묻겠습니까?', situation: '승전 소식을 들었을 때', his: ['삼하 18:29'], hisShort: '“소년 압살롬이 잘 있느냐” 물었다' }], submit: '묻기', skips: ['묻지 않는다'],
+  await say('아히마아스', '평안하십시오! 왕의 하나님 여호와를 찬양합니다. 왕께 맞서던 자들을 다 넘겨주셨습니다!', '삼하 18:28');
+  await speakLoop({ scene: '5 · 두 문 사이', prompts: [{ ask: '엎드린 아히마아스에게 무엇을 묻겠습니까?', situation: '승전 소식을 들었을 때', his: ['삼하 18:29'], hisShort: '“소년 압살롬이 잘 있느냐” 물었다' }], submit: '묻기', skips: ['묻지 않는다'],
     reacts: [{ fx: 'watch', text: '아히마아스가 머뭇거린다.' }] });
-  await A.say('아히마아스', '요압 장군이 저를 보낼 때 큰 소동이 있는 건 봤는데요… 무슨 일인지는 모르겠습니다.', '삼하 18:29#2');
-  await A.say('구스 사람', '왕께 알려 드릴 소식이 있습니다! 오늘 여호와께서 왕을 대적하던 모든 원수를 갚아 주셨습니다.', '삼하 18:31');
+  await say('아히마아스', '요압 장군이 저를 보낼 때 큰 소동이 있는 건 봤는데요… 무슨 일인지는 모르겠습니다.', '삼하 18:29#2');
+  await say('구스 사람', '왕께 알려 드릴 소식이 있습니다! 오늘 여호와께서 왕을 대적하던 모든 원수를 갚아 주셨습니다.', '삼하 18:31');
   await direction('구스 사람이 고개를 숙인 채 말을 잇는다.', { auto: true, ms: 2000 });
   await choicePoint('c7');
   world.climb(); audio.wind(.3, 4); audio.chord(.15, 6);
   await direction('해가 진다.', { auto: true, ms: 3500 });
+  // 6 · 마지막 날
+  await sceneCut('6', '마지막 날', '사무엘하 22–23장, 열왕기상 1–2장', async () => { world.setEnv('palace', 0); world.place('deathbed'); });
+  audio.wind(0, 2); audio.drone(.06, 3); audio.chord(.05, 4);
+  await verse('삼하 22:1');
+  await verse('삼하 22:2-3');
+  await verse('삼하 23:1-2');
+  await direction('여러 해가 지났다.', { auto: true, ms: 2200 });
+  await verse('왕상 1:1');
+  await verse('왕상 1:15-16');
+  world.bedLook();
+  await choicePoint('d8');
+  world.swear();
+  await verse('왕상 1:29-30');
+  await verse('왕상 1:31');
+  world.trumpets();
+  await direction('멀리 기혼 샘 쪽에서 나팔 소리와 함성이 들린다.', { auto: true, ms: 3200 });
+  await verse('왕상 1:39-40');
+  await world.solomonComes();
+  await speakLoop({ scene: '6 · 마지막 날', prompts: [{ ask: '죽을 날이 가까웠습니다. 아들 솔로몬에게 무엇을 당부하겠습니까?', situation: '죽을 날이 임박했을 때', his: ['왕상 2:1-3'], hisShort: '“너는 힘써 대장부가 되고 네 하나님 여호와의 명을 지켜 그 길로 행하라” 했다' }], submit: '당부하기', skips: ['아무 말도 하지 않는다'],
+    reacts: [{ fx: 'look', text: '솔로몬이 고개를 숙인다.' }] });
+  world.lastLight();
   await verse('왕상 2:10-11');
+  await verse('왕상 2:12');
+  await sleep(world.stub ? 500 : 3000);
 }
 
 export default {
   id: 'david', name: '다윗', abbr: '',
   V, P, PARTIAL_LIST, CHOICES, presets, initialEnv: 'dusk',
-  world, stub, story,
-  summary: {
-    wordsTitle: '골짜기에서, 왕궁에서 한 말',
-    hisWords: ['삼상 17:34-35', '삼상 17:45', '삼상 17:46-47', '삼상 24:11', '삼하 12:5-6', '삼하 18:29'],
-    silentMine: '당신은 아무 말도 하지 않았습니다.',
-    hidden: { title: '다윗이 들에 있는 동안', refs: ['삼상 16:6', '삼상 16:7', '삼상 16:10'], note: '연출 · 형들이 사무엘 앞을 지날 때 다윗은 들에서 양을 지키고 있었습니다(삼상 16:11). 이 체험에서도 당신은 그 자리에 없었습니다.' }
-  }
+  world, stub,
+  parts: [
+    { story: part1, summary: { wordsTitle: '골짜기에서 한 말', hisWords: ['삼상 17:29', '삼상 17:34-35', '삼상 17:45', '삼상 17:46-47', '삼상 17:58'],
+      hidden: { title: '다윗이 들에 있는 동안', refs: ['삼상 16:6', '삼상 16:7', '삼상 16:10'], note: '연출 · 형들이 사무엘 앞을 지날 때 다윗은 들에서 양을 지키고 있었습니다(삼상 16:11). 이 체험에서도 당신은 그 자리에 없었습니다.' } } },
+    { story: part2, summary: { wordsTitle: '쫓기며 한 말', hisWords: ['삼상 24:11', '삼하 2:1'], hidden: null } },
+    { story: part3, summary: { wordsTitle: '왕궁에서, 성문에서 한 말', hisWords: ['삼하 12:5-6', '삼하 12:13', '삼하 12:22-23', '삼하 15:25-26', '삼하 18:29', '왕상 2:1-3'], hidden: null } }
+  ]
 };
