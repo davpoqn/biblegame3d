@@ -253,6 +253,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     // 이름으로 부르는 프리셋은 하늘·빛·날씨를 바꾼다. 서 있는 자리(camX, camZ)와 눈높이(camH)는 프리셋에 직접 적힌 경우만 바꾸고, 아니면 place()가 정한 대로 둔다
     if (typeof name === 'string') for (const k of ['camX', 'camZ', 'camH']) if (!(PRE[name] && k in PRE[name])) delete src[k];
     const patch = Object.assign({}, src, extra || {});
+    if ('camH' in patch) camGround.on = false;  // 눈높이를 직접 정하면 땅 따라가기를 끈다
     for (const k in patch) {
       if (!(k in env)) continue;
       tw[k] = isColorKey(k) ? { from: env[k].clone(), to: new THREE.Color(patch[k]), t0: clock, dur } : { from: env[k], to: patch[k], t0: clock, dur };
@@ -293,6 +294,17 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     }
   }
 
+  /* --- 땅 높이: 지형, 바닥, 배가 알려 준다. 카메라와 내 몸이 땅속으로 들어가지 않게 쓴다 --- */
+  const grounds = [];
+  function groundAt(x, z) {
+    let g = -Infinity;
+    for (const fn of grounds) { const h = fn(x, z); if (h != null && h > g) g = h; }
+    return g === -Infinity ? 0 : g;
+  }
+  // 바닥 하나 더하기: kit.addGround((x, z) => 안이면 높이, 아니면 null)
+  function addGround(fn) { grounds.push(fn); return fn; }
+  function addFloor(cx, cz, w, d, y = 0, obj) { return addGround((x, z) => (!obj || obj.visible) && Math.abs(x - cx) <= w / 2 && Math.abs(z - cz) <= d / 2 ? y : null); }
+
   /* --- 지형 --- */
   function terrain({ height, size = 900, seg = 240, lo = '#5f4738', hi = '#b8936a', yMul = .055, grain = .3, at = [0, 0] } = {}) {
     const g = new THREE.PlaneGeometry(size, size, seg, seg); g.rotateX(-Math.PI / 2); g.translate(at[0], 0, at[1]);
@@ -305,7 +317,9 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
     const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }));
-    scene.add(m); return m;
+    scene.add(m);
+    addGround((x, z) => m.visible && Math.abs(x - at[0]) <= size / 2 && Math.abs(z - at[1]) <= size / 2 ? height(x, z) : null);
+    return m;
   }
   function disc({ r = 12, c0 = '#6d5846', c1 = '#8a7058', at = [0, 0], y = .02, height } = {}) {
     const g = new THREE.CircleGeometry(r, 72); g.rotateX(-Math.PI / 2);
@@ -367,8 +381,33 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   const UNDER = ['under_chest', 'under_body', 'under_arm', 'under_thigh', 'under_calf'];
   const TINT = [['dress', 'dress'], ['royal_mantle', 'royal'], ['mantle', 'mantle'], ['tunic_long', 'tunic'], ['tunic_short', 'tunic']];
   const figs = [];
+  // 예수님(연출: 성경에는 생김새가 없어 전통 그림을 따른다): 흰 옷, 붉은 겉옷, 어깨까지 오는 머리, 수염, 인자한 눈과 입
+  const JESUS = { name: '예수 (연출)', body: 'm', wear: ['tunic_long', 'belt', 'sandals', 'beard'], under: '#eee9de', colors: { tunic: '#eee9de', belt: '#c8b896', beard: '#4a3122' } };
+  const JESUS_RED = '#a3292a', JESUS_HAIR = '#3f2a1c';
+  function dressJesus(body) {
+    body.updateMatrixWorld(true);  // 지금 동작 자세 그대로 머리·가슴 뼈에 붙인다 (skeleton.pose()는 뼈 크기가 달라진다)
+    const head = body.getObjectByName('Head'), chest = body.getObjectByName('spine_03'), hp = head.getWorldPosition(new THREE.Vector3()), cp = chest.getWorldPosition(new THREE.Vector3());
+    const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: .85 });
+    const put = (bone, mesh, base, [x, y, z], rot, sc) => { mesh.position.set(base.x + x, base.y + y, base.z + z); if (rot) mesh.rotation.set(...rot); if (sc) mesh.scale.set(...sc); mesh.frustumCulled = false; body.add(mesh); mesh.updateMatrixWorld(true); bone.attach(mesh); return mesh; };
+    const eyeM = M('#24160f'), browM = M('#3a2618'), lipM = M('#7a4433'), skinM = M('#b4876a'), hairM = new THREE.MeshStandardMaterial({ color: JESUS_HAIR, roughness: .95, side: THREE.DoubleSide });
+    // 눈: 짙은 눈동자 위로 살짝 내려온 눈꺼풀 (웃는 눈매)
+    for (const sx of [-1, 1]) {
+      put(head, new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), eyeM), hp, [sx * .039, .122, .136], null, [.012, .0075, .006]);
+      put(head, new THREE.Mesh(new THREE.TorusGeometry(.013, .0026, 4, 10, Math.PI), browM), hp, [sx * .039, .121, .139], [0, 0, 0], [1, .55, 1]);  // 눈꺼풀 선
+      put(head, new THREE.Mesh(new THREE.BoxGeometry(.03, .0045, .006), browM), hp, [sx * .04, .142, .136], [0, 0, sx * -.12]);  // 눈썹 (안쪽이 살짝 올라간 온화한 모양)
+    }
+    put(head, new THREE.Mesh(new THREE.ConeGeometry(.012, .034, 6), skinM), hp, [0, .097, .147], [Math.PI / 2 + .35, 0, 0]);  // 코
+    put(head, new THREE.Mesh(new THREE.TorusGeometry(.019, .0032, 4, 12, Math.PI * .8), lipM), hp, [0, .068, .138], [0, 0, Math.PI + Math.PI * .1]);  // 미소 짓는 입
+    // 머리카락: 정수리를 덮고, 옆과 뒤로 어깨까지 내려온다. 가운데 가르마
+    put(head, new THREE.Mesh(new THREE.SphereGeometry(1, 18, 10, 0, Math.PI * 2, 0, Math.PI * .5), hairM), hp, [0, .105, .03], [-.55, 0, 0], [.118, .172, .142]);  // 정수리 (이마 선은 높고 뒤는 낮게)
+    put(head, new THREE.Mesh(new THREE.CylinderGeometry(.1, .118, .21, 18, 1, true, Math.PI * .3, Math.PI * 1.4), hairM), hp, [0, .005, .03], null, [1, 1, 1.05]);  // 옆과 뒤로 어깨까지 (얼굴 쪽은 트였다)
+    // 붉은 겉옷: 왼쪽 어깨에서 오른쪽 허리로 비스듬히 두른 띠, 그리고 등 뒤로 늘어진 자락
+    const red = new THREE.MeshStandardMaterial({ color: JESUS_RED, roughness: .9, side: THREE.DoubleSide });
+    put(chest, new THREE.Mesh(new THREE.CylinderGeometry(1, 1, .3, 24, 1, true), red), cp, [0, -.06, .01], [0, 0, .62], [.215, 1, .15]);
+    put(chest, new THREE.Mesh(new THREE.PlaneGeometry(.3, .62), red), cp, [.05, -.26, -.155], [.08, 0, .1]);
+  }
   function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3 } = {}) {
-    const spec = figSrc && figSrc.outfits.roles[role];
+    const spec = role === 'jesus' ? (figSrc && JESUS) : figSrc && figSrc.outfits.roles[role];
     if (!spec) return person(tint || '#4a3c30', { pose, scale, visible });
     const d = figSrc.outfits.default_colors, col = { ...d };  // 색 규칙은 tools/chars/build_chars.py role_colors와 같다
     for (const u of UNDER) col[u] = spec.under || d.tunic;
@@ -395,11 +434,45 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
         a.reset().play(); if (F.cur && fade) F.cur.crossFadeTo(a, fade, false); else if (F.cur) F.cur.stop();
         F.cur = a;
       } };
+    if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); dressJesus(body); }
     F.play(F.base, 0); mixer.update(Math.random() * 3);  // 여러 사람이 같은 박자로 움직이지 않게
     const bones = {}; F.bone = n => bones[n] || (bones[n] = body.getObjectByName(n));
     g.userData.fig = F; g.userData.head = body.getObjectByName('Head');
     g.scale.setScalar(scale * .92); g.visible = visible; scene.add(g); figs.push(g);
     return g;
+  }
+  /* --- 내 몸 (1인칭): 아래를 보면 다리와 발, 옷자락이 보인다. 머리는 숨기고, 눈이 카메라 자리에 오게 몸을 옮긴다 --- */
+  const me = { g: null, head: null, on: true, pose: '', yaw: 0, sp: 0, lx: 0, lz: 0 };
+  function selfBody(role, opts = {}) {
+    if (me.g) { scene.remove(me.g); const i = figs.indexOf(me.g); if (i >= 0) figs.splice(i, 1); me.g = null; }
+    if (!role) return null;
+    const g = figure(role, { ...opts, visible: true });
+    if (!g.userData.fig) { scene.remove(g); return null; }  // 캐릭터가 없으면 몸을 그리지 않는다
+    me.g = g; me.head = g.userData.fig.bone('Head'); me.neck = g.userData.fig.bone('neck_01'); me.pose = ''; me.lx = env.camX; me.lz = env.camZ; me.yaw = env.camY + Math.PI;
+    return g;
+  }
+  const _e = new THREE.Vector3();
+  function stepSelf(dt) {
+    const g = me.g; if (!g) return;
+    const F = g.userData.fig, cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
+    const h = cy - groundAt(cx, cz), id = 1 / Math.max(dt, 1e-3);
+    const vx = (env.camX - me.lx) * id, vz = (env.camZ - me.lz) * id; me.lx = env.camX; me.lz = env.camZ;
+    me.sp += (Math.min(8, Math.hypot(vx, vz)) - me.sp) * Math.min(1, dt * 5);
+    const pose = !me.on || h < .72 ? 'hide' : h < 1.38 ? 'sit' : me.sp > .35 ? 'walk' : 'stand';
+    g.visible = pose !== 'hide'; if (!g.visible) return;
+    if (pose !== me.pose) { me.pose = pose; F.play(pose === 'sit' ? 'Sitting_Idle_Loop' : pose === 'walk' ? 'Walk_Loop' : 'Idle_Loop', .35); }
+    if (pose === 'walk' && F.cur) F.cur.timeScale = clamp(me.sp / 1.25, .6, 1.8);
+    // 몸이 향하는 쪽: 이야기가 정한 방향, 걸을 때는 가는 방향 (둘러보기로는 몸이 돌지 않는다)
+    let want = pose === 'walk' ? Math.atan2(vx, vz) : env.camY + Math.PI;
+    while (want - me.yaw > Math.PI) want -= Math.PI * 2; while (want - me.yaw < -Math.PI) want += Math.PI * 2;
+    me.yaw += (want - me.yaw) * Math.min(1, dt * 4);
+    g.rotation.set(0, me.yaw, 0); g.position.set(cx, cy, cz); g.updateMatrixWorld(true);
+    me.head.getWorldPosition(_e);
+    const fx = Math.sin(me.yaw), fz = Math.cos(me.yaw), s = g.scale.x;
+    // 눈 = 머리 뼈 + 위로 0.11. 카메라를 머리보다 0.24 앞에 두어, 아래를 보면 배에 가리지 않고 다리와 발이 보이게 한다
+    const fwd = me.pose === 'sit' ? .2 : .24;
+    g.position.x += cx - (_e.x + fx * fwd * s); g.position.z += cz - (_e.z + fz * fwd * s); g.position.y += cy - (_e.y + .11 * s);
+    me.head.scale.setScalar(.001); me.neck.scale.setScalar(.35); g.updateMatrixWorld(true);
   }
   const stepFigs = dt => {
     for (const g of figs) if (g.visible) { const F = g.userData.fig; F.mixer.update(dt); if (F.gest) applyGesture(g, F, dt); }
@@ -651,7 +724,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   }
   function water({ y = 0, size = 1400, seg = 220, deep = '#16303a', at = [0, 0] } = {}) {
     const g = new THREE.PlaneGeometry(size, size, seg, seg); g.rotateX(-Math.PI / 2); g.translate(at[0], 0, at[1]);
-    const u = { uTime: { value: 0 }, uAmp: { value: 0 }, uY: { value: y }, uDeep: { value: new THREE.Color(deep) }, uTop: { value: new THREE.Color() }, uHorizon: { value: new THREE.Color() }, uSun: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3() }, uFog: { value: new THREE.Color() }, uFogD: { value: .006 }, uCam: { value: new THREE.Vector3() }, uStars: { value: 0 } };
+    const u = { uBoat: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uBoatL: { value: [0, 0, 0, 0] }, uBoatN: { value: 0 }, uTime: { value: 0 }, uAmp: { value: 0 }, uY: { value: y }, uDeep: { value: new THREE.Color(deep) }, uTop: { value: new THREE.Color() }, uHorizon: { value: new THREE.Color() }, uSun: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3() }, uFog: { value: new THREE.Color() }, uFogD: { value: .006 }, uCam: { value: new THREE.Vector3() }, uStars: { value: 0 } };
     const wl = WAVES.map(w => `h += ${w[3].toFixed(2)} * sin(dot(vec2(${w[0].toFixed(2)}, ${w[1].toFixed(2)}), p) * ${w[2].toFixed(2)} + uTime * ${w[4].toFixed(2)}); d += ${w[3].toFixed(2)} * ${w[2].toFixed(2)} * cos(dot(vec2(${w[0].toFixed(2)}, ${w[1].toFixed(2)}), p) * ${w[2].toFixed(2)} + uTime * ${w[4].toFixed(2)}) * vec2(${w[0].toFixed(2)}, ${w[1].toFixed(2)});`).join('\n');
     const m = new THREE.Mesh(g, new THREE.ShaderMaterial({
       uniforms: u,
@@ -661,7 +734,14 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
           float k = .06 + uAmp; w.y = uY + h * k; vN = normalize(vec3(-d.x * k, 1., -d.y * k)); vW = w.xyz;
           gl_Position = projectionMatrix * viewMatrix * w; }`,
       fragmentShader: `uniform vec3 uDeep, uTop, uHorizon, uSun, uSunDir, uFog, uCam; uniform float uFogD, uTime, uStars; varying vec3 vW; varying vec3 vN;
-        void main(){ vec3 v = normalize(uCam - vW);
+        uniform vec4 uBoat[4]; uniform float uBoatL[4]; uniform int uBoatN;
+        void main(){
+          for (int i = 0; i < 4; i++) { if (i >= uBoatN) break;
+            vec2 d = vW.xz - uBoat[i].xy; float lx = d.x * uBoat[i].z - d.y * uBoat[i].w, lz = d.x * uBoat[i].w + d.y * uBoat[i].z;
+            float az = abs(lz), hw = ${BOAT_HW.toFixed(2)}, e = (az - uBoatL[i]) / ${BOAT_END.toFixed(2)};
+            if ((az <= uBoatL[i] && abs(lx) < hw) || (az > uBoatL[i] && e * e + (lx / hw) * (lx / hw) < 1.)) discard;  // 배 안에는 물이 없다
+          }
+          vec3 v = normalize(uCam - vW);
           vec3 n = normalize(vN + vec3(sin(vW.x * 1.7 + uTime * 1.3) * .035, 0., cos(vW.z * 1.9 + uTime * 1.1) * .035));
           float fr = pow(1. - max(dot(v, n), 0.), 4.) * .9 + .05;
           vec3 r = reflect(-v, n); vec3 sky = mix(uHorizon, uTop, clamp(r.y * 1.6, 0., 1.));
@@ -678,6 +758,26 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   function float(obj, { y = 0, roll = 1, draft = .1 } = {}) { const o = { obj, y, roll, draft, on: true }; floaters.push(o); return o; }
 
   /* --- 배 --- */
+  // 배 안쪽(배 기준 좌표): 가운데는 너비 ±HW, 길이 ±len/2, 양 끝은 둥글게 1.25m 더
+  const boats = [], BOAT_HW = 1.1, BOAT_END = 1.25;
+  function boatLocal(b, x, z) { const dx = x - b.position.x, dz = z - b.position.z, c = Math.cos(b.rotation.y), s = Math.sin(b.rotation.y); return [dx * c - dz * s, dx * s + dz * c]; }
+  function insideBoat(b, lx, lz, m = 0) {
+    const hw = BOAT_HW + m, hl = b.userData.len / 2, az = Math.abs(lz);
+    if (az <= hl) return Math.abs(lx) < hw;
+    const e = (az - hl) / (BOAT_END + m), q = lx / hw; return e * e + q * q < 1;
+  }
+  function boatAt(x, z, m = 0) { for (const b of boats) { if (!b.visible || !b.parent) continue; const [lx, lz] = boatLocal(b, x, z); if (insideBoat(b, lx, lz, m)) return b; } return null; }
+  // 배 안에 들어온 점을 가까운 뱃전 밖으로 밀어낸다 (고기, 물보라)
+  function outsideBoats(v, m = .25) {
+    for (const b of boats) {
+      if (!b.visible) continue;
+      const [lx, lz] = boatLocal(b, v.x, v.z); if (!insideBoat(b, lx, lz, m)) continue;
+      const nx = (lx >= 0 ? 1 : -1) * (BOAT_HW + m + .02), c = Math.cos(b.rotation.y), s = Math.sin(b.rotation.y);
+      v.x = b.position.x + nx * c + lz * s; v.z = b.position.z - nx * s + lz * c;
+    }
+    return v;
+  }
+  addGround((x, z) => { const b = boatAt(x, z); return b ? b.position.y + .1 : null; });
   function boat({ len = 7, color = '#4b3a2c', at = [0, 0, 0], ry = 0 } = {}) {
     const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry;
     const mat = new THREE.MeshStandardMaterial({ color, roughness: .95, side: THREE.DoubleSide });
@@ -689,6 +789,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     [-len * .25, 0, len * .25].forEach(z => { const b = new THREE.Mesh(new THREE.BoxGeometry(2, .08, .3), bench); b.position.set(0, .42, z); g.add(b); });
     const rail = new THREE.MeshStandardMaterial({ color: '#3a2c21', roughness: 1 });
     [-1, 1].forEach(s => { const r = new THREE.Mesh(new THREE.BoxGeometry(.08, .1, len), rail); r.position.set(s * 1.13, .58, 0); g.add(r); });
+    g.userData.len = len; boats.push(g);
     scene.add(g); return g;
   }
   function net({ w = 3, d = 2, color = '#8a7b62', at = [0, 0, 0] } = {}) {
@@ -723,17 +824,16 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     return g;
   }
 
-  /* --- 시점 --- */
-  let lookX = 0, lookY = 0, tLookX = 0, tLookY = 0, dragging = null;
+  /* --- 시점: 마우스나 손가락으로 끌어서 둘러본다 (움직이지는 않는다). 가만히 두면 천천히 이야기의 방향으로 돌아온다 --- */
+  let lookX = 0, lookY = 0, tLookX = 0, tLookY = 0, dragging = null, lastDrag = -99;
   const onMove = e => {
-    if (e.pointerType === 'mouse') { tLookX = e.clientX / innerWidth * 2 - 1; tLookY = e.clientY / innerHeight * 2 - 1; }
-    else if (dragging && e.pointerId === dragging.id) {
-      tLookX = clamp(dragging.lx - (e.clientX - dragging.x) / innerWidth * 2.4, -1, 1);
-      tLookY = clamp(dragging.ly - (e.clientY - dragging.y) / innerHeight * 2.4, -1, 1);
-    }
+    if (!dragging || e.pointerId !== dragging.id) return;
+    tLookX = clamp(dragging.lx - (e.clientX - dragging.x) / innerWidth * 2.2, -1, 1);
+    tLookY = clamp(dragging.ly - (e.clientY - dragging.y) / innerHeight * 2.4, -1, 1);
+    lastDrag = clock;
   };
-  const onDown = e => { if (e.pointerType !== 'mouse') dragging = { id: e.pointerId, x: e.clientX, y: e.clientY, lx: tLookX, ly: tLookY }; };
-  const onUp = e => { if (dragging && e.pointerId === dragging.id) dragging = null; };
+  const onDown = e => { if (e.pointerType === 'mouse' && e.button !== 0) return; dragging = { id: e.pointerId, x: e.clientX, y: e.clientY, lx: tLookX, ly: tLookY }; lastDrag = clock; };
+  const onUp = e => { if (dragging && e.pointerId === dragging.id) { dragging = null; lastDrag = clock; } };
   window.addEventListener('pointermove', onMove, { passive: true });
   canvas.addEventListener('pointerdown', onDown);
   window.addEventListener('pointerup', onUp);
@@ -766,7 +866,10 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     moon.intensity = dark * .7;
     renderer.toneMappingExposure = env.exposure * (1.15 + dark * .35);
     ashU.uTime.value = clock; ashU.uAmt.value = env.ash; ashU.uWind.value = env.wind; ashU.uTint.value.copy(env.fog).multiplyScalar(1.5).addScalar(.06); ashU.uCam.value.copy(camera.position);
+    let bn = 0;
+    for (const b of boats) { if (bn >= 4 || !b.visible || !b.parent) continue; waters[0] && waters.forEach(({ u }) => { u.uBoat.value[bn].set(b.position.x, b.position.z, Math.cos(b.rotation.y), Math.sin(b.rotation.y)); u.uBoatL.value[bn] = b.userData.len / 2; }); bn++; }
     waters.forEach(({ u }) => {
+      u.uBoatN.value = bn;
       u.uTime.value = clock; u.uAmp.value = env.waves; u.uTop.value.copy(env.top); u.uHorizon.value.copy(env.horizon); u.uSun.value.copy(env.sun);
       u.uSunDir.value.copy(sunDir); u.uFog.value.copy(env.fog); u.uFogD.value = env.fogD; u.uCam.value.copy(camera.position);
     });
@@ -783,18 +886,22 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     skyU.uFlash.value = fx.flash;
     sparks.update(dt); dust.update(dt);
 
-    const lk = Math.min(1, dt * 2.5); lookX += (tLookX - lookX) * lk; lookY += (tLookY - lookY) * lk;
+    if (!dragging && clock - lastDrag > 5) { const k = 1 - Math.exp(-dt * .7); tLookX -= tLookX * k; tLookY -= tLookY * k; }
+    const lk = Math.min(1, dt * 4); lookX += (tLookX - lookX) * lk; lookY += (tLookY - lookY) * lk;
     const sway = reduceMotion ? 0 : 1, sh = env.shake * (reduceMotion ? .15 : 1);
+    if (camGround.on) env.camH = groundAt(env.camX, env.camZ) + camGround.eye;  // 걸을 때 눈높이를 땅에 맞춘다
     camera.position.set(env.camX + Math.sin(clock * 13.1) * .02 * sh, env.camH + Math.sin(clock * .9) * .012 * sway + Math.sin(clock * 17.3) * .02 * sh, env.camZ);
     if (camWater.on) camera.position.y += waveH(env.camX, env.camZ, env.waves) * camWater.k;
-    camera.rotation.set(env.camP - lookY * .22 + Math.sin(clock * .6) * .004 * sway, env.camY - lookX * .55, env.camR + Math.sin(clock * .37) * .004 * sway + Math.sin(clock * 11) * .004 * sh + (camWater.on ? (waveH(env.camX + 1, env.camZ, env.waves) - waveH(env.camX - 1, env.camZ, env.waves)) * .3 * camWater.k : 0));
+    { const gy = groundAt(camera.position.x, camera.position.z) + .28; if (camera.position.y < gy) camera.position.y = gy; }  // 땅·배 바닥 아래로는 내려가지 않는다
+    camera.rotation.set(Math.max(-1.45, env.camP - lookY * (lookY > 0 ? 1.3 : .45)) + Math.sin(clock * .6) * .004 * sway, env.camY - lookX * 1.4, env.camR + Math.sin(clock * .37) * .004 * sway + Math.sin(clock * 11) * .004 * sh + (camWater.on ? (waveH(env.camX + 1, env.camZ, env.waves) - waveH(env.camX - 1, env.camZ, env.waves)) * .3 * camWater.k : 0));
     sky.position.copy(camera.position);
+    stepSelf(dt);
     grain.uniforms.uTime.value = clock;
 
     composer.render(dt);
     raf = requestAnimationFrame(frame);
   }
-  const camWater = { on: false, k: 1 };
+  const camWater = { on: false, k: 1 }, camGround = { on: false, eye: 1.65 };
   setEnv(initial, 0);
   raf = requestAnimationFrame(frame);
 
@@ -807,11 +914,16 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     onFrame(fn) { frameFns.push(fn); },
     onReset(fn) { resetFns.push(fn); },
     camOnWater(on, k = 1) { camWater.on = on; camWater.k = k; },
+    // 눈높이를 땅 + eye로 (걸어가는 장면). null이면 끈다
+    groundCam(eye = 1.65) { if (eye == null) { camGround.on = false; return; } camGround.on = true; camGround.eye = eye; },
+    // 땅을 따라 걸어간다: kit.walkTo(x, z, 초, { eye })
+    walkTo(x, z, dur, { eye = 1.65 } = {}) { camGround.on = true; camGround.eye = eye; return setEnv({ camX: x, camZ: z }, dur); },
+    groundAt, addGround, addFloor, boatAt, outsideBoats,
     waveH: (x, z) => waveH(x, z, env.waves),
-    terrain, disc, rocks, box, glow, glowMat, person, figure, gesture, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
+    terrain, disc, rocks, box, glow, glowMat, person, figure, gesture, selfBody, get self() { return me; }, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
     reset() {
       for (const k in tw) delete tw[k];
-      tweens.length = 0; cyc = null; camWater.on = false;
+      tweens.length = 0; cyc = null; camWater.on = false; camGround.on = false; tLookX = tLookY = 0;
       setEnv(initial, 0); env.camY = 0; env.camX = 0; env.camZ = 0; env.camR = 0;
       walkers.forEach(w => { w.state = 'idle'; w.g.visible = false; });
       figs.forEach(g => g.userData.fig.play(g.userData.fig.base, 0));

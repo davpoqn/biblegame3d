@@ -182,6 +182,23 @@ body:not(.playing) #text-toggle{visibility:hidden}
 .heard .h-line{font:400 .92rem/1.55 var(--f-display);color:var(--bone)}
 .heard .h-who{font:500 .64rem var(--f-ui);letter-spacing:.14em;color:var(--dust)}
 .heard .said-text{font:400 .86rem/1.6 var(--f-verse);color:var(--star);word-break:keep-all;overflow-wrap:anywhere}
+/* --- 부 고르기 · 둘러보기 안내 · 더 읽어 보기 --- */
+.part-picker{display:grid;gap:0;margin:0;padding:0;min-width:0}
+.part{display:flex;gap:.9rem;align-items:baseline;background:none;border:0;border-bottom:1px solid var(--line);padding:.62rem .1rem;cursor:pointer;text-align:left;color:var(--dust);width:100%}
+.part b{font:500 .98rem/1.3 var(--f-display);color:inherit;min-width:0}
+.part small{font:400 .7rem/1.3 var(--f-ui);letter-spacing:.04em;margin-left:auto;white-space:nowrap}
+.part:hover{color:var(--bone)}
+.part[aria-checked="true"]{color:var(--bone)}
+.part[aria-checked="true"] b::before{content:"";display:inline-block;width:.42rem;height:.42rem;border-radius:50%;background:var(--ember);margin-right:.55rem;vertical-align:.12em}
+.part .done{color:var(--star)}
+.hint{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);z-index:11;margin:0;max-width:calc(100% - 32px);padding:.55rem .95rem;font:500 .8rem/1.5 var(--f-ui);letter-spacing:.03em;color:var(--bone);background:rgba(12,10,9,.62);border:1px solid var(--line);border-radius:999px;text-align:center;pointer-events:none;opacity:0;transition:opacity .8s ease}
+.hint.on{opacity:1}
+.readmore{display:grid;gap:.35rem;padding:.8rem 1rem;border-left:2px solid var(--wheat);background:rgba(12,10,9,.5)}
+.readmore b{font:500 .68rem var(--f-ui);letter-spacing:.2em;color:var(--wheat)}
+.readmore span{font:400 1.02rem/1.5 var(--f-verse);color:var(--bone)}
+.readlist{margin:0;padding:0;list-style:none;display:grid;gap:.35rem}
+.readlist li{font:400 .98rem/1.6 var(--f-verse)}
+.readlist li small{font:500 .7rem var(--f-ui);color:var(--dust);letter-spacing:.06em;margin-right:.6rem}
 </style>
 
 <div id="backdrop"></div>
@@ -197,9 +214,10 @@ body:not(.playing) #text-toggle{visibility:hidden}
 
 <section id="title-screen" aria-labelledby="game-title">
   <div class="title-block">
-    <p class="eyebrow">성경 인물 1인칭 체험 · 데모 챕터</p>
+    <p class="eyebrow">성경 인물 1인칭 체험</p>
     <h1 id="game-title"></h1>
     <div class="picker" id="picker" role="radiogroup" aria-label="누구의 자리에 설지 고르기"></div>
+    <div class="part-picker" id="part-picker" role="radiogroup" aria-label="몇 부부터 할지 고르기"></div>
     <p class="lede" id="lede"></p>
     <ul class="meta" id="meta"></ul>
     <p class="notice" id="gl-notice" hidden>이 기기에서는 3D 화면을 띄울 수 없어 글과 소리로 진행합니다.</p>
@@ -215,6 +233,7 @@ body:not(.playing) #text-toggle{visibility:hidden}
 </section>
 
 <p class="daycount" id="daycount" aria-live="polite"></p>
+<p class="hint" id="hint" aria-live="polite"></p>
 
 <div id="fade" aria-hidden="true">
   <div class="chapter-card">
@@ -226,7 +245,7 @@ body:not(.playing) #text-toggle{visibility:hidden}
 
 <section id="summary" hidden aria-labelledby="sum-title">
   <div class="sum-inner">
-    <p class="eyebrow">데모 챕터를 마쳤습니다</p>
+    <p class="eyebrow" id="sum-eyebrow">데모 챕터를 마쳤습니다</p>
     <h2 id="sum-title"></h2>
     <p class="sum-lede" id="sum-count"></p>
     <div class="sum-mode"><p class="note" id="sum-mode-note"></p><button class="mode-switch" type="button" data-modeswitch>원문 보기</button></div>
@@ -243,6 +262,12 @@ body:not(.playing) #text-toggle{visibility:hidden}
       <div class="hidden-scene" id="sum-hidden"></div>
     </div>
 
+    <div id="read-wrap">
+      <h3>더 읽어 보기</h3>
+      <p class="note">이 부에서 지나온 장면들입니다. 성경을 펴서 앞뒤 이야기와 함께 읽어 보세요.</p>
+      <ul class="readlist" id="sum-read"></ul>
+    </div>
+
     <h3>해석 한 줄</h3>
     <aside class="lens">
       <p class="note">너진똑의 관점 · [040] 기독교의 비밀, 사이비 사망 선고 [계시록] (1:31:19)</p>
@@ -250,7 +275,8 @@ body:not(.playing) #text-toggle{visibility:hidden}
     </aside>
 
     <div class="sum-actions">
-      <button class="btn-primary" id="restart" type="button">처음부터 다시</button>
+      <button class="btn-primary" id="next-part" type="button" hidden>다음 부로</button>
+      <button class="btn-ghost" id="restart" type="button">이 부를 다시</button>
       <button class="btn-ghost" id="pick-other" type="button">다른 인물 고르기</button>
     </div>
     <p class="source">본문은 성경전서 개역한글판(대한성서공회, 1961)을 그대로 옮겼고, ‘(일부)’ 표시는 절의 일부만 인용한 것입니다. ‘풀어 쓴 말’은 이 체험을 위해 개역한글 본문을 쉬운 말로 옮긴 것으로, 성경 번역본이 아닙니다. ‘연출’ 표시가 붙은 문장과 선택지는 게임을 위해 쓴 것으로 성경 본문이 아닙니다.</p>
@@ -274,23 +300,46 @@ const reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion
 
 /* ---------- 인물 목록 (시작 화면) ---------- */
 const CHARS = [
-  { id: 'job', name: '욥', sub: '재 위에서', short: '욥기', minutes: 13,
-    lede: '당신은 우스 땅의 욥입니다. 일곱 아들과 세 딸, 많은 종과 가축을 가진 사람입니다.',
-    sky: ['#c9875a', '#2a3150'] },
-  { id: 'peter', name: '베드로', sub: '숯불 곁에서', short: '누가·마태·요한복음', minutes: 12,
-    lede: '당신은 게네사렛 호숫가의 어부 시몬입니다. 배와 그물, 함께 일하는 동업자들이 있습니다.',
-    sky: ['#d79a6c', '#33456a'] },
-  { id: 'david', name: '다윗', sub: '두 문 사이에서', short: '사무엘상·하, 열왕기상', minutes: 13,
+  { id: 'peter', name: '베드로', sub: '숯불 곁에서', short: '사복음서',
+    lede: '당신은 요한의 아들 시몬입니다. 벳새다 사람으로, 형제 안드레와 함께 게네사렛 호수에서 고기를 잡습니다.',
+    sky: ['#d79a6c', '#33456a'],
+    parts: [{ t: '1부 · 부르심과 기적', s: '요한복음 1·6장, 누가복음 5장, 마가복음 1·3·5장, 마태복음 14장', m: 22 },
+            { t: '2부 · 고백과 무너짐', s: '마태복음 16–26장, 마가복음 11·13장, 누가복음 22장, 요한복음 13·18장', m: 26 },
+            { t: '3부 · 십자가와 부활', s: '마태·마가·누가·요한복음의 십자가, 요한복음 20–21장, 누가복음 24장', m: 24 }] },
+  { id: 'paul', name: '바울', sub: '다메섹 길에서', short: '사도행전, 서신',
+    lede: '당신은 길리기아 다소에서 난 유대인 사울입니다. 가말리엘의 문하에서 율법을 배운 바리새인이고, 날 때부터 로마 시민입니다.',
+    sky: ['#d8a06a', '#36456c'],
+    parts: [{ t: '1부 · 핍박하는 사람', s: '사도행전 7–9장, 빌립보서 3장, 갈라디아서 1장', m: 20 },
+            { t: '2부 · 전하는 사람', s: '사도행전 9·13–17장, 고린도후서 11장', m: 22 },
+            { t: '3부 · 로마까지', s: '사도행전 21–28장', m: 22 }] },
+  { id: 'david', name: '다윗', sub: '두 문 사이에서', short: '사무엘상·하, 열왕기상',
     lede: '당신은 베들레헴 사람 이새의 막내아들입니다. 들에서 아버지의 양을 지키고 있습니다.',
-    sky: ['#d9a46a', '#3b4f78'] },
-  { id: 'abraham', name: '아브라함', sub: '모리아로 가는 길', short: '창세기 12–25장', minutes: 13,
+    sky: ['#d9a46a', '#3b4f78'],
+    parts: [{ t: '1부 · 목동과 거인', s: '사무엘상 16–17장', m: 18 },
+            { t: '2부 · 쫓기는 사람', s: '사무엘상 16·18–24장, 사무엘하 2·5장', m: 22 },
+            { t: '3부 · 왕의 죄와 눈물', s: '사무엘하 11–12·15–18·22–23장, 열왕기상 1–2장', m: 24 }] },
+  { id: 'abraham', name: '아브라함', sub: '모리아로 가는 길', short: '창세기 12–25장',
     lede: '당신은 하란에 사는 아브람입니다. 아내 사래와 조카 롯, 모은 재물과 사람들이 곁에 있습니다.',
-    sky: ['#e0aa74', '#41507a'] },
-  { id: 'jacob', name: '야곱', sub: '얍복 나루에서', short: '창세기 27–49장', minutes: 13,
+    sky: ['#e0aa74', '#41507a'],
+    parts: [{ t: '1부 · 떠남', s: '창세기 12–13장', m: 18 },
+            { t: '2부 · 약속과 기다림', s: '창세기 15–21장', m: 24 },
+            { t: '3부 · 모리아', s: '창세기 22–25장', m: 18 }] },
+  { id: 'jacob', name: '야곱', sub: '얍복 나루에서', short: '창세기 27–33장',
     lede: '당신은 이삭의 작은아들 야곱입니다. 아버지의 장막에는 눈이 어두운 아버지와 어머니 리브가, 형 에서가 있습니다.',
-    sky: ['#c98e66', '#2c3552'] }
+    sky: ['#c98e66', '#2c3552'],
+    parts: [{ t: '야곱의 길', s: '창세기 27–33장', m: 13 }] },
+  { id: 'job', name: '욥', sub: '재 위에서', short: '욥기',
+    lede: '당신은 우스 땅의 욥입니다. 일곱 아들과 세 딸, 많은 종과 가축을 가진 사람입니다.',
+    sky: ['#c9875a', '#2a3150'],
+    parts: [{ t: '욥의 날들', s: '욥기 1–2·38·42장', m: 13 }] }
 ];
-const RULE = '성경 본문이 정한 일은 그대로 일어납니다. 그 일 앞에서 무엇을 하고 무슨 말을 할지는 당신이 고릅니다. 당신의 선택과 성경 속 그의 선택은 마지막에 한꺼번에 나란히 보여 드립니다.';
+const RULE = '성경 본문이 정한 일은 그대로 일어납니다. 그 일 앞에서 무엇을 하고 무슨 말을 할지는 당신이 고릅니다. 당신의 선택과 성경 속 그의 선택은 부가 끝날 때 한꺼번에 나란히 보여 드립니다.';
+// 마친 부 기록 (이 기기에만 남는다). 저장이 막혀 있어도 게임은 그대로 된다
+const PROG_KEY = 'bg3d-progress';
+function loadProg() { try { return JSON.parse(localStorage.getItem(PROG_KEY) || '{}') || {}; } catch (_) { return {}; } }
+function saveDone(id, i) { try { const p = loadProg(); p[id] = Array.from(new Set([...(p[id] || []), i])); localStorage.setItem(PROG_KEY, JSON.stringify(p)); } catch (_) {} }
+const TOUCH = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+const LOOK_HINT = TOUCH ? '화면을 끌어서 둘러볼 수 있어요 · 아래를 보면 내 몸이 보여요' : '마우스로 화면을 끌어서 둘러볼 수 있어요 · 아래를 보면 내 몸이 보여요';
 
 /* ---------- 소리 (Web Audio로 합성) ---------- */
 const audio = (() => {
@@ -546,7 +595,15 @@ async function echo(text) {
   setTimeout(() => e.remove(), 4000);
 }
 const fadeEl = $('#fade');
+let reads = [];  // 이 부에서 지나온 장면 (더 읽어 보기)
+async function readMore(sub) {
+  clearStage();
+  const d = el('div', 'readmore'); d.append(el('b', null, '더 읽어 보기'), el('span', null, `이 장면은 ${sub}`));
+  stage.append(d); await sleep(reduceMotion ? 1600 : 2600);
+}
 async function sceneCut(num, name, sub, setup) {
+  if (reads.length) await readMore(reads[reads.length - 1].sub);
+  if (sub) reads.push({ num, name, sub });
   clearStage();
   $('#card-num').textContent = num; $('#card-name').textContent = name; $('#card-sub').textContent = sub;
   fadeEl.classList.add('on'); await sleep(1400);
@@ -604,9 +661,16 @@ async function recall(title) {
   await waitContinue();
 }
 
+let partIdx = 0;
+const PARTS = () => C.parts || [{ story: C.story, summary: C.summary }];
 function showSummary() {
   clearStage();
-  const S = C.summary, who = C.name;
+  const S = PARTS()[partIdx].summary || {}, who = C.name, meta = CHARS.find(x => x.id === C.id), pm = meta.parts[partIdx];
+  $('#sum-eyebrow').textContent = `${pm ? pm.t : '이 부'}를 마쳤습니다`;
+  const rl = $('#sum-read'); rl.replaceChildren();
+  reads.forEach(r => { const li = el('li'); li.append(el('small', null, `${r.num} · ${r.name}`), document.createTextNode(r.sub)); rl.append(li); });
+  $('#read-wrap').hidden = !reads.length;
+  $('#next-part').hidden = partIdx >= meta.parts.length - 1;
   $('#sum-title').textContent = `당신과 ${who}`;
   const n = record.choices.filter(c => c.same === true).length, total = record.choices.filter(c => c.same !== null).length;
   const lede = $('#sum-count'); lede.replaceChildren();
@@ -633,7 +697,7 @@ function showSummary() {
   if (record.words.length) record.words.forEach(w => mine.append(el('p', null, `“${w.text}”`)));
   else mine.append(el('p', null, S.silentMine || '당신은 아무 말도 하지 않았습니다.'));
   const his = $('#sum-his'); his.replaceChildren();
-  S.hisWords.forEach(r => his.append(textNode('p', null, r), refNode(r)));
+  (S.hisWords || []).forEach(r => his.append(textNode('p', null, r), refNode(r)));
   const hw = $('#hidden-wrap');
   hw.hidden = !S.hidden;
   if (S.hidden) {
@@ -645,7 +709,7 @@ function showSummary() {
   applyMode();
   $('#hud-chapter').textContent = '기록';
   const s = $('#summary'); s.hidden = false; s.scrollTop = 0;
-  setTimeout(() => { try { $('#restart').focus({ preventScroll: true }); } catch (_) {} }, 100);
+  setTimeout(() => { try { ($('#next-part').hidden ? $('#restart') : $('#next-part')).focus({ preventScroll: true }); } catch (_) {} }, 100);
 }
 
 /* ---------- 3D 세계 불러오기 ---------- */
@@ -675,7 +739,23 @@ async function makeWorld() {
 }
 
 /* ---------- 시작 화면 ---------- */
-let selected = 'job';
+let selected = 'peter', selectedPart = 0;
+function renderParts() {
+  const c = CHARS.find(x => x.id === selected), pp = $('#part-picker'), done = loadProg()[selected] || [];
+  pp.replaceChildren(); pp.hidden = c.parts.length < 2;
+  c.parts.forEach((p, i) => {
+    const b = el('button', 'part'); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(i === selectedPart)); b.dataset.part = i;
+    const sm = el('small', done.includes(i) ? 'done' : null, done.includes(i) ? `마침 · 약 ${p.m}분` : `약 ${p.m}분`);
+    b.append(el('b', null, p.t), sm); b.title = p.s;
+    b.addEventListener('click', () => { selectedPart = i; renderParts(); updateMeta(); });
+    pp.append(b);
+  });
+}
+function updateMeta() {
+  const c = CHARS.find(x => x.id === selected), p = c.parts[selectedPart];
+  const meta = $('#meta'); meta.replaceChildren();
+  [`약 ${p.m}분`, p.s, '본문: 성경전서 개역한글판(1961)', '화면에는 풀어 쓴 말, 버튼으로 원문', TOUCH ? '화면을 끌어서 둘러보기' : '마우스로 끌어서 둘러보기', '입력한 말은 저장되지 않습니다'].forEach(t => meta.append(el('li', null, t)));
+}
 function renderPicker() {
   const pk = $('#picker'); pk.replaceChildren();
   CHARS.forEach((c, i) => {
@@ -692,31 +772,40 @@ function renderPicker() {
     pk.append(b);
   });
 }
-function select(id) {
-  selected = id;
+function select(id, keepPart) {
+  const changed = id !== selected; selected = id;
   const c = CHARS.find(x => x.id === id);
+  if (changed || !keepPart) { const done = loadProg()[id] || []; selectedPart = Math.max(0, c.parts.findIndex((_, i) => !done.includes(i))); }
   const h = $('#game-title'); h.replaceChildren(document.createTextNode(c.name), el('span', 'comma', ','), el('br'), document.createTextNode(c.sub));
   $('#lede').textContent = `${c.lede} ${RULE}`;
-  const meta = $('#meta'); meta.replaceChildren();
-  [`약 ${c.minutes}분`, '본문: 성경전서 개역한글판(1961)', '화면에는 풀어 쓴 말, 버튼으로 원문', '입력한 말은 저장되지 않습니다'].forEach(t => meta.append(el('li', null, t)));
+  updateMeta();
   paintBackdrop(c.sky[0], c.sky[1]);
-  renderPicker();
+  renderPicker(); renderParts();
 }
-select('job');
+select('peter');
 
 const soundBtn = $('#sound-toggle');
 function syncSound() { const on = audio.enabled; soundBtn.textContent = on ? '소리 끄기' : '소리 켜기'; soundBtn.setAttribute('aria-pressed', String(on)); }
 soundBtn.addEventListener('click', () => { if (audio.enabled) audio.disable(); else audio.enable(); syncSound(); });
 
-const api = () => ({ V: C.V, P: C.P, world, audio, sleep, reduceMotion, verse, say, direction, choose, speak, echo, react, sceneCut, choicePoint, speakLoop, recall, showDay, hideDay, clearStage, get record() { return record; } });
+// 다른 사람의 자리에서 볼 때(예: 구레네 사람 시몬, 로마 군병) 위쪽 이름을 바꾼다. 빈 값이면 원래대로
+function setWho(text) { const meta = CHARS.find(x => x.id === C.id), pm = meta.parts[partIdx]; $('#hud-name').textContent = text || `${meta.name}, ${pm && meta.parts.length > 1 ? pm.t : meta.sub}`; }
+const api = () => ({ V: C.V, P: C.P, world, audio, sleep, reduceMotion, verse, say, direction, choose, speak, echo, react, sceneCut, choicePoint, speakLoop, recall, showDay, hideDay, clearStage, readMore, setWho, showHint, part: partIdx, get record() { return record; } });
 
 let running = false;
+let hintTimer = 0;
+function showHint(text = LOOK_HINT, ms = 7000) { const h = $('#hint'); h.textContent = text; h.classList.add('on'); clearTimeout(hintTimer); hintTimer = setTimeout(() => h.classList.remove('on'), ms); }
 async function runStory() {
-  record = { choices: [], words: [] };
+  record = { choices: [], words: [] }; reads = [];
   textMode = 'easy'; applyMode();
-  world.reset();
+  world.reset(partIdx);
   audio.chord(0, 2); audio.crackle(0); audio.water && audio.water(0, 1);
-  await C.story(api());
+  const meta = CHARS.find(x => x.id === C.id), pm = meta.parts[partIdx];
+  $('#hud-name').textContent = `${meta.name}, ${pm && meta.parts.length > 1 ? pm.t : meta.sub}`;
+  setTimeout(() => showHint(), 4500);
+  await PARTS()[partIdx].story(api());
+  if (reads.length) await readMore(reads[reads.length - 1].sub);
+  saveDone(C.id, partIdx);
   audio.chord(.4, 6);
   showSummary();
 }
@@ -726,6 +815,7 @@ async function begin(withSound) {
   if (withSound) audio.enable();
   syncSound();
   const meta = CHARS.find(x => x.id === selected);
+  partIdx = selectedPart;
   document.body.classList.add('playing');
   $('#title-screen').hidden = true;
   $('#hud-name').textContent = `${meta.name}, ${meta.sub}`;
@@ -759,6 +849,13 @@ $('#restart').addEventListener('click', async () => {
   running = true;
   try { await runStory(); } finally { running = false; }
 });
+$('#next-part').addEventListener('click', async () => {
+  if (running) return;
+  partIdx++; selectedPart = partIdx;
+  $('#summary').hidden = true;
+  running = true;
+  try { await runStory(); } finally { running = false; }
+});
 function toTitle() {
   epoch++; running = false; pendingContinue = null;
   $('#summary').hidden = true;
@@ -767,10 +864,10 @@ function toTitle() {
   const old = $('#gl'), fresh = old.cloneNode(false); old.replaceWith(fresh);
   audio.wind(0, 1); audio.drone(0, 1); audio.chord(0, 1); audio.crackle(0); audio.water && audio.water(0, 1);
   document.body.classList.remove('playing');
-  $('#hud-chapter').textContent = '데모 챕터';
-  clearStage();
+  $('#hud-chapter').textContent = '';
+  clearStage(); $('#hint').classList.remove('on');
   $('#title-screen').hidden = false;
-  select(selected);
+  select(selected, true);
   const b = $(`#picker [data-id="${selected}"]`); b && b.focus();
 }
 $('#pick-other').addEventListener('click', () => { if (!running) toTitle(); });
