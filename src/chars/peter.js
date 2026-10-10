@@ -28,7 +28,8 @@ const V = /*KRV*/{
   '막 3:13#1': 'MRK 3:13 ~ 또 산에 오르사 자기의 원하는 자들을 부르시니',
   '막 3:14-15': 'MRK 3:14-15',
   '막 3:16': 'MRK 3:16',
-  '막 3:17-19': 'MRK 3:17-19',
+  '막 3:17': 'MRK 3:17',
+  '막 3:18-19': 'MRK 3:18-19',
   '막 5:22-23': 'MRK 5:22-23',
   '막 5:24': 'MRK 5:24',
   '막 5:35': 'MRK 5:35',
@@ -273,7 +274,8 @@ const P = {
   '막 3:13#1': '예수께서 산에 오르셔서 원하시는 사람들을 부르셨다…',
   '막 3:14-15': '예수께서 열둘을 세우셨다. 자기와 함께 있게 하시고, 보내어 말씀을 전하게 하시며, 귀신을 쫓아내는 권세도 가지게 하시려는 것이었다.',
   '막 3:16': '이렇게 열둘을 세우셨는데, 시몬에게는 베드로라는 이름을 붙여 주셨다.',
-  '막 3:17-19': '세베대의 아들 야고보와 그 형제 요한에게는 ‘보아너게’, 곧 ‘천둥의 아들’이라는 이름을 붙여 주셨다. 그리고 안드레, 빌립, 바돌로매, 마태, 도마, 알패오의 아들 야고보, 다대오, 가나안 사람 시몬, 그리고 가룟 유다였다. 유다는 나중에 예수를 판 사람이다.',
+  '막 3:17': '세베대의 아들 야고보와 그 형제 요한에게는 ‘보아너게’, 곧 ‘천둥의 아들’이라는 이름을 붙여 주셨다.',
+  '막 3:18-19': '그리고 안드레, 빌립, 바돌로매, 마태, 도마, 알패오의 아들 야고보, 다대오, 가나안 사람 시몬, 그리고 가룟 유다였다. 유다는 나중에 예수를 판 사람이다.',
   '막 5:22-23': '회당장 가운데 야이로라는 사람이 와서 예수를 보고 발 앞에 엎드려 간곡히 빌었다. “제 어린 딸이 죽게 되었습니다. 오셔서 그 아이에게 손을 얹어 주십시오. 그러면 아이가 나아서 살 것입니다.”',
   '막 5:24': '예수께서 그와 함께 가시는데, 큰 무리가 뒤따르며 그분을 에워싸고 밀어 댔다.',
   '막 5:35': '예수께서 아직 말씀하고 계실 때, 회당장의 집에서 사람들이 와서 말했다. “따님이 죽었습니다. 왜 선생님을 더 번거롭게 하십니까?”',
@@ -879,7 +881,8 @@ async function world(kit, { audio, sleep }) {
   /* ===== 벳새다 들, 풀이 많은 언덕 (요 6:1–14) ===== */
   const GX = 4500;
   site('grass');
-  const hG = (x, z) => { const lx = x - GX; return Math.max(-6, z * .09 + 1.2 + 2.4 * (vnoise(lx * .02, z * .02) - .5)) + 10 * smooth(140, 280, Math.hypot(lx, z - 40)); };
+  // 사람들이 앉는 풀밭(z -40까지)은 물보다 높게, 그 너머로 호수로 내려간다 (전에는 앉은 자리 대부분이 물속이었다)
+  const hG = (x, z) => { const lx = x - GX; return Math.max(-6, 1.5 + z * .02 + 1.1 * (vnoise(lx * .02, z * .02) - .5) - 8 * smooth(-46, -72, z)) + 10 * smooth(140, 280, Math.hypot(lx, z - 40)); };
   kit.terrain({ height: hG, size: 600, seg: 140, at: [GX, 0], lo: '#4f6a34', hi: '#8a9a5a', yMul: .03, grain: .4 });
   kit.water({ y: 0, size: 900, seg: 60, at: [GX, -440], deep: '#173640' });
   kit.grass({ center: [GX, 0], rx: 70, rz: 50, n: 3000, height: hG, color: '#6a8a3e' });
@@ -887,12 +890,19 @@ async function world(kit, { audio, sleep }) {
   const blocks = [];
   for (let bx = -5; bx <= 5; bx++) for (let bz = 0; bz < 5; bz++) blocks.push([GX + bx * 7.5, -6 - bz * 7, (bx + bz) % 2 ? 50 : 100]);
   const seated = kit.throng({ n: 1400, pose: 'seat', height: hG, place: i => { const b = blocks[i % blocks.length], k = Math.floor(i / blocks.length); return [b[0] + ((k % 6) - 2.5) * .9 + rnd(-.15, .15), b[1] + (Math.floor(k / 6) - 2) * .9, rnd(-.4, .4) + Math.PI * 0]; } });
-  const arriving = kit.throng({ n: 300, height: hG, place: i => [GX + rnd(-60, 60), rnd(-80, -40), 0] });
+  const arriving = kit.throng({ n: 300, height: hG, place: i => [GX + rnd(-60, 60), rnd(-44, -12), 0] });
   const JG = v3(GX, hG(GX, 12), 12);
   const jesusG = fig('jesus', JG.x, JG.y, JG.z, Math.PI);
   const philip = fig('man', GX - 1.6, hG(GX - 1.6, 11), 11, Math.PI * .8, { tint: '#8a7a5a' });
   const andrewG = fig('fisherman', GX + 1.8, hG(GX + 1.8, 10.6), 10.6, -Math.PI * .8, { tint: '#c9b48e', colors: { headcloth: '#7a3a2a' } });
-  const boy = fig('boy', GX + 2.6, hG(GX + 2.6, 9.6), 9.6, -Math.PI * .7, { tint: '#b8a47e' });
+  const boy = fig('boy', GX + 2.6, hG(GX + 2.6, 9.6), 9.6, -Math.PI * .7, { tint: '#b8a47e', scale: .8 });  // 요 6:9 '한 아이'
+  const boyW = kit.walker(boy, { height: hG });
+  // 아이의 바구니: 보리떡 다섯과 물고기 둘 (요 6:9). 든 사람의 두 손 사이에 붙어 다닌다
+  const lunch = new THREE.Group(); { const bk = new THREE.Mesh(new THREE.CylinderGeometry(.17, .12, .12, 12, 1, true), kit.mat('#8a6a3a', { side: THREE.DoubleSide })); lunch.add(bk); const bot = new THREE.Mesh(new THREE.CircleGeometry(.12, 12), kit.mat('#7a5a30')); bot.rotation.x = -Math.PI / 2; bot.position.y = -.06; lunch.add(bot);
+    for (let i = 0; i < 5; i++) { const b = kit.prop('prop_bread'); if (b) { b.scale.setScalar(.55); b.position.set(Math.cos(i * 1.26) * .07, .02 + (i === 4 ? .04 : 0), Math.sin(i * 1.26) * .07); lunch.add(b); } }
+    for (let i = 0; i < 2; i++) { const f = kit.prop('prop_fish'); if (f) { f.scale.setScalar(.55); f.position.set(-.03 + i * .06, .08, 0); f.rotation.set(0, .3 + i * .5, Math.PI / 2); lunch.add(f); } } }
+  sites.grass.add(lunch); lunch.visible = false; let lunchBy = null;
+  kit.onFrame(() => { if (!lunchBy || !lunch.visible) return; const F = lunchBy.userData.fig; if (!F) return; const a = F.bone('hand_l').getWorldPosition(new THREE.Vector3()), b = F.bone('hand_r').getWorldPosition(new THREE.Vector3()); lunch.position.copy(a.add(b).multiplyScalar(.5)); lunch.position.y += .03; lunch.rotation.y = lunchBy.rotation.y; });
   const discG = [[-3, 9], [3.6, 8.6], [-4.4, 11.2], [4.6, 11.8], [-2.2, 7.4], [1.2, 7.2]].map(([dx, dz], i) => fig(i < 2 ? 'fisherman' : 'man', GX + dx, hG(GX + dx, dz), dz, Math.PI, { tint: ['#d8ccb0', '#bfae8a', '#a89878', '#b9a888', '#8a7a5a', '#9a8a6a'][i], pose: 'seat' }));
   const breadN = 260, breadI = kit.instancedProp('prop_bread', breadN);
   const breadSt = []; if (breadI) sites.grass.add(breadI);
@@ -909,7 +919,10 @@ async function world(kit, { audio, sleep }) {
   const SH = v3(MX + 70, 0, 60); SH.y = hM(SH.x, SH.z);  // 산 중턱 (막 3)
   const followers = kit.throng({ n: 90, height: hM, place: i => { let x, z; do { x = SH.x + rnd(-14, 14); z = SH.z + rnd(4, 18); } while (Math.hypot(x - SH.x - 1.4, z - SH.z - 9) < 3.5); return [x, z, Math.PI + rnd(-.4, .4)]; } });
   const jesusM = fig('jesus', SH.x, SH.y, SH.z - 6, 0);
-  const twelveM = Array.from({ length: 11 }, (_, i) => { const g = i < 4 ? kit.figure(i < 3 ? 'fisherman' : 'man', { tint: ['#c9b48e', '#d8ccb0', '#bfae8a', '#a89878'][i], visible: true }) : kit.person(['#4a3c30', '#5a4a3a', '#3a3029'][i % 3], { visible: true }); let x, z; do { x = SH.x + rnd(-10, 10); z = SH.z + rnd(6, 14); } while (Math.hypot(x - SH.x - 1.4, z - SH.z - 9) < 3); g.position.set(x, hM(x, z), z); faceTo(g, SH.x, SH.z - 6); return { g, w: kit.walker(g, { height: hM }) }; });
+  // 열한 사람(막 3:16–19 순서: 야고보, 요한, 안드레, 빌립, 바돌로매, 마태, 도마, 알패오의 아들 야고보, 다대오, 가나안인 시몬, 가룟 유다). 당신(시몬)은 가운데 자리
+  const SLOT_M = [.24, .48, -.24, -.48, -.72, -.96, -1.2, .72, .96, 1.2, 1.44], RING_M = 3.2;
+  const jmM = kit.walker(jesusM, { height: hM, pace: 4, noRun: true });
+  const twelveM = Array.from({ length: 11 }, (_, i) => { const g = kit.figure(i < 3 ? 'fisherman' : 'man', { tint: ['#c9b48e', '#d8ccb0', '#bfae8a', '#a89878', '#8a7a5a', '#9a8a6a', '#b9a888', '#7a6a4a', '#a08c6a', '#6e5e48', '#5a4a3a'][i], visible: true }); let x, z; do { x = SH.x + rnd(-10, 10); z = SH.z + rnd(6, 14); } while (Math.hypot(x - SH.x - 1.4, z - SH.z - 9) < 3); g.position.set(x, hM(x, z), z); faceTo(g, SH.x, SH.z - 6); return { g, w: kit.walker(g, { height: hM }) }; });
   const SUM = v3(MX, hM(MX, 0), 0);  // 꼭대기 (마 17)
   const jesusT = fig('jesus', SUM.x, SUM.y, SUM.z - 3, 0);
   const glowT = new THREE.PointLight('#ffffff', 0, 16, 1.5); glowT.position.set(0, 1.4, .4); jesusT.add(glowT);
@@ -1143,7 +1156,7 @@ async function world(kit, { audio, sleep }) {
         jesus.position.set(.6, heightAt(.6, -4.6), -4.6); jesus.rotation.y = 0; jesus.visible = true; coal.g.visible = false; coal.level = 0; show(shoreDisciples, false); line.visible = hookFish.visible = coin.visible = false;
         lookers = [...crewA, ...crewB];
       }
-      if (where === 'sea') { only('lake'); crowd.visible = false; show(fishers, false); show(nets, false); jesus.visible = false; jesusSeat.visible = false; boatB.visible = false; boatA.position.set(0, 0, -200); boatA.rotation.y = 0; fa.draft = .1; show(crewA, true); show(crewSea, true); kit.setEnv({ camX: 0, camZ: -197.6, camH: 1.25 }, 0); kit.camOnWater(true, .9); lookers = [...crewA, ...crewSea]; }
+      if (where === 'sea') { only('lake'); crowd.visible = false; show(fishers, false); show(nets, false); jesus.visible = false; jesusSeat.visible = false; boatB.visible = false; boatA.position.set(0, 0, -200); boatA.rotation.y = 0; fa.draft = .1; show(crewA, true); show(crewSea, true); kit.setEnv({ camX: 0, camZ: -197.6, camH: 1.25 }, 0); kit.camOnWater(true, .9); kit.camOnBoat(boatA, [0, 1.35, 2.4], true); lookers = [...crewA, ...crewSea]; }
       if (where === 'tax') { only('lake'); crowd.visible = false; show(fishers, false); show(nets, false); jesus.visible = false; show([...crewA, ...crewB], false); boatA.position.set(-3, 0, -9.5); boatB.position.set(5, 0, -11); coal.g.visible = false; show(shoreDisciples, false); stand(TAX.x, TAX.z + 1.2); lookNow(TAX.x, TAX.z - 20); }
       if (where === 'dawnBoat') { only('lake'); crowd.visible = false; show(fishers, false); show(nets, false); boatB.visible = false; boatA.position.set(0, 0, -92); boatA.rotation.y = 0; fa.draft = .12; jesusSeat.visible = false; show(crewA, true); show(crewSea, true); jesus.position.set(.2, heightAt(.2, -5.2), -5.2); jesus.rotation.y = 0; jesus.visible = true; coal.g.visible = true; coal.level = 1; meal.visible = true; kit.setEnv({ camX: 0, camZ: -89.6, camH: 1.25 }, 0); kit.camOnWater(true, .9); lookers = [...crewA, ...crewSea]; }
       if (where === 'capStreet') {
@@ -1175,10 +1188,10 @@ async function world(kit, { audio, sleep }) {
       }
       if (where === 'grass') {
         only('grass'); stand(GX + 1.2, 8.4); lookNow(GX, -20);
-        seated.visible = false; arriving.visible = true; baskets.forEach(b => { b.visible = false; }); breadSt.length = 0; if (breadI) { const d = new THREE.Object3D(); d.scale.setScalar(0); d.updateMatrix(); for (let i = 0; i < breadN; i++) breadI.setMatrixAt(i, d.matrix); breadI.instanceMatrix.needsUpdate = true; }
+        seated.visible = false; arriving.visible = true; lunch.visible = false; lunchBy = null; kit.hold(boy); boyW.idle(); boy.position.set(GX + 2.6, hG(GX + 2.6, 9.6), 9.6); boy.rotation.y = -Math.PI * .7; baskets.forEach(b => { b.visible = false; }); breadSt.length = 0; if (breadI) { const d = new THREE.Object3D(); d.scale.setScalar(0); d.updateMatrix(); for (let i = 0; i < breadN; i++) breadI.setMatrixAt(i, d.matrix); breadI.instanceMatrix.needsUpdate = true; }
         lookers = [philip, andrewG, boy, ...discG];
       }
-      if (where === 'mtn12') { only('mtn'); stand(SH.x + 1.4, SH.z + 9); lookNow(SH.x, SH.z - 6); jesusM.visible = true; twelveM.forEach(t => { t.w.idle(); t.g.visible = true; }); followers.visible = true; lookers = twelveM.map(t => t.g); }
+      if (where === 'mtn12') { only('mtn'); stand(SH.x + 1.4, SH.z + 9); lookNow(SH.x, SH.z - 6); jesusM.visible = true; jmM.idle(); kit.hold(jesusM); jesusM.position.set(SH.x, SH.y, SH.z - 6); jesusM.rotation.y = 0; twelveM.forEach(t => { t.w.idle(); t.g.visible = true; }); followers.visible = true; lookers = twelveM.map(t => t.g); }
       if (where === 'summit') { only('mtn'); stand(SUM.x - .2, 9); lookNow(SUM.x, SUM.z - 3); jesusT.visible = true; moses.visible = elijah.visible = false; cloud.visible = false; glowT.intensity = 0; lookers = [jamesT, johnT]; }
       if (where === 'caes') { only('caes'); sitAt(KX + .2, 3.4, 1.05); lookNow(KX - 1, -3); lookers = discK; }
       if (where === 'road') { only('road'); stand(RX + .6, 3.6); lookNow(RX, -4); rich.visible = false; jrw.idle(); jesusR.visible = true; jesusR.position.set(RX, hR(RX, -4), -4); faceTo(jesusR, RX + .6, 3.6); lookers = discR; }
@@ -1221,7 +1234,10 @@ async function world(kit, { audio, sleep }) {
       jesusJ.position.set(JX + 12, hJ(JX + 12, -6), -6); jjw.idle(); jdB.position.set(JX + 13.2, hJ(JX + 13.2, -6.4), -6.4); jdB.visible = true;
       jdA.visible = true; lookAt(JX + 13, -2, 2); await ajw.go(v3(JX + 12, 0, -6), v3(JX + 13.4, 0, 2.2), 4); kit.faceCamera(jdA, .8); play(jdA, 'Idle_Talking_Loop');
     },
-    async toJesus() { setBase(jdA, 'Idle_Loop'); ajw.go(jdA.position.clone(), v3(JX + 14.2, 0, -4.4), 9); lookAt(JX + 12, -6, 2); await walk(JX + 12.6, -2.6, 9); kit.faceCamera(jesusJ, 1.2); kit.faceCamera(jdB, 1.2); await sleep(1200); },
+    async toJesus() { setBase(jdA, 'Idle_Loop'); ajw.go(jdA.position.clone(), v3(JX + 14.2, 0, -4.4), 9); lookAt(JX + 12, -6, 2); await walk(JX + 12.3, -4.1, 9); kit.faceCamera(jesusJ, 1.2); kit.faceCamera(jdB, 1.2); await sleep(1200); },
+    // 요 1:42 예수께서 보시고 이름을 주신다: 바로 앞에서 당신을 보며 손을 내미신다
+    nameYou() { lookAt(JX + 12, -6, 1.2); kit.setEnv({ camP: .06 }, 1.2); kit.faceCamera(jesusJ, .8); setTimeout(() => kit.hold(jesusJ, 'reach'), 700); },
+    namedDone() { kit.hold(jesusJ); kit.setEnv({ camP: 0 }, 2); },
     // 눅 5:3
     async board() {
       await jw.go(jesus.position.clone(), v3(-2.6, 0, -7.6), 3.2);
@@ -1241,9 +1257,9 @@ async function world(kit, { audio, sleep }) {
     },
     async leave() { kit.focus(165, 5); jesus.rotation.y = 0; jw.go(jesus.position.clone(), v3(-2, 0, 18), 18); await walk(-2.6, 12, 12); },
     walkOnWater() { jesus.visible = true; jesus.position.set(3, 0, -228); jesusLight.intensity = 6; jesus.rotation.y = 0; return jw.go(jesus.position.clone(), v3(.6, 0, -206), 16); },
-    async stepOut() { await kit.setEnv({ camX: 0, camZ: -201.6, camH: 1.55 }, 3.5); jw.go(jesus.position.clone(), v3(.4, 0, -204.2), 3); },
+    async stepOut() { kit.camOnBoat(null); await kit.setEnv({ camX: 0, camZ: -201.6, camH: 1.55 }, 3.5); jw.go(jesus.position.clone(), v3(.4, 0, -204.2), 3); },
     async sink() { audio.wind(1, 1); audio.splash(); kit.setEnv({ waves: 2.1 }, 2); await kit.setEnv({ camH: .22, camP: .08 }, 4.5); },
-    async rescue() { audio.splash(); kit.hold(jesus, 'reach'); await kit.setEnv({ camH: 1.5, camP: 0 }, 2.2); kit.hold(jesus); kit.setEnv({ camZ: -197.6, camH: 1.25 }, 5); jw.go(jesus.position.clone(), v3(.7, 0, -199.4), 5).then(() => { jesus.visible = false; jesusLight.intensity = 0; jesusSeat.visible = true; jesusSeat.position.set(0, .25, -1.2); }); },
+    async rescue() { audio.splash(); kit.hold(jesus, 'reach'); await kit.setEnv({ camH: 1.5, camP: 0 }, 2.2); kit.hold(jesus); kit.setEnv({ camZ: -197.6, camH: 1.25 }, 5).then(() => kit.camOnBoat(boatA, [0, 1.35, 2.4])); jw.go(jesus.position.clone(), v3(.7, 0, -199.4), 5).then(() => { jesus.visible = false; jesusLight.intensity = 0; jesusSeat.visible = true; jesusSeat.position.set(0, .25, -1.2); }); },
     calm() { audio.wind(.08, 3); audio.water(.12, 3); return kit.setEnv('calm', 5); },
     // 막 1:29–34
     async walkHome() { jcw.go(jesusC.position.clone(), v3(CX + 1.2, 0, PH.z - 2.4), 9); jamW.go(jamesC.position.clone(), v3(CX + .4, 0, PH.z - 4), 9.4); johW.go(johnC.position.clone(), v3(CX + 1.8, 0, PH.z - 4.4), 9.6); andW.go(andrewC.position.clone(), v3(CX + .2, 0, PH.z - 3.2), 8.8); await walk(CX - .4, PH.z - 5.4, 10); },
@@ -1256,10 +1272,15 @@ async function world(kit, { audio, sleep }) {
     async doorCrowd() { await blink(async () => { stand(CX - 1.2, PH.z + 1); lookNow(CX + 3, PH.z); jesusC.position.set(CX + 2.2, hC(CX + 2.2, PH.z), PH.z); faceTo(jesusC, CX - 1, PH.z); doorCrowd.visible = true; show(sick, true); mil.visible = false; }); },
     async heal() { for (const g of sick) { await jcw.go(jesusC.position.clone(), v3(g.position.x + .8, 0, g.position.z), 1.6); kit.hold(jesusC, 'reach'); await sleep(900); kit.hold(jesusC); kit.tween(g.scale, { y: 1.08 }, .6); } },
     // 막 3:13–19
-    async comeForward() { twelveM.forEach((t, i) => { const a = -1 + i * .2; t.w.go(t.g.position.clone(), v3(SH.x + Math.sin(a) * 3.2, 0, SH.z - 6 + Math.cos(a) * 3.2), 4 + i * .3); }); await walk(SH.x + .2, SH.z - 2.4, 5); kit.faceCamera(jesusM, 1); },
+    async comeForward() { twelveM.forEach((t, i) => { const a = SLOT_M[i]; t.w.go(t.g.position.clone(), v3(SH.x + Math.sin(a) * RING_M, 0, SH.z - 6 + Math.cos(a) * RING_M), 4 + i * .3); }); await walk(SH.x, SH.z - 6 + RING_M, 5); twelveM.forEach(t => faceTo(t.g, SH.x, SH.z - 6)); kit.faceCamera(jesusM, 1); },
+    // 한 사람 앞으로 가서(가운데에서 각도 a, 1.1m 앞) 그를 보며 손을 내미신다
+    async jesusTo(a, look) { kit.hold(jesusM); const r = RING_M - 1.1; await jmM.go(jesusM.position.clone(), v3(SH.x + Math.sin(a) * r, 0, SH.z - 6 + Math.cos(a) * r), 1.8); faceTo(jesusM, look[0], look[1]); lookAt(jesusM.position.x, jesusM.position.z, .8); kit.hold(jesusM, 'reach'); },
+    async nameMe() { await api.jesusTo(0, [kit.env.camX, kit.env.camZ]); kit.setEnv({ camP: .06 }, 1); },  // 막 3:16 시몬에게 베드로라는 이름
+    async nameZebedee() { const a = (SLOT_M[0] + SLOT_M[1]) / 2, p = t => twelveM[t].g.position; await api.jesusTo(a, [(p(0).x + p(1).x) / 2, (p(0).z + p(1).z) / 2]); kit.faceCamera(twelveM[0].g, 1); },  // 막 3:17 보아너게
+    async nameRest() { for (let i = 2; i < 11; i++) { const p = twelveM[i].g.position; await api.jesusTo(SLOT_M[i], [p.x, p.z]); await sleep(1100); } kit.hold(jesusM); await jmM.go(jesusM.position.clone(), v3(SH.x, 0, SH.z - 6), 2.4); kit.faceCamera(jesusM, 1); },
     namesLook() { lookAll(twelveM.map(t => t.g)); },
     // 막 5:21–43
-    async jairusComes() { await jaw.go(jairus.position.clone(), v3(CX - .4, 0, -27.6), 5); faceTo(jairus, CX - .4, -29); setBase(jairus, 'Fixing_Kneeling'); lookers = [jairus, jamesC, johnC]; },
+    async jairusComes() { throngC.userData.makeWay([jesusC, jairus, jamesC, johnC, messenger]); await jaw.go(jairus.position.clone(), v3(CX - .4, 0, -27.6), 5); faceTo(jairus, CX - .4, -29); setBase(jairus, 'Fixing_Kneeling'); lookers = [jairus, jamesC, johnC]; },
     async pressOn() { setBase(jairus, 'Idle_Loop'); jcw.go(jesusC.position.clone(), v3(CX - .2, 0, -14), 10); jaw.go(jairus.position.clone(), v3(CX - 1.2, 0, -13), 9.6); jamW.go(jamesC.position.clone(), v3(CX - 1.6, 0, -15.6), 10.2); johW.go(johnC.position.clone(), v3(CX + 1.4, 0, -15.6), 10.2); await walk(CX + .4, -17.4, 10); },
     async messengerComes() { messenger.visible = true; await msw.go(v3(CX + 1.2, 0, 10), v3(CX + .8, 0, -11.2), 5); faceTo(messenger, CX - 1.2, -13); faceTo(jairus, CX + .8, -11.2); },
     async toJairusHouse() { throngC.visible = false; jcw.go(jesusC.position.clone(), v3(JH.x + 3.6, 0, JH.z + .4), 11); jamW.go(jamesC.position.clone(), v3(JH.x + 4.6, 0, JH.z + 1.6), 11.4); johW.go(johnC.position.clone(), v3(JH.x + 4.8, 0, JH.z - 1.2), 11.4); jaw.go(jairus.position.clone(), v3(JH.x + 3.4, 0, JH.z - 1.4), 10.6); messenger.visible = false; await walk(JH.x + 6.4, JH.z + .2, 12); lookAt(JH.x, JH.z, 1.4); lookers = [jairus, jamesC, johnC]; },
@@ -1270,9 +1291,16 @@ async function world(kit, { audio, sleep }) {
     // 요 6:1–14
     async crowdComes() { arriving.visible = true; await lookAt(GX, -40, 2); },
     sitDown() { arriving.visible = false; seated.visible = true; lookAt(GX, -14, 2.4); },
-    async bless() { lookAt(JG.x, JG.z, 1.6); kit.hold(jesusG, 'lift'); await sleep(2200); kit.hold(jesusG, 'give'); },
+    // 요 6:9 아이가 예수 앞으로 나와 보리떡 다섯과 물고기 둘을 두 손으로 보인다
+    async boyShows() {
+      lunch.visible = true; lunchBy = boy; lookAt(GX + .6, 11, 1.4);
+      kit.walkTo(GX - 1.2, 9.4, 3);  // 왼쪽으로 비켜서서 아이와 그분이 함께 보이게(안드레가 가리지 않게)
+      await boyW.go(boy.position.clone(), v3(GX + .35, 0, 10.9), 3.2); faceTo(boy, JG.x, JG.z); kit.hold(boy, 'give');
+      lookAt(GX + .15, 11.4, 1.2); kit.setEnv({ camP: -.1 }, 1.2); await sleep(2400); kit.setEnv({ camP: 0 }, 1.5);
+    },
+    async bless() { lookAt(JG.x, JG.z, 1.6); kit.hold(boy); lunchBy = jesusG; boyW.go(boy.position.clone(), v3(GX + 1.9, 0, 10.2), 2.4).then(() => faceTo(boy, JG.x, JG.z)); kit.hold(jesusG, 'lift'); await sleep(2200); kit.hold(jesusG, 'give'); },
     async distribute() {
-      kit.hold(jesusG);
+      kit.hold(jesusG); lunch.visible = false; lunchBy = null;
       const hand = kit.self.g && kit.self.g.userData.fig.bone('hand_r'), held = kit.prop('prop_bread');
       if (hand && held) { hand.add(held); held.position.set(0, .08, .04); held.scale.setScalar(1 / .92); }
       // 앞줄을 따라 걸으며 빵을 놓는다
@@ -1475,7 +1503,9 @@ async function part1(A) {
   await A.adapt([['강가의 사람', '메시아? 요즘 그런 말 하는 사람이 한둘이야?'], ['강가의 사람', '그래도 요한이 직접 가리켰다잖아. 그냥 흘려들을 말은 아니지.']]);  // 각색
   await choicePoint('a1');
   await world.toJesus();
+  world.nameYou();
   await verse('요 1:42#2', { voice: true });
+  world.namedDone();
 
   // 2 · 게네사렛 (눅 5:1–11)
   await sceneCut('2', '게네사렛', '누가복음 5장 1–11절', async () => { world.setEnv('shore', 0); world.place('shore'); });
@@ -1539,9 +1569,13 @@ async function part1(A) {
   await choicePoint('a5');
   await world.comeForward();
   await verse('막 3:14-15');
+  await world.nameMe();
   await verse('막 3:16');
+  await world.nameZebedee();
+  await verse('막 3:17');
+  world.nameRest();
+  await verse('막 3:18-19');
   world.namesLook();
-  await verse('막 3:17-19');
 
   // 5 · 야이로의 딸 (막 5:21–43)
   await sceneCut('5', '야이로의 딸', '마가복음 5장 21–43절', async () => { world.setEnv('noon', 0); world.place('capShore'); });
@@ -1578,6 +1612,7 @@ async function part1(A) {
   await verse('요 6:5', { voice: true });
   await say('빌립', '한 사람에게 조금씩만 줘도, 이백 데나리온어치 빵으로도 모자라요.', '요 6:7');
   await say('안드레', '여기 아이 하나가 보리빵 다섯 개랑 물고기 두 마리를 가지고 있어요. 그런데 이 많은 사람한테 그게 무슨 소용이 있겠어요?', '요 6:8-9');
+  await world.boyShows();
   await verse('요 6:10', { voice: true });
   world.sitDown();
   await verse('막 6:39-40');
@@ -1587,6 +1622,7 @@ async function part1(A) {
   await choicePoint('a7');
   await world.distribute();
   await verse('요 6:11');
+  await A.adapt([['풀밭의 사람', '어? 또 나와… 바구니에서 계속 나와!'], ['풀밭의 여자', '이게 무슨 일이야? 떡이 다섯 개였잖아!'], ['풀밭의 사람', '뭐야 이게… 어떻게 되는 거야?']]);  // 각색
   await verse('요 6:12', { voice: true });
   world.baskets();
   await verse('요 6:13');
@@ -1605,9 +1641,11 @@ async function part1(A) {
   await say('배 안의 제자들', '저, 저기… 유령이야! 유령이다!', '마 14:26');
   await verse('마 14:27', { voice: true });
   await choicePoint('a8');
+  await A.adapt([['배 안의 제자', '시몬! 미쳤어? 가지 마!'], ['배 안의 제자', '빠진다고! 이 물살을 봐!'], ['배 안의 제자', '(노를 붙잡고 떨며) 주여… 주여…']]);  // 각색
   await verse('마 14:29');
   await world.stepOut();
   await direction('발밑이 물이다. 그런데 당신은 서 있다.');
+  await A.adapt([['배 안의 제자', '걷는다… 진짜 물 위를 걷고 있어!'], ['배 안의 제자', '이게… 어떻게 된 거야?']]);  // 각색
   world.sink();
   await verse('마 14:30#1');
   await speakLoop({ scene: '7 · 물 위', prompts: [{ ask: '물이 차오릅니다. 무엇이라고 외치겠습니까?', situation: '바람을 보고 무서워 빠져 갈 때', his: ['마 14:30'], hisShort: '“주여 나를 구원하소서” 소리질렀다' }], submit: '외치기', skips: ['아무 소리도 내지 못한다'],

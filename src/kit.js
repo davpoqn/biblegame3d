@@ -528,6 +528,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     bone.parent.getWorldQuaternion(_q3).invert(); bone.quaternion.copy(_q3.multiply(_q2));
     bone.updateMatrixWorld(true);
   }
+  const OPEN_HAND = { reach: ['r'], show: ['l', 'r'], give: ['l', 'r'], lift: ['l', 'r'] }, _qOpen = new THREE.Quaternion();
   function applyGesture(g, F, dt) {
     const G = F.gest, t = clock - G.t0;
     if (t >= G.total) { F.gest = null; return; }
@@ -543,6 +544,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       cur.lerp(_d.set(v[0] * sg, v[1] + (name === 'weep' ? Math.sin(clock * 15 + (sd === 'l' ? 0 : 1)) * .06 : 0), v[2]), lk);
       aimBone(g, F.bone(`${b}_${sd}`), F.bone(b === 'upperarm' ? `lowerarm_${sd}` : `hand_${sd}`), cur.clone(), w);
     }
+    // 손을 내밀 때는 손가락을 편다(쉬는 동작은 주먹을 쥐고 있다)
+    const open = OPEN_HAND[name]; if (open) for (const sd of open) for (const f of ['index', 'middle', 'ring', 'pinky', 'thumb']) for (const n of ['01', '02', '03']) { const bn = F.bone(`${f}_${n}_${sd}`); if (bn) bn.quaternion.slerp(_qOpen, w * (f === 'thumb' ? .5 : .9)); }
     if (pose.neck) { const cur = G.dir.neck || (G.dir.neck = new THREE.Vector3(...pose.neck)); cur.lerp(_d.set(...pose.neck), lk); aimBone(g, F.bone('neck_01'), F.bone('Head'), cur.clone(), w); }
   }
   // 몸짓 순서대로 하기: kit.gesture(g, [['dust', 3], ['tear', 2.6], ['weep', 7]])
@@ -576,6 +579,23 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     draw();
     g.add(body, head); R().add(g);
     g.userData.items = items; g.userData.draw = draw;
+    // 길 비키기: g.userData.makeWay([사람, ...])를 부르면, 카메라(당신)와 그 사람들이 가까이 올 때 옆으로 비켜선다(뚫고 지나가지 않게)
+    items.forEach(o => { o.hx = o.x; o.hz = o.z; o.ox = 0; o.oz = 0; });
+    let movers = null; const _mv = new THREE.Vector3();
+    g.userData.makeWay = (list, r = 1.3) => { movers = list ? [...list] : null; g.userData.wayR = r; };
+    frameFns.push(dt => {
+      if (!movers || !shown(g)) return;
+      const RW = g.userData.wayR, pts = [[env.camX, env.camZ]];
+      for (const m of movers) if (m && m.visible) { m.getWorldPosition(_mv); pts.push([_mv.x, _mv.z]); }
+      let moved = false; const k = Math.min(1, dt * 4);
+      for (const o of items) {
+        let tx = 0, tz = 0;
+        for (const [px, pz] of pts) { const dx = o.hx - px, dz = o.hz - pz, dd = Math.hypot(dx, dz); if (dd < RW) { const f = (RW - dd) / (dd || .01); tx += dx * f; tz += dz * f; } }
+        const nx = o.ox + (tx - o.ox) * k, nz = o.oz + (tz - o.oz) * k;
+        if (Math.abs(nx - o.ox) + Math.abs(nz - o.oz) > 1e-4) { o.ox = nx; o.oz = nz; o.x = o.hx + nx; o.z = o.hz + nz; if (height) o.y = height(o.x, o.z); moved = true; }
+      }
+      if (moved) draw();
+    });
     return g;
   }
   const walkers = [];
@@ -1081,6 +1101,9 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     if (camWater.on) camera.position.y += waveH(env.camX, env.camZ, env.waves) * camWater.k;
     { const gy = groundAt(camera.position.x, camera.position.z) + .28; if (camera.position.y < gy) camera.position.y = gy; }  // 땅·배 바닥 아래로는 내려가지 않는다
     camera.rotation.set(Math.max(-1.45, env.camP - lookY * (lookY > 0 ? 1.3 : .45)) + Math.sin(clock * .6) * .004 * sway, env.camY - lookX * 1.4, env.camR + Math.sin(clock * .37) * .004 * sway + Math.sin(clock * 11) * .004 * sh + (camWater.on ? (waveH(env.camX + 1, env.camZ, env.waves) - waveH(env.camX - 1, env.camZ, env.waves)) * .3 * camWater.k : 0));
+    // 배에 붙은 시선: 배의 기울기를 따라 자리를 옮기고 시선도 조금 기운다
+    camBoat.w += ((camBoat.on ? 1 : 0) - camBoat.w) * Math.min(1, dt * 1.5);
+    if (camBoat.w > .002 && camBoat.boat) { const b = camBoat.boat; b.updateMatrixWorld(); camera.position.lerp(b.localToWorld(_cb.copy(camBoat.local)), camBoat.w); camera.rotation.x += b.rotation.x * .4 * camBoat.w; camera.rotation.z += b.rotation.z * .35 * camBoat.w; }
     sky.position.copy(camera.position);
     stepSelf(dt);
     grain.uniforms.uTime.value = clock;
@@ -1089,6 +1112,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     raf = requestAnimationFrame(frame);
   }
   const camWater = { on: false, k: 1 }, camGround = { on: false, eye: 1.65 };
+  const camBoat = { on: false, boat: null, local: new THREE.Vector3(), w: 0 }, _cb = new THREE.Vector3();  // 배에 탄 시선: 배와 함께 흔들리고 배 밑으로 꺼지지 않는다
   setEnv(initial, 0);
   raf = requestAnimationFrame(frame);
 
@@ -1101,6 +1125,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     onFrame(fn) { frameFns.push(fn); },
     onReset(fn) { resetFns.push(fn); },
     camOnWater(on, k = 1) { camWater.on = on; camWater.k = k; },
+    // 시선을 배의 한 자리(배 기준 좌표)에 붙인다: kit.camOnBoat(boat, [x, y, z], 바로) / kit.camOnBoat(null)로 뗀다(천천히 풀린다)
+    camOnBoat(boat, local, now = false) { if (!boat) { camBoat.on = false; return; } camBoat.boat = boat; camBoat.local.set(...local); camBoat.on = true; if (now) camBoat.w = 1; },
     // 눈높이를 땅 + eye로 (걸어가는 장면). null이면 끈다
     groundCam(eye = 1.65) { if (eye == null) { camGround.on = false; return; } camGround.on = true; camGround.eye = eye; },
     // 땅을 따라 걸어간다: kit.walkTo(x, z, 초, { eye })
@@ -1110,7 +1136,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     terrain, disc, rocks, box, glow, glowMat, person, figure, gesture, hold, selfBody, mat, house, village, room, cityWall, temple, trees, grass, cross, tomb, rooster, get self() { return me; }, into, site, shown, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
     reset() {
       for (const k in tw) delete tw[k];
-      tweens.length = 0; cyc = null; camWater.on = false; camGround.on = false; tLookX = tLookY = 0;
+      tweens.length = 0; cyc = null; camWater.on = false; camGround.on = false; camBoat.on = false; camBoat.w = 0; tLookX = tLookY = 0;
       setEnv(initial, 0); env.camY = 0; env.camX = 0; env.camZ = 0; env.camR = 0;
       walkers.forEach(w => { w.state = 'idle'; w.g.visible = false; });
       figs.forEach(g => g.userData.fig.play(g.userData.fig.base, 0));
