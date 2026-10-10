@@ -174,6 +174,10 @@ async function world(kit, { audio, sleep }) {
   const lampG = kit.glow(.08, .12, 4, 2, .7, -1.2, .45, -2.3);
   kit.box(2.6, .08, 1.8, '#5a3f2e', .3, .04, -3.4);
   const isaac = kit.figure('elder', { tint: '#8b806c', pose: 'seat', visible: true }); isaac.position.set(.3, .08, -3.6);
+  // 내 몸 (1인칭). 27:15–16 에서의 좋은 옷을 입고 손과 목에 염소 새끼 가죽을 두르면 팔이 털 덮인 팔로 바뀐다
+  const JACOB = { tint: '#5a4a3a', colors: { tunic: '#d9ceb2' } }, DISGUISE = { tint: '#7a3a2a', colors: { tunic: '#e6dfcf', M_Main: '#4a3828', M_Joints: '#4a3828' } };
+  kit.selfBody('man', JACOB);
+  const faceIsaac = () => { isaac.rotation.y = Math.atan2(.28 - isaac.position.x, -2.5 - isaac.position.z); };
   const rebekah = kit.figure('woman_veil', { tint: '#7b5a48', scale: .96, visible: true }); rebekah.position.set(-1.6, 0, .6); rebekah.rotation.y = Math.PI * .7;
   const esau = kit.figure('shepherd', { tint: '#7a4a2a', scale: 1.06 }); const ew = kit.walker(esau, { height: h0 });
   [[-14, -6, .4], [12, -10, -.5]].forEach(([x, z, r]) => kit.tent({ at: [x, h0(x, z), z], ry: r }));
@@ -244,7 +248,11 @@ async function world(kit, { audio, sleep }) {
       if (where === 'plain') { C({ camX: X4, camZ: 0, camH: 1.65 + h4(X4, 0) }); esau4.visible = false; }
     },
     cycleDays(n, secs, onDay) { return kit.cycleDays(n, secs, onDay, 'night', 'morning'); },
-    leaveTent() { lamp.intensity = 1; return kit.setEnv({ camZ: 5.5, camH: 1.65 }, 4); },
+    goatSkin(on) { kit.selfBody('man', on ? DISGUISE : JACOB); },
+    // 27:21–22 가까이 가면 아버지의 손이 무릎 위에 놓인 내 손(털 덮인 손)을 더듬는다. 아래를 보면 보인다
+    async isaacTouch() { faceIsaac(); await kit.setEnv({ camX: .28, camZ: -2.5 }, 2); kit.hold(isaac, 'reach'); await kit.setEnv({ camP: -1.05 }, 1.6); },
+    touchEnd() { kit.hold(isaac); kit.setEnv({ camP: 0 }, 1.5); },
+    leaveTent() { lamp.intensity = 1; kit.selfBody('man', JACOB); return kit.setEnv({ camZ: 5.5, camH: 1.65 }, 4); },
     esauReturns() { kit.focus(160, 3); esau.visible = true; return ew.go(v3(-30, 0, 30), v3(.2, 0, 2.6), 10); },
     dream(on) { ladder.visible = on; angels = on; if (on) audio.chord(.7, 4); },
     wake() { return kit.setEnv('dawn', 4); },
@@ -277,7 +285,7 @@ async function world(kit, { audio, sleep }) {
       if (kind === 'water') audio.water(.6, .5);
     },
     reset() {
-      kit.reset(); angels = false; ladder.visible = false;
+      kit.reset(); angels = false; ladder.visible = false; kit.selfBody('man', JACOB); kit.hold(isaac);
       esau.visible = false; esau4.visible = false; stranger.visible = false; leah.visible = false;
       fourHundred.position.set(0, 0, 0); isaac.rotation.set(0, 0, 0);
       api.place('tent');
@@ -306,13 +314,16 @@ async function story(A) {
   await choicePoint('c1');
   await A.say('어머니', '저주는 엄마가 받을게. 넌 내 말대로 가서 가져오기만 해.', '창 27:13');
   await verse('창 27:15-16');
+  world.goatSkin(true);
   await direction('털 덮인 손으로 음식을 들고 아버지 앞에 선다.', { auto: true, ms: 2600 });
   await direction('“아버지.” 당신이 부른다.', { auto: true, ms: 1800 });
   await speakLoop({ scene: '1 · 장막', prompts: [{ who: '아버지', line: '그래, 나 여기 있다. …얘야, 너 누구냐?', ref: '창 27:18', ask: '무엇이라고 대답하겠습니까?', situation: '눈이 어두운 아버지가 물을 때', his: ['창 27:19'], hisShort: '“나는 아버지의 맏아들 에서로소이다” 했다' }], submit: '대답하기', skips: ['대답하지 않는다'],
     reacts: [{ fx: 'isaac', text: '아버지가 고개를 기울인다. 등잔불이 흔들린다.' }] });
   await A.say('아버지', '가까이 와 봐라. 네가 정말 에서인지 만져 봐야겠다.', '창 27:21-22');
+  await world.isaacTouch();
   await direction('아버지의 손이 당신의 손등을 더듬는다.', { auto: true, ms: 2600 });
   await A.say('아버지', '목소리는 야곱인데… 손은 에서 손이로구나.', '창 27:21-22');
+  world.touchEnd();
   await choicePoint('c2');
   await verse('창 27:27-28');
   await world.leaveTent();

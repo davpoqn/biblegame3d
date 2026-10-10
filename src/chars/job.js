@@ -281,6 +281,10 @@ async function world(kit, { audio, sleep }) {
     const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: '#3d3a37', roughness: 1 }));
     m.position.y = .035; m.visible = false; scene.add(m); return m;
   })();
+  kit.addGround((x, z) => { if (!ashMound.visible) return null; const r = Math.hypot(x, z); return r < 6 ? .035 + (1 - smooth(0, 6, r)) * .16 : null; });  // 잿더미 위에 앉는다 (2:8)
+  // 내 몸 (1인칭): 부유한 동방 사람의 옷, 재 위에서는 찢은 잿빛 옷 (1:20, 2:8), 회복된 뒤에는 다시 좋은 옷
+  const JOB = { tint: '#6a4a3a', colors: { tunic: '#e6dfcf', headcloth: '#e3dac4' } }, JOB_ASH = { tint: '#4a4440', colors: { tunic: '#8a8278', headcloth: '#7a746c', mantle: '#4a4440' } };
+  kit.selfBody('elder', JOB);
   const impactLight = new THREE.PointLight('#ff9a4a', 0, 140, 1.4); impactLight.position.copy(FLOCK).setY(heightAt(FLOCK.x, FLOCK.z) + 8); scene.add(impactLight);
 
   /* --- 폭풍 (회오리) --- */
@@ -470,7 +474,7 @@ async function world(kit, { audio, sleep }) {
       if (name === 'wife') { wife.g.visible = v; if (!v) wife.w.idle(); }
       if (name === 'wifeStand') { wife.w.idle(); wife.g.visible = v; wife.g.position.copy(at(-3.4, -6.2)); wife.g.rotation.set(.02, Math.atan2(3.4, -1.8), 0); }
       if (name === 'friends') friends.forEach(f => { f.visible = v; });
-      if (name === 'ashMound') ashMound.visible = v;
+      if (name === 'ashMound') { ashMound.visible = v; kit.selfBody('elder', v ? JOB_ASH : JOB); }
       if (name === 'campfire') campfire.g.visible = v;
       if (name === 'flock') flock.visible = v;
       if (name === 'kids') kids.forEach(k => { k.g.visible = v; k.w.idle(); if (v) { k.g.position.copy(k.home); k.g.rotation.set(0, Math.atan2(-k.home.x, -k.home.z), 0); } });
@@ -556,7 +560,7 @@ async function world(kit, { audio, sleep }) {
       msgs.forEach(m => { m.g.visible = false; m.g.rotation.set(0, 0, 0); });
       wife.g.visible = false; wife.g.rotation.set(0, 0, 0);
       friends.forEach(f => { f.visible = false; }); lift.v = 0;
-      ashMound.visible = false; campfire.g.visible = false; campfire.level = 1; flock.visible = true;
+      ashMound.visible = false; kit.selfBody('elder', JOB); campfire.g.visible = false; campfire.level = 1; flock.visible = true;
       sheep.forEach((o, i) => { o.burn = -1; drawSheep(i); }); flock.instanceMatrix.needsUpdate = true; if (flock.instanceColor) flock.instanceColor.needsUpdate = true;
       parts.forEach(p => { p.live = false; p.m.position.copy(p.p0); p.m.rotation.copy(p.r0); });
       winMat.color.setRGB(.22, .15, .09); houseLight.intensity = 0;
