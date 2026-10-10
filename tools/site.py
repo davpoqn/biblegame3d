@@ -36,7 +36,7 @@ out = S + '_site/index.html'
 open(out, 'w', encoding='utf8').write(head + page + '\n</body>\n</html>\n')
 # 아이콘(tools/icon/render.py가 만든 것)과 홈 화면에 추가할 때 쓰는 정보
 for f in os.listdir(S + 'assets/icon'): shutil.copy(S + 'assets/icon/' + f, S + '_site/' + f)
-json.dump({'name': TITLE, 'short_name': TITLE, 'start_url': './', 'display': 'standalone', 'background_color': '#0c0a09', 'theme_color': '#0c0a09',
+json.dump({'name': TITLE, 'short_name': TITLE.split(' · ')[0], 'start_url': './', 'display': 'standalone', 'background_color': '#0c0a09', 'theme_color': '#0c0a09',
            'icons': [{'src': f'icon-{n}.png', 'sizes': f'{n}x{n}', 'type': 'image/png'} for n in (192, 512)]},
           open(S + '_site/site.webmanifest', 'w', encoding='utf8'), ensure_ascii=False)
 print(out, 'bytes', os.path.getsize(out))

@@ -30,7 +30,7 @@ block=("/* ---------- 3D 공용 도구 ---------- */\nconst KIT = (() => {\n"+ki
 page=open(S+'dist/index.html',encoding='utf8').read()
 NAMES={'job':'욥','peter':'베드로','paul':'바울','david':'다윗','abraham':'아브라함','jacob':'야곱'}
 if len(ONLY)==1:
-    page=page.replace('<title>그 사람의 자리</title>','<title>'+NAMES[ONLY[0]]+'의 자리</title>',1)
+    page=page.replace('<title>그날, 그곳에서 · 성경 속으로</title>','<title>'+NAMES[ONLY[0]]+' · 그날, 그곳에서</title>',1)
 if ONLY:
     a="const RULE = "
     assert a in page; page=page.replace(a,"CHARS.splice(0, CHARS.length, ...CHARS.filter(c => "+json.dumps(ONLY)+".includes(c.id)));\n"+a,1)
