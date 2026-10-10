@@ -15,7 +15,8 @@
 ```
 npm install
 python3 tools/build.py                                  # → dist/
-python3 tools/bundle.py                                 # → single/index.html
+python3 tools/bundle.py                                 # → single/index.html (여섯 인물)
+python3 tools/bundle.py paul                            # → single/paul.html (한 인물, 허브 링크 붙음)
 tools/check.sh                                          # 문법 검사
 python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
 ```
@@ -29,4 +30,4 @@ python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
 
 ## 다음 할 일
 
-**PLAN.md 11장 1단계부터.** 사용자가 게임을 해 보고 준 의견을 단계별로 정리해 두었다(생선 크기, 밝기, 다윗 전쟁, 예수님 모습, 내 손과 발, 장면 채우기). 캐릭터·동물은 `assets/chars/`, 다시 만들기는 `tools/chars/make.sh`.
+**전체 확장(3부 구성, 바울 추가, 인물별 게시와 허브)은 끝났다.** 게시 링크와 남은 한계는 PLAN.md 2장 끝에 있다. 사용자가 새 버전을 해 보고 주는 의견을 반영한다. 캐릭터·동물은 `assets/chars/`, 다시 만들기는 `tools/chars/make.sh`.

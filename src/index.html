@@ -739,7 +739,7 @@ async function makeWorld() {
 }
 
 /* ---------- 시작 화면 ---------- */
-let selected = 'peter', selectedPart = 0;
+let selected = CHARS[0].id, selectedPart = 0;
 function renderParts() {
   const c = CHARS.find(x => x.id === selected), pp = $('#part-picker'), done = loadProg()[selected] || [];
   pp.replaceChildren(); pp.hidden = c.parts.length < 2;
@@ -782,7 +782,7 @@ function select(id, keepPart) {
   paintBackdrop(c.sky[0], c.sky[1]);
   renderPicker(); renderParts();
 }
-select('peter');
+select(CHARS[0].id);
 
 const soundBtn = $('#sound-toggle');
 function syncSound() { const on = audio.enabled; soundBtn.textContent = on ? '소리 끄기' : '소리 켜기'; soundBtn.setAttribute('aria-pressed', String(on)); }
