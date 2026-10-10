@@ -746,7 +746,7 @@ async function world(kit, { audio, sleep }) {
 
   const jesus = kit.figure('jesus');
   const jesusLight = new THREE.PointLight('#ffe6c4', 0, 9, 2); jesusLight.position.set(0, 1.4, .3); jesus.add(jesusLight);
-  const jw = kit.walker(jesus, { height: (x, z) => Math.max(0, heightAt(x, z)), pace: 4 });
+  const jw = kit.walker(jesus, { height: (x, z) => Math.max(0, heightAt(x, z)), pace: 4, noRun: true });
 
   // 배 두 척, 그물, 씻는 어부들 (눅 5:2)
   const boatA = kit.boat({ at: [-3, 0, -9.5], ry: .15 }), boatB = kit.boat({ at: [5, 0, -11], ry: -.2, color: '#433426' });
@@ -826,7 +826,7 @@ async function world(kit, { audio, sleep }) {
   const baptist = fig('shepherd', JX + 4.2, hJ(JX + 4.2, -24), -24, -Math.PI / 2, { tint: '#6b5236', colors: { mantle: '#5a4028' } });  // 요한 (낙타 털옷, 마 3:4)
   const jdA = fig('fisherman', JX + 5.4, hJ(JX + 5.4, -22.6), -22.6, -2, { tint: '#c9b48e', colors: { headcloth: '#7a3a2a' } });  // 안드레
   const jdB = fig('man', JX + 5.6, hJ(JX + 5.6, -25.4), -25.4, -1.2, { tint: '#b9a888' });  // 다른 제자
-  const jesusJ = fig('jesus', JX + 9, hJ(JX + 9, -60), -60, 0); const jjw = kit.walker(jesusJ, { height: hJ, pace: 4 });
+  const jesusJ = fig('jesus', JX + 9, hJ(JX + 9, -60), -60, 0); const jjw = kit.walker(jesusJ, { height: hJ, pace: 4, noRun: true });
   const ajw = kit.walker(jdA, { height: hJ }), bjw = kit.walker(jdB, { height: hJ });
   const bathers = kit.throng({ n: 26, height: hJ, place: i => [JX + rnd(3, 9) * (i % 3 ? 1 : -1), rnd(-34, -12), rnd(0, 6)] });
   const camp = kit.fire([JX + 15.2, hJ(JX + 15.2, 5.6) + .05, 5.6], { level: .6, size: .7 });
@@ -850,7 +850,7 @@ async function world(kit, { audio, sleep }) {
   const mat0 = kit.box(1.9, .08, .8, '#7a6a52', PH.x + 1.4, PH.y + .04, PH.z - 1.2);
   const doorCrowd = kit.throng({ n: 60, height: hC, place: i => [CX + rnd(-3, 2.6), PH.z + rnd(-8, 8), Math.PI / 2 + rnd(-.5, .5)] });
   const sick = [0, 1, 2, 3].map(i => { const g = kit.person(['#5a4a3a', '#4a4036', '#6a5a48', '#3a3028'][i], { pose: i % 2 ? 'seat' : 'kneel', visible: true }); g.position.set(CX + .8 + i * .5, hC(CX + 1, PH.z), PH.z - 2.4 + i * 1.4); g.rotation.y = Math.PI / 2; return g; });
-  const jesusC = fig('jesus', CX, hC(CX, -6), -6, 0); const jcw = kit.walker(jesusC, { height: hC, pace: 4 });
+  const jesusC = fig('jesus', CX, hC(CX, -6), -6, 0); const jcw = kit.walker(jesusC, { height: hC, pace: 4, noRun: true });
   const jamesC = fig('fisherman', CX - .8, hC(CX - .8, -7.5), -7.5, 0, { tint: '#d8ccb0', colors: { headcloth: '#3c5a7a' } }), johnC = fig('fisherman', CX + .9, hC(CX + .9, -7.4), -7.4, 0, { tint: '#bfae8a', colors: { headcloth: '#6a5a3a' } });
   const andrewC = fig('fisherman', CX + 1.6, hC(CX + 1.6, -5), -5, 0, { tint: '#c9b48e', colors: { headcloth: '#7a3a2a' } });
   const jamW = kit.walker(jamesC, { height: hC }), johW = kit.walker(johnC, { height: hC }), andW = kit.walker(andrewC, { height: hC });
@@ -941,7 +941,7 @@ async function world(kit, { audio, sleep }) {
   const hR = (x, z) => { const lx = x - RX; return 3 * (vnoise(lx * .015, z * .015) - .5) + 6 * smooth(30, 90, Math.abs(lx)) * vnoise(lx * .03, z * .02) + 14 * smooth(120, 240, Math.hypot(lx, z)); };
   kit.terrain({ height: hR, size: 520, seg: 120, at: [RX, 0], lo: '#8a7656', hi: '#c9b38c', yMul: .02 });
   kit.rocks({ n: 90, height: hR, center: [RX, 0], rMin: 6, rMax: 150, sMax: .8, color: '#a08c6c' });
-  const jesusR = fig('jesus', RX, hR(RX, -4), -4, 0); const jrw = kit.walker(jesusR, { height: hR, pace: 4 });
+  const jesusR = fig('jesus', RX, hR(RX, -4), -4, 0); const jrw = kit.walker(jesusR, { height: hR, pace: 4, noRun: true });
   const rich = fig('man', RX + 1.6, hR(RX + 1.6, -6.4), -6.4, -2.6, { tint: '#e8e0d0', colors: { mantle: '#5b2a5e', headcloth: '#f1ece0', belt: '#c9a23a' } }); const rcw = kit.walker(rich, { height: hR });
   const roadCrowd = kit.throng({ n: 60, height: hR, place: i => [RX + rnd(-8, 8), rnd(2, 16), Math.PI + rnd(-.5, .5)] });
   const discR = [[-1.8, 1.4], [1.6, 1.8], [-.4, 2.6], [2.8, .4], [-2.8, 0]].map(([dx, dz], i) => fig(i < 3 ? 'fisherman' : 'man', RX + dx, hR(RX + dx, dz), dz, Math.PI, { tint: ['#c9b48e', '#d8ccb0', '#bfae8a', '#a89878', '#8a7a5a'][i] }));
@@ -1006,7 +1006,7 @@ async function world(kit, { audio, sleep }) {
   const host = fig('elder', STREET[4][0] - 1.6, hJr(STREET[4][0] - 1.6, STREET[4][1] - 1.4), STREET[4][1] - 1.4, .6, { tint: '#5a4a62' });
   // 겟세마네 (마 26:36–56, 요 18:1–11)
   const GE = v3(JR + 12, 0, 24); GE.y = hJr(GE.x, GE.z);
-  const jesusGe = fig('jesus', GE.x, GE.y, GE.z - 2, 0); const jgw = kit.walker(jesusGe, { height: hJr, pace: 4 });
+  const jesusGe = fig('jesus', GE.x, GE.y, GE.z - 2, 0); const jgw = kit.walker(jesusGe, { height: hJr, pace: 4, noRun: true });
   const gLight = new THREE.PointLight('#c8d4ff', 0, 10, 2); gLight.position.set(0, 1.6, .3); jesusGe.add(gLight);
   const sleepers = [[-1.1, .6], [1.2, .4]].map(([dx, dz], i) => fig('fisherman', GE.x + dx, hJr(GE.x + dx, GE.z + dz), GE.z + dz, Math.PI, { tint: ['#d8ccb0', '#bfae8a'][i], colors: { headcloth: ['#3c5a7a', '#6a5a3a'][i] }, pose: 'seat' }));
   const others8 = Array.from({ length: 8 }, (_, i) => { const g = kit.person(['#4a3c30', '#5a4a3a', '#3a3029', '#6a5541'][i % 4], { pose: 'seat', visible: true }); g.position.set(GE.x - 8 + rnd(-3, 3), 0, GE.z + 9 + rnd(-2, 2)); g.position.y = hJr(g.position.x, g.position.z); g.rotation.y = rnd(0, 6); return g; });
@@ -1036,7 +1036,7 @@ async function world(kit, { audio, sleep }) {
   const splitRocks = [[-8, 6], [7, 8], [-12, -4]].map(([dx, dz]) => { const a = kit.box(1.4, 1.2, 1.6, '#8a7a66', GO.x + dx - .36, hJr(GO.x + dx, GO.z + dz) + .5, GO.z + dz), b = kit.box(1.4, 1.2, 1.6, '#8a7a66', GO.x + dx + .36, hJr(GO.x + dx, GO.z + dz) + .5, GO.z + dz); a.userData.x0 = a.position.x; b.userData.x0 = b.position.x; return [a, b]; });
   // 성안에서 골고다로 (눅 23:26–33): 시몬이 십자가를 지고 따라간다
   const VIA = [[JR - 200, 20], [JR - 236, 40], [JR - 262, 70], [JR - 286, 72], [GO.x + 3, GO.z + 6]];
-  const jesusVia = fig('jesus', VIA[0][0] - 4, 0, VIA[0][1], -Math.PI / 2, { colors: { tunic: '#dcd3c0' } }); jesusVia.position.y = hJr(jesusVia.position.x, jesusVia.position.z); const jvw = kit.walker(jesusVia, { height: hJr, pace: 4 });
+  const jesusVia = fig('jesus', VIA[0][0] - 4, 0, VIA[0][1], -Math.PI / 2, { colors: { tunic: '#dcd3c0' } }); jesusVia.position.y = hJr(jesusVia.position.x, jesusVia.position.z); const jvw = kit.walker(jesusVia, { height: hJr, pace: 4, noRun: true });
   const guardsVia = [0, 1, 2, 3].map(i => { const g = fig('roman', VIA[0][0] - 2 + (i % 2) * 2.2, 0, VIA[0][1] + (i < 2 ? -1.6 : 1.6)); g.position.y = hJr(g.position.x, g.position.z); return { g, w: kit.walker(g, { height: hJr, pace: 4 }) }; });
   const weepers = Array.from({ length: 6 }, (_, i) => fig('woman_veil', VIA[2][0] + rnd(-3, 3), 0, VIA[2][1] + (i % 2 ? 4 : -4) + rnd(-1, 1), i % 2 ? Math.PI : 0, { tint: ['#33507e', '#5a4a62', '#6a5a48', '#7a3a3a', '#4a5a62', '#6a4a3a'][i] }));
   weepers.forEach(g => { g.position.y = hJr(g.position.x, g.position.z); });
@@ -1134,7 +1134,7 @@ async function world(kit, { audio, sleep }) {
       lookers = [];
       if (where === 'jordan') {
         only('jordan'); stand(JX + 14, 4); lookNow(JX + 5, -24);
-        jesusJ.position.set(JX + 10, hJ(JX + 10, -70), -70); jesusJ.visible = true; jdA.position.set(JX + 5.4, hJ(JX + 5.4, -22.6), -22.6); jdB.position.set(JX + 5.6, hJ(JX + 5.6, -25.4), -25.4); jdA.visible = jdB.visible = true;
+        jesusJ.position.set(JX + 10, hJ(JX + 10, -40), -40); jesusJ.visible = true; jdA.position.set(JX + 5.4, hJ(JX + 5.4, -22.6), -22.6); jdB.position.set(JX + 5.6, hJ(JX + 5.6, -25.4), -25.4); jdA.visible = jdB.visible = true;
         camp.level = .6; lookers = [jdA];
       }
       if (where === 'shore') {
@@ -1221,7 +1221,7 @@ async function world(kit, { audio, sleep }) {
       jesusJ.position.set(JX + 12, hJ(JX + 12, -6), -6); jjw.idle(); jdB.position.set(JX + 13.2, hJ(JX + 13.2, -6.4), -6.4); jdB.visible = true;
       jdA.visible = true; lookAt(JX + 13, -2, 2); await ajw.go(v3(JX + 12, 0, -6), v3(JX + 13.4, 0, 2.2), 4); kit.faceCamera(jdA, .8); play(jdA, 'Idle_Talking_Loop');
     },
-    async toJesus() { setBase(jdA, 'Idle_Loop'); ajw.go(jdA.position.clone(), v3(JX + 13, 0, -3.6), 9); lookAt(JX + 12, -6, 2); await walk(JX + 12.6, -2.6, 9); kit.faceCamera(jesusJ, 1.2); kit.faceCamera(jdB, 1.2); await sleep(1200); },
+    async toJesus() { setBase(jdA, 'Idle_Loop'); ajw.go(jdA.position.clone(), v3(JX + 14.2, 0, -4.4), 9); lookAt(JX + 12, -6, 2); await walk(JX + 12.6, -2.6, 9); kit.faceCamera(jesusJ, 1.2); kit.faceCamera(jdB, 1.2); await sleep(1200); },
     // 눅 5:3
     async board() {
       await jw.go(jesus.position.clone(), v3(-2.6, 0, -7.6), 3.2);
@@ -1239,8 +1239,8 @@ async function world(kit, { audio, sleep }) {
       kit.camOnWater(false); jesusSeat.visible = false; jesus.visible = true; jesus.position.set(-1.2, heightAt(-1.2, -1.4), -1.4);
       await walk(-3.2, -3.4, 3.2); audio.water(.15, 3);
     },
-    async leave() { kit.focus(165, 5); jesus.rotation.y = 0; jw.go(jesus.position.clone(), v3(-2, 0, 30), 18); await walk(-2.6, 12, 12); },
-    walkOnWater() { jesus.visible = true; jesus.position.set(4, 0, -262); jesusLight.intensity = 6; jesus.rotation.y = 0; return jw.go(jesus.position.clone(), v3(.6, 0, -206), 16); },
+    async leave() { kit.focus(165, 5); jesus.rotation.y = 0; jw.go(jesus.position.clone(), v3(-2, 0, 18), 18); await walk(-2.6, 12, 12); },
+    walkOnWater() { jesus.visible = true; jesus.position.set(3, 0, -228); jesusLight.intensity = 6; jesus.rotation.y = 0; return jw.go(jesus.position.clone(), v3(.6, 0, -206), 16); },
     async stepOut() { await kit.setEnv({ camX: 0, camZ: -201.6, camH: 1.55 }, 3.5); jw.go(jesus.position.clone(), v3(.4, 0, -204.2), 3); },
     async sink() { audio.wind(1, 1); audio.splash(); kit.setEnv({ waves: 2.1 }, 2); await kit.setEnv({ camH: .22, camP: .08 }, 4.5); },
     async rescue() { audio.splash(); kit.hold(jesus, 'reach'); await kit.setEnv({ camH: 1.5, camP: 0 }, 2.2); kit.hold(jesus); kit.setEnv({ camZ: -197.6, camH: 1.25 }, 5); jw.go(jesus.position.clone(), v3(.7, 0, -199.4), 5).then(() => { jesus.visible = false; jesusLight.intensity = 0; jesusSeat.visible = true; jesusSeat.position.set(0, .25, -1.2); }); },
@@ -1458,7 +1458,7 @@ function stub({ audio, sleep }) {
 
 /* ---------- 1부 · 부르심과 기적 ---------- */
 async function part1(A) {
-  const { world, audio, sleep, verse, direction, sceneCut, choicePoint, speakLoop, say } = A;
+  const { world, audio, sleep, verse, direction, sceneCut, choicePoint, speakLoop, say, adapt } = A;
 
   // 1 · 요단 강 건너편 (요 1:35–42)
   await sceneCut('1', '요단 강 건너편', '요한복음 1장 35–42절', async () => { world.setEnv('jordan', 0); world.place('jordan'); });
@@ -1481,23 +1481,31 @@ async function part1(A) {
   audio.water(.3, 2); audio.wind(.12); audio.chord(.08, 4);
   await direction('갈릴리로 돌아와 다시 고기를 잡는다. 밤새 그물을 던졌지만 아무것도 잡지 못했다. 동이 튼 물가에 사람들이 몰려든다.');
   await verse('눅 5:1');
+  // 각색(사용자 요청 2026-10-10): 이름 없는 어부와 구경꾼의 말. 일어나는 일과 결과는 눅 5:1–11 그대로다. 같은 배의 일꾼은 5:9 '그와 함께 있는 모든 사람'
+  await adapt([['물가의 사람', '저분이야, 저분. 말씀 한번 들어 보려고 다들 몰려온 거래.'], ['물가의 사람', '밀지 마요, 물에 빠지겠어!']]);
   await direction('물가에 배 두 척이 있다. 하나는 당신의 배, 하나는 동업자들의 배다.', { auto: true, ms: 2600 });
   await verse('눅 5:2');
+  await adapt([['어부 1', '밤새 한 마리도 없네. 오늘은 공쳤다.'], ['어부 2', '그물이나 빨고 들어가 자자. 눈이 감긴다.']]);
   await world.board();
   await verse('눅 5:3');
+  await adapt([['어부 2', '우리 배에 타신다고? …뭐, 자리야 내 드리면 되지.']], { auto: true, ms: 2800 });
   world.sailOut();
   await verse('눅 5:4', { voice: true });
+  await adapt([['어부 1', '시몬, 진짜 던질 거야? 날이 훤한데 깊은 데로? 고기는 밤에 잡는 거잖아.'], ['어부 2', '에이, 밑져야 본전이지. 한 번 더 던진다고 뭐가 줄어?'], ['어부 1', '선생님이 고기잡이를 아시나… 우린 밤새 해 봤다고.']]);
   await choicePoint('a2');
   world.catchFish();
   await verse('눅 5:6');
+  await adapt([['어부 2', '어, 어? 무거워… 그물이 안 올라와!'], ['어부 1', '찢어진다, 찢어져! 저쪽 배 불러, 빨리!']]);
   await world.partners();
   await verse('눅 5:7');
+  await adapt([['건너편 배 어부', '이게 말이 돼? 밤새 한 마리도 없던 물에서…'], ['어부 2', '배가 가라앉겠어! 그만, 그만 퍼 담아!'], ['어부 1', '(작은 소리로) 저분… 대체 누구신데…']]);
   await choicePoint('a3');
   await verse('눅 5:9');
   await verse('눅 5:10');
   await world.landing();
   await direction('두 척의 배가 고기를 가득 실은 채 모래에 닿는다.');
   await verse('눅 5:11');
+  await adapt([['물가의 사람', '저 고기를 다 두고 간다고? 저게 얼마치인데…'], ['물가의 사람', '미쳤나 봐. …아니면 뭘 본 거지?']]);
   await direction('등 뒤로 배와 그물, 가득 잡은 고기가 남는다.', { auto: true, ms: 400 });
   await world.leave();
 

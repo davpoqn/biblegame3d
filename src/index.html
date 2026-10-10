@@ -170,7 +170,7 @@ h1 .comma{color:var(--ember)}
 .source{margin:0;font-size:.76rem;color:var(--dust);line-height:1.7}
 
 @media (prefers-reduced-motion: reduce){
-  .w{animation:none;opacity:1;filter:none}
+  .w,.adapt{animation:none;opacity:1;filter:none}
   .continue::after{animation:none}
   .echo{transition:opacity 1.2s ease}
   .echo.go{transform:none}
@@ -196,6 +196,10 @@ body:not(.playing) #text-toggle{visibility:hidden}
 .sum-mode{display:flex;flex-wrap:wrap;gap:.4rem 1rem;align-items:baseline}
 .loading{margin:0;font:400 .9rem var(--f-ui);color:var(--dust)}
 .tag-say{color:var(--bone);border-style:dashed}
+/* 각색: 성경에 적히지 않은 주변 사람들의 말 */
+.tag-adapt{color:var(--dust);border-style:dotted}
+.adapt{display:grid;gap:.35rem;justify-items:start;opacity:0;animation:wIn .5s ease forwards}
+.adapt-line{margin:0;font:400 clamp(1.02rem,2.7vw,1.26rem)/1.6 var(--f-display);color:var(--bone);max-width:30em;word-break:keep-all;overflow-wrap:anywhere}
 .say-line{margin:0;font:400 clamp(1.14rem,3.1vw,1.48rem)/1.7 var(--f-display);color:var(--bone);max-width:30em;text-wrap:pretty;word-break:keep-all;overflow-wrap:anywhere}
 .heard{display:grid;gap:.25rem;margin-top:.45rem;padding-left:.7rem;border-left:1px solid var(--line)}
 .heard .h-line{font:400 .92rem/1.55 var(--f-display);color:var(--bone)}
@@ -358,7 +362,7 @@ const PROG_KEY = 'bg3d-progress';
 function loadProg() { try { return JSON.parse(localStorage.getItem(PROG_KEY) || '{}') || {}; } catch (_) { return {}; } }
 function saveDone(id, i) { try { const p = loadProg(); p[id] = Array.from(new Set([...(p[id] || []), i])); localStorage.setItem(PROG_KEY, JSON.stringify(p)); } catch (_) {} }
 const TOUCH = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
-const LOOK_HINT = TOUCH ? '화면을 끌어서 둘러볼 수 있어요 · 아래를 보면 내 몸이 보여요' : '마우스로 화면을 끌어서 둘러볼 수 있어요 · 아래를 보면 내 몸이 보여요';
+const LOOK_HINT = TOUCH ? '화면을 끌어서 둘러볼 수 있어요 · 아래를 보면 내 몸이 보여요' : '마우스를 움직이거나 끌어서, 또는 휠을 돌려서 둘러볼 수 있어요 · 아래를 보면 내 몸이 보여요';
 
 /* ---------- 소리 (Web Audio로 합성) ---------- */
 const audio = (() => {
@@ -521,10 +525,10 @@ function toggleMode() { textMode = isEasy() ? 'orig' : 'easy'; applyMode(); }
 $('#text-toggle').addEventListener('click', toggleMode);
 $('#summary [data-modeswitch]').addEventListener('click', toggleMode);
 
-function revealWords(node, text) {
+function revealWords(node, text, base = 0) {
   if (reduceMotion) { node.textContent = text; return; }
   const words = text.split(' '), step = Math.min(55, 2400 / Math.max(1, words.length));
-  words.forEach((w, i) => { const s = el('span', 'w', w); s.style.animationDelay = (i * step) + 'ms'; node.append(s); if (i < words.length - 1) node.append(' '); });
+  words.forEach((w, i) => { const s = el('span', 'w', w); s.style.animationDelay = (base + i * step) + 'ms'; node.append(s); if (i < words.length - 1) node.append(' '); });
 }
 let pendingContinue = null;
 function waitContinue(label = '계속') {
@@ -560,6 +564,20 @@ async function say(who, line, ref, { auto = false, ms = 0 } = {}) {
   clearStage();
   const p = el('p', 'say-line'); revealWords(p, line);
   stage.append(sayTag(who), p);
+  if (auto) { if (ms) await sleep(ms); return; }
+  await waitContinue();
+}
+// 각색: 성경에 적히지 않은 주변 사람들(이름 없는 어부, 구경꾼 등)의 말을 한 화면에 차례로 보여 준다.
+// 성경이 정한 일과 결과는 바꾸지 않는다. 엔딩 기록에는 넣지 않는다. lines: [['어부', '말'], ...]
+async function adapt(lines, { auto = false, ms = 0 } = {}) {
+  clearStage();
+  let delay = 0;
+  for (const [who, line] of lines) {
+    const row = el('div', 'adapt'), p = el('p', 'adapt-line');
+    revealWords(p, line, delay); row.style.animationDelay = delay + 'ms';
+    row.append(el('span', 'layer-tag tag-adapt', `각색 · ${who}`), p); stage.append(row);
+    delay += Math.min(2400, line.split(' ').length * 55) + 900;
+  }
   if (auto) { if (ms) await sleep(ms); return; }
   await waitContinue();
 }
@@ -773,7 +791,7 @@ function renderParts() {
 function updateMeta() {
   const c = CHARS.find(x => x.id === selected), p = c.parts[selectedPart];
   const meta = $('#meta'); meta.replaceChildren();
-  [`약 ${p.m}분`, p.s, '본문: 성경전서 개역한글판(1961)', '화면에는 풀어 쓴 말, 버튼으로 원문', TOUCH ? '화면을 끌어서 둘러보기' : '마우스로 끌어서 둘러보기', '입력한 말은 저장되지 않습니다'].forEach(t => meta.append(el('li', null, t)));
+  [`약 ${p.m}분`, p.s, '본문: 성경전서 개역한글판(1961)', '화면에는 풀어 쓴 말, 버튼으로 원문', TOUCH ? '화면을 끌어서 둘러보기' : '마우스(움직이기·끌기·휠)로 둘러보기', '입력한 말은 저장되지 않습니다'].forEach(t => meta.append(el('li', null, t)));
 }
 function renderPicker() {
   const pk = $('#picker'); pk.replaceChildren();
@@ -810,7 +828,7 @@ soundBtn.addEventListener('click', () => { if (audio.enabled) audio.disable(); e
 
 // 다른 사람의 자리에서 볼 때(예: 구레네 사람 시몬, 로마 군병) 위쪽 이름을 바꾼다. 빈 값이면 원래대로
 function setWho(text) { const meta = CHARS.find(x => x.id === C.id), pm = meta.parts[partIdx]; $('#hud-name').textContent = text || `${meta.name}, ${pm && meta.parts.length > 1 ? pm.t : meta.sub}`; }
-const api = () => ({ V: C.V, P: C.P, world, audio, sleep, reduceMotion, verse, say, direction, choose, speak, echo, react, sceneCut, choicePoint, speakLoop, recall, showDay, hideDay, clearStage, readMore, setWho, showHint, part: partIdx, get record() { return record; } });
+const api = () => ({ V: C.V, P: C.P, world, audio, sleep, reduceMotion, verse, say, adapt, direction, choose, speak, echo, react, sceneCut, choicePoint, speakLoop, recall, showDay, hideDay, clearStage, readMore, setWho, showHint, part: partIdx, get record() { return record; } });
 
 let running = false;
 let hintTimer = 0;

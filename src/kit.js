@@ -565,12 +565,12 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     return g;
   }
   const walkers = [];
-  function walker(g, { height, pace = 11, amp = .09, lean = .22, standLean = .3 } = {}) {
+  function walker(g, { height, pace = 11, amp = .09, lean = .22, standLean = .3, noRun = false } = {}) {  // noRun: 빨라도 달리지 않고 걷는다(예수님)
     const F = g.userData.fig; if (F) { amp = 0; lean = 0; standLean = 0; }  // 캐릭터는 걷기 동작이 몸을 움직인다
     const o = { g, height: height || (() => 0), pace, amp, lean, standLean, state: 'idle', t0: 0, dur: 1, from: new THREE.Vector3(), to: new THREE.Vector3(), res: null, seed: Math.random() * 6 };
     o.go = (from, to, dur) => {
       if (from) o.from.copy(from); if (to) o.to.copy(to); o.dur = dur || o.dur; g.visible = true; o.state = 'run'; o.t0 = clock; g.position.copy(o.from);
-      if (F) { const sp = Math.hypot(o.to.x - o.from.x, o.to.z - o.from.z) / o.dur / g.scale.x, run = sp > 2.4 || pace >= 10; F.play(run ? 'Jog_Fwd_Loop' : 'Walk_Loop', .25, clamp(sp / (run ? 3 : 1.25), .6, 1.7)); }
+      if (F) { const sp = Math.hypot(o.to.x - o.from.x, o.to.z - o.from.z) / o.dur / g.scale.x, run = !noRun && (sp > 2.4 || pace >= 10); F.play(run ? 'Jog_Fwd_Loop' : 'Walk_Loop', .25, clamp(sp / (run ? 3 : 1.25), .6, 1.7)); }
       return new Promise(r => { o.res = r; });
     };
     o.idle = () => { o.state = 'idle'; };
@@ -985,7 +985,14 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
 
   /* --- 시점: 마우스나 손가락으로 끌어서 둘러본다 (움직이지는 않는다). 가만히 두면 천천히 이야기의 방향으로 돌아온다 --- */
   let lookX = 0, lookY = 0, tLookX = 0, tLookY = 0, dragging = null, lastDrag = -99;
+  // 마우스는 끌지 않아도 가리키는 쪽을 조금 바라보고(hTX·hTY), 화면 좌우 끝에 두면 그쪽으로 계속 돈다(edge). 휠로도 좌우로 돈다
+  let hTX = 0, hTY = 0, edge = 0;
   const onMove = e => {
+    if (!dragging && e.pointerType === 'mouse') {
+      if (e.target === canvas) { const x = e.clientX / innerWidth * 2 - 1, y = e.clientY / innerHeight * 2 - 1; hTX = x * .3; hTY = -y * .18; edge = Math.abs(x) > .86 ? Math.sign(x) * (Math.abs(x) - .86) / .14 : 0; lastDrag = clock; }
+      else edge = 0;  // 글 상자나 버튼 위에서는 시점을 그대로 둔다
+      return;
+    }
     if (!dragging || e.pointerId !== dragging.id) return;
     tLookX = clamp(dragging.lx - (e.clientX - dragging.x) / innerWidth * 2.2, -1, 1);
     tLookY = clamp(dragging.ly - (e.clientY - dragging.y) / innerHeight * 2.4, -1, 1);
@@ -996,6 +1003,10 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   window.addEventListener('pointermove', onMove, { passive: true });
   canvas.addEventListener('pointerdown', onDown);
   window.addEventListener('pointerup', onUp);
+  const onWheel = e => { if (e.target !== canvas) return; e.preventDefault(); tLookX = clamp(tLookX + (e.deltaY + e.deltaX) * .0012, -1, 1); lastDrag = clock; };
+  canvas.addEventListener('wheel', onWheel, { passive: false });
+  const onLeave = () => { hTX = hTY = 0; edge = 0; };  // 마우스가 창 밖으로 나가면 가운데로
+  document.documentElement.addEventListener('mouseleave', onLeave);
   function resize() {
     const w = innerWidth, h = innerHeight;
     renderer.setSize(w, h, false); composer.setSize(w, h);
@@ -1045,8 +1056,9 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     skyU.uFlash.value = fx.flash;
     sparks.update(dt); dust.update(dt);
 
-    if (!dragging && clock - lastDrag > 5) { const k = 1 - Math.exp(-dt * .7); tLookX -= tLookX * k; tLookY -= tLookY * k; }
-    const lk = Math.min(1, dt * 4); lookX += (tLookX - lookX) * lk; lookY += (tLookY - lookY) * lk;
+    if (edge && !dragging) { tLookX = clamp(tLookX + edge * dt * .9, -1, 1); lastDrag = clock; }
+    if (!dragging && clock - lastDrag > 5) { const k = 1 - Math.exp(-dt * .7); tLookX -= tLookX * k; tLookY -= tLookY * k; hTX -= hTX * k; hTY -= hTY * k; }
+    const lk = Math.min(1, dt * 4); lookX += (clamp(tLookX + hTX, -1, 1) - lookX) * lk; lookY += (clamp(tLookY + hTY, -1, 1) - lookY) * lk;
     const sway = reduceMotion ? 0 : 1, sh = env.shake * (reduceMotion ? .15 : 1);
     if (camGround.on) env.camH = groundAt(env.camX, env.camZ) + camGround.eye;  // 걸을 때 눈높이를 땅에 맞춘다
     camera.position.set(env.camX + Math.sin(clock * 13.1) * .02 * sh, env.camH + Math.sin(clock * .9) * .012 * sway + Math.sin(clock * 17.3) * .02 * sh, env.camZ);
@@ -1093,6 +1105,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     dispose() {
       dead = true; cancelAnimationFrame(raf);
       window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); window.removeEventListener('resize', resize);
+      canvas.removeEventListener('wheel', onWheel); document.documentElement.removeEventListener('mouseleave', onLeave);
       scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); });
       composer.dispose && composer.dispose(); renderer.dispose(); renderer.forceContextLoss && renderer.forceContextLoss();
     }
