@@ -232,7 +232,10 @@ body:not(.playing) #text-toggle{visibility:hidden}
 .map-ref{margin:0;font:400 .84rem/1.5 var(--f-ui);color:var(--dust)}
 .map-note{margin:0;font:400 .8rem/1.55 var(--f-ui);color:#c9b48e}
 @media (max-width: 720px){.map-inner{grid-template-columns:1fr;padding:.6rem}#map-cv{aspect-ratio:1/1}}
-body:not(.playing) #map-toggle,body:not(.playing) #speed-toggle{display:none}
+body:not(.playing) #map-toggle,body:not(.playing) #speed-toggle,body:not(.playing) #auto-toggle{display:none}
+#speed-toggle,#auto-toggle{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+#auto-toggle[aria-pressed="true"]{background:rgba(201,170,110,.32);border-color:rgba(230,205,150,.7)}
+@media (max-width: 560px){.hud{flex-wrap:wrap;row-gap:.5rem}.hud-title{flex:1 1 100%}.hud-title b{white-space:nowrap}.hud-right{gap:.3rem;margin-left:auto}.hud .pill{padding:.32rem .55rem;font-size:.7rem;letter-spacing:.02em}.hint{top:calc(env(safe-area-inset-top,0px) + 104px)}}  /* 휴대폰: 제목 한 줄, 버튼 한 줄 */
 
 /* 인트로 (사이트 첫 화면): 흰 바탕에 성경책 하나. 스치면 펼쳐지고 책 이름이 솟아오른다 */
 #intro{position:fixed;inset:0;z-index:30;overflow:hidden;color-scheme:light;color:#3b2a1c;background:radial-gradient(70% 60% at 50% 30%,#fffdf6 0%,#fbf6ea 55%,#f1e8d8 100%);touch-action:none;transition:opacity .9s ease}
@@ -274,7 +277,8 @@ body:not(.playing) #map-toggle,body:not(.playing) #speed-toggle{display:none}
 <header class="hud">
   <div class="hud-title"><b id="hud-name"></b><span id="hud-chapter">데모 챕터</span></div>
   <div class="hud-right">
-    <button class="pill" id="speed-toggle" type="button" title="배속 (F) · 테스트용">1×</button>
+    <button class="pill" id="speed-toggle" type="button" title="빠르게 (F)" aria-label="빠르기">1×</button>
+    <button class="pill" id="auto-toggle" type="button" aria-pressed="false" title="자동 진행 (A)">자동</button>
     <button class="pill" id="map-toggle" type="button" aria-expanded="false" title="지도 (M)">지도</button>
     <button class="pill" id="text-toggle" type="button" aria-pressed="false">원문 보기</button>
     <button class="pill" id="sound-toggle" type="button" aria-pressed="false">소리 켜기</button>
@@ -609,7 +613,7 @@ function waitContinue(label = '계속') {
     let fired = false;
     const onKey = e => { const t = e.target && e.target.tagName; if (t === 'TEXTAREA' || t === 'INPUT') return; if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); done(); } };
     const done = () => { if (fired) return; fired = true; window.removeEventListener('keydown', onKey); pendingContinue = null; b.disabled = true; res(); };
-    b.addEventListener('click', done); window.addEventListener('keydown', onKey); pendingContinue = done;
+    b.addEventListener('click', done); window.addEventListener('keydown', onKey); pendingContinue = done; setTimeout(autoKick);
     stage.append(b); setTimeout(() => { try { b.focus({ preventScroll: true }); } catch (_) {} }, 80);
   });
 }
@@ -992,7 +996,9 @@ $('#pick-other').addEventListener('click', () => { if (!running) toTitle(); });
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !$('#map').hidden) { e.preventDefault(); showMap(false); return; }
   if (e.key === 'Escape' && document.body.classList.contains('playing')) { e.preventDefault(); toTitle(); }
-  if (TEST && (e.key === 'f' || e.key === 'F' || e.key === 'ㄹ') && document.body.classList.contains('playing') && !(e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) { e.preventDefault(); $('#speed-toggle').click(); }
+  if ((e.code === 'KeyF' || e.code === 'KeyA') && !e.ctrlKey && !e.metaKey && !e.altKey && document.body.classList.contains('playing') && !(e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) {
+    e.preventDefault(); if (e.code === 'KeyA') setAuto(!autoOn); else if (e.shiftKey) toggleFast(); else nextSpeed();
+  }
   if ((e.key === 'm' || e.key === 'M' || e.key === 'ㅡ') && document.body.classList.contains('playing') && !(e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) { e.preventDefault(); showMap($('#map').hidden); }
 });
 
@@ -1112,17 +1118,36 @@ function drawMap() {
 }
 $('#map-toggle').addEventListener('click', () => showMap($('#map').hidden));
 
-/* ---------- 테스트용 배속 (사용자 요청 2026-10-14): 주소에 ?test를 붙이면 '1×' 버튼이 생기고, 누르거나 F 키로 1→2→4→8배 ----------
-   3D 시계, 이야기의 기다림, 글자가 나타나는 효과를 함께 빠르게 한다. 계속(Space)과 고르기는 그대로 직접 누른다 */
-const TEST = /[?&]test\b/.test(location.search), SPEEDS = [1, 2, 4, 8];
+/* ---------- 배속과 자동 진행 (사용자 요청 2026-10-14) ----------
+   누구나: '1×' 버튼이나 F 키로 1·2배, '자동' 버튼이나 A 키로 자동 진행(글을 읽을 만큼 기다렸다가 '계속'을 누른다. 고르기와 글쓰기는 직접 한다).
+   숨은 키(만든 사람 테스트용, 화면에는 알리지 않는다): PC는 Shift+F, 휴대폰은 배속 버튼을 길게 누르기 → 4·8배가 열리고 4배가 된다. 다시 하면 닫힌다. 이 기기에 기억한다.
+   3D 시계, 이야기의 기다림, 글자가 나타나는 효과를 함께 빠르게 한다 */
+const store = { get: k => { try { return localStorage.getItem(k); } catch (_) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} } };
+let fastOpen = store.get('bg3d-fast') === '1', autoOn = false, autoT = 0;
+const speeds = () => fastOpen ? [1, 2, 4, 8] : [1, 2];
 function setSpeed(s) {
   speed = s; if (curKit) curKit.setSpeed(s); $('#speed-toggle').textContent = s + '×';
   for (const a of document.getAnimations()) a.playbackRate = s;
+  autoKick();
 }
-if (TEST) {
-  $('#speed-toggle').addEventListener('click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]));
-  setInterval(() => { if (speed !== 1) for (const a of document.getAnimations()) if (a.playbackRate !== speed) a.playbackRate = speed; }, 120);
-} else $('#speed-toggle').remove();
+const nextSpeed = () => { const L = speeds(); setSpeed(L[(L.indexOf(speed) + 1) % L.length]); };
+function toggleFast() { fastOpen = !fastOpen; store.set('bg3d-fast', fastOpen ? '1' : '0'); setSpeed(fastOpen ? 4 : Math.min(speed, 2)); }
+setInterval(() => { if (speed !== 1) for (const a of document.getAnimations()) if (a.playbackRate !== speed) a.playbackRate = speed; }, 120);
+{
+  const b = $('#speed-toggle'); let hold = 0, held = false;
+  b.addEventListener('pointerdown', () => { held = false; clearTimeout(hold); hold = setTimeout(() => { held = true; toggleFast(); }, 800); });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, () => clearTimeout(hold));
+  b.addEventListener('contextmenu', e => e.preventDefault());
+  b.addEventListener('click', () => { if (held) { held = false; return; } nextSpeed(); });
+}
+// 자동 진행: 지금 화면의 글 길이만큼 읽을 시간을 주고 '계속'을 누른다 (배속이면 그만큼 빨리)
+function autoKick() {
+  clearTimeout(autoT); if (!autoOn || !pendingContinue) return;
+  const go = pendingContinue, n = (stage.textContent || '').length;
+  autoT = setTimeout(() => { if (autoOn && pendingContinue === go) go(); }, Math.min(12000, 1800 + n * 65) / speed);
+}
+function setAuto(on) { autoOn = on; $('#auto-toggle').setAttribute('aria-pressed', String(on)); autoKick(); }
+$('#auto-toggle').addEventListener('click', () => setAuto(!autoOn));
 $('#map-close').addEventListener('click', () => showMap(false));
 $('#map').addEventListener('click', e => { if (e.target === $('#map')) showMap(false); });
 

@@ -24,7 +24,7 @@ tools/check.sh                                          # 문법 검사
 python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
 ```
 
-직접 해 보며 확인할 때는 주소 끝에 `?test`를 붙인다(예: `https://davpoqn.github.io/biblegame3d/?test#job`). 위쪽 '1×' 버튼이나 `F` 키로 2·4·8배속.
+직접 해 보며 확인할 때는 숨은 키로 빠르게 한다: PC는 `Shift+F`, 휴대폰은 위쪽 '1×' 버튼을 길게 누르면 4·8배가 열린다(사용자와 Claude만 쓰는 테스트용. 화면에 알리지 않는다). 그다음 `F`나 버튼으로 1→2→4→8배. 누구나 쓰는 것은 2배와 '자동'(`A`) 진행.
 
 ## 작업 방식 (사용자 선호)
 
