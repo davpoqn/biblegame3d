@@ -742,6 +742,7 @@ async function world(kit, { audio, sleep }) {
     return lerp(h, 12 + 30 * vnoise(x * .008 + 3, z * .008), far);
   }
   kit.terrain({ height: heightAt, size: 1000, seg: 220, at: [0, -150], lo: '#5b4a3a', hi: '#b59a74', yMul: .03 });
+  kit.path([[-3.4, -6], [-3, 2], [-2.6, 12], [-2.2, 26], [-1, 40]], { width: 2, height: heightAt });  // 물가에서 마을로 가는 길
   kit.water({ y: 0, size: 1400, at: [0, -300], deep: '#173640' });
   kit.rocks({ n: 90, height: heightAt, rMin: 6, rMax: 60, center: [0, 10], avoid: (x, z) => z < -4 || (Math.abs(x) < 5 && z < 6), sMax: .5 });
   kit.village({ center: [-60, 60], n: 10, rMin: 6, rMax: 30, height: heightAt, seed: 4 });
@@ -974,6 +975,7 @@ async function world(kit, { audio, sleep }) {
     return h + 18 * smooth(380, 520, Math.hypot(lx + 60, z));
   };
   kit.terrain({ height: hJr, size: 1100, seg: 220, at: [JR - 40, 0], lo: '#7a6a52', hi: '#c2ad88', yMul: .012 });
+  kit.path([[JR + 175, -24], [JR + 150, -22], [JR + 60, -14], [JR + 4, -12], [JR - 50, -12]], { width: 3.4, height: hJr });  // 예루살렘으로 들어가는 길 (마 21:8–10)
   kit.cityWall({ from: [JR - 270, -110], to: [JR - 60, -110], height: hJr }); kit.cityWall({ from: [JR - 60, -110], to: [JR - 60, -18], height: hJr }); kit.cityWall({ from: [JR - 60, -6], to: [JR - 60, 110], height: hJr });
   kit.cityWall({ from: [JR - 60, 110], to: [JR - 270, 110], height: hJr }); kit.cityWall({ from: [JR - 270, 110], to: [JR - 270, 76], height: hJr }); kit.cityWall({ from: [JR - 270, 64], to: [JR - 270, -110], height: hJr });
   kit.temple({ at: [JR - 120, hJr(JR - 120, 10) - 2, 10], ry: Math.PI / 2, s: .8 });
@@ -1036,7 +1038,7 @@ async function world(kit, { audio, sleep }) {
   const GO = v3(JR - 300, 0, 70); GO.y = hJr(GO.x, GO.z);
   const crosses = [-5, 0, 5].map((dx, i) => kit.cross({ at: [GO.x + dx, hJr(GO.x + dx, GO.z - 2) - .1, GO.z - 2], h: i === 1 ? 4.4 : 3.9, titulus: i === 1 }));
   const hang = (g, c) => { const p = c.userData.hang.clone(); c.localToWorld(p); g.position.copy(p); g.rotation.y = 0; };
-  const jesusX = fig('jesus', 0, 0, 0, 0, { colors: { tunic: '#e9e2d2' } }); hang(jesusX, crosses[1]);
+  const jesusX = fig('jesus', 0, 0, 0, 0, { colors: { tunic: '#e9e2d2' }, mantle: false }); hang(jesusX, crosses[1]);  // 군병들이 그 옷을 취하였다 (요 19:23)
   const thieves = [0, 2].map(ci => { const g = fig('boy', 0, 0, 0, 0, { tint: '#9a8a6a' }); hang(g, crosses[ci]); return g; });
   const soldiersX = [[-2.4, 3.6, 'seat'], [-1, 4.4, 'seat'], [1.2, 4.6, 'seat'], [2.6, 3.8, 'seat'], [-4.4, 1.6, 'stand'], [4.6, 1.8, 'stand']].map(([dx, dz, p]) => { const g = fig('roman', GO.x + dx, hJr(GO.x + dx, GO.z + dz), GO.z + dz, Math.atan2(-dx, -dz - 2), { pose: p }); return g; });
   const centurion = fig('roman', GO.x - 2.2, hJr(GO.x - 2.2, GO.z + 1.6), GO.z + 1.6, 0, { colors: { cloak: '#7a1a18' } });
@@ -1083,7 +1085,7 @@ async function world(kit, { audio, sleep }) {
   const SEATS = [[-3, -3.6], [-1.6, -3.7], [1.6, -3.7], [3, -3.6], [-5.2, -1.6], [-5.2, .2], [5.2, -1.6], [5.2, .2], [-3, -.6], [3, -.9], [.2, -.2]];
   const diners = SEATS.map(([x, z], i) => { const g = i < 6 ? kit.figure(i < 3 ? 'fisherman' : 'man', { tint: ['#c9b48e', '#bfae8a', '#d8ccb0', '#a89878', '#8a7a5a', '#6a5a3a'][i], pose: 'seat', visible: true }) : kit.person(['#3e3228', '#4a3b2f', '#352c25'][i % 3], { pose: 'seat', visible: true }); g.position.set(UP.x + x, 0, UP.z + z); faceTo(g, UP.x, UP.z - 1.6); return g; });
   const judasUp = diners[5], johnUp = diners[1];
-  const jesusUp = fig('jesus', UP.x, 0, UP.z - 3.7, 0, { pose: 'seat' }); const jesusWash = fig('jesus', UP.x, 0, UP.z - 3, 0, { colors: { tunic: '#eee9de' } }); jesusWash.visible = false; const jww = kit.walker(jesusWash, { pace: 4 });
+  const jesusUp = fig('jesus', UP.x, 0, UP.z - 3.7, 0, { pose: 'seat' }); const jesusWash = fig('jesus', UP.x, 0, UP.z - 3, 0, { colors: { tunic: '#eee9de' }, mantle: false });  /* 겉옷을 벗고 (요 13:4) */ jesusWash.visible = false; const jww = kit.walker(jesusWash, { pace: 4 });
   const basin = new THREE.Mesh(new THREE.CylinderGeometry(.28, .2, .14, 14), kit.mat('#8a6a4a')); basin.visible = false; sites.jer.add(basin);
   const breadUp = kit.prop('prop_bread'), cup = new THREE.Mesh(new THREE.CylinderGeometry(.05, .035, .12, 10), kit.mat('#9a7a4a', { metalness: .3 }));
   if (breadUp) { breadUp.position.set(UP.x - .25, .43, UP.z - 2.3); sites.jer.add(breadUp); } cup.position.set(UP.x + .25, .46, UP.z - 2.3); sites.jer.add(cup);

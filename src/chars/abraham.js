@@ -391,6 +391,7 @@ async function world(kit, { audio, sleep }) {
   /* --- 1 · 하란 --- */
   const h0 = land(0);
   kit.terrain({ height: h0, size: 700, seg: 160, at: [0, -120], lo: '#6c5a42', hi: '#c2a87e', yMul: .035 });
+  kit.path([[1.5, 6], [1.8, -18], [.5, -44], [0, -62], [1, -100]], { width: 2.2, height: h0 });  // 하란을 떠나는 길 (창 12:4–5)
   kit.rocks({ n: 60, height: h0, rMin: 8, rMax: 140, sMax: .5 });
   const town = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: '#a8916f', roughness: 1 }), 90);
   { const d = new THREE.Object3D(); for (let i = 0; i < 90; i++) { const x = rnd(-50, 50), z = rnd(30, 80), w = rnd(4, 8), hh = rnd(2.5, 5); d.position.set(x, h0(x, z) + hh / 2 - .3, z); d.rotation.y = rnd(-.2, .2); d.scale.set(w, hh, rnd(4, 8)); d.updateMatrix(); town.setMatrixAt(i, d.matrix); } }

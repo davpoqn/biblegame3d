@@ -481,10 +481,11 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   const TINT = [['dress', 'dress'], ['royal_mantle', 'royal'], ['mantle', 'mantle'], ['tunic_long', 'tunic'], ['tunic_short', 'tunic']];
   const figs = [];
   // 예수님(연출: 성경에는 생김새가 없어 전통 그림을 따른다): 흰 옷, 붉은 겉옷, 어깨까지 오는 머리, 수염, 인자한 눈과 입
-  const JESUS = { name: '예수 (연출)', body: 'm', wear: ['tunic_long', 'belt', 'sandals', 'beard'], under: '#eee9de', colors: { tunic: '#eee9de', belt: '#c8b896', beard: '#4a3122' } };
-  const JESUS_RED = '#a3292a', JESUS_HAIR = '#3f2a1c';
+  // 예수님(연출: 성경에는 생김새가 없다). 사용자가 보낸 그림(2026-10-14)처럼 평범한 갈릴리 사람: 거친 베 속옷, 붉은 줄무늬 띠, 두 어깨에 두른 줄무늬 올리브색 겉옷, 가죽끈 샌들. 후광은 없다
+  const JESUS = { name: '예수 (연출)', body: 'm', wear: ['tunic_long', 'belt', 'sandals', 'beard'], under: '#d8ccb6', colors: { tunic: '#d8ccb6', belt: '#8a3328', beard: '#4a3122' } };
+  const JESUS_MANTLE = '#6f6c3a', JESUS_HAIR = '#3f2a1c';
   const JHEAD = { y: .122, z: .136 };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준, 예전 얼굴의 눈 자리)
-  function dressJesus(body) {
+  function dressJesus(body, { mantle = true } = {}) {
     body.updateMatrixWorld(true);  // 지금 동작 자세 그대로 머리·가슴 뼈에 붙인다 (skeleton.pose()는 뼈 크기가 달라진다)
     const head = body.getObjectByName('Head'), chest = body.getObjectByName('spine_03'), hp = head.getWorldPosition(new THREE.Vector3()), cp = chest.getWorldPosition(new THREE.Vector3());
     const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: .85 });
@@ -513,10 +514,26 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     put(head, new THREE.Mesh(new THREE.SphereGeometry(1, 18, 10, 0, Math.PI * 2, 0, Math.PI * .5), hairM), hp, [0, .105, .03], [-.55, 0, 0], [.118, .172, .142]);  // 정수리 (이마 선은 높고 뒤는 낮게)
     put(head, new THREE.Mesh(new THREE.CylinderGeometry(.1, .118, .21, 18, 1, true, Math.PI * .3, Math.PI * 1.4), hairM), hp, [0, .005, .03], null, [1, 1, 1.05]);  // 옆과 뒤로 어깨까지 (얼굴 쪽은 트였다)
     }
-    // 붉은 겉옷: 왼쪽 어깨에서 오른쪽 허리로 비스듬히 두른 띠, 그리고 등 뒤로 늘어진 자락
-    const red = new THREE.MeshStandardMaterial({ color: JESUS_RED, roughness: .9, side: THREE.DoubleSide });
-    put(chest, new THREE.Mesh(new THREE.CylinderGeometry(1, 1, .3, 24, 1, true), red), cp, [0, -.06, .01], [0, 0, .62], [.215, 1, .15]);
-    put(chest, new THREE.Mesh(new THREE.PlaneGeometry(.3, .62), red), cp, [.05, -.26, -.155], [.08, 0, .1]);
+    // 겉옷: 두 어깨에 두르고 앞은 열려 속옷과 띠가 보인다. 두꺼운 양털, 아랫단과 앞자락에 짙은 줄. 겉옷을 벗은 장면(요 13:4, 19:23)에는 두르지 않는다
+    if (mantle) {
+      TEX.mantle = TEX.mantle || canvasTex(256, 256, (g, w, h) => {
+        g.fillStyle = 'rgb(236,234,226)'; g.fillRect(0, 0, w, h);
+        for (let y = 0; y < h; y += 2) { g.fillStyle = `rgba(${Math.random() < .5 ? '190,188,180' : '255,255,250'},${rnd(.15, .35).toFixed(2)})`; g.fillRect(0, y, w, 1); }  // 짠 결
+        for (let x = 0; x < w; x++) { const f = Math.sin(x / w * 6.283 * 7 + Math.sin(x * .09) * 1.3), a = f > 0 ? f * .22 : -f * .16; g.fillStyle = f > 0 ? `rgba(255,255,250,${a.toFixed(3)})` : `rgba(40,38,30,${a.toFixed(3)})`; g.fillRect(x, 0, 1, h); }  // 세로로 늘어진 주름의 밝고 어두운 면
+        g.fillStyle = 'rgba(70,72,40,.75)'; for (const y of [h - 30, h - 18]) g.fillRect(0, y, w, 6);  // 아랫단 줄 (v=0이 아래)
+        for (const x of [10, 22, w - 28, w - 16]) g.fillRect(x, 0, 6, h);  // 앞자락 줄
+      });
+      const mm = new THREE.MeshStandardMaterial({ color: JESUS_MANTLE, map: TEX.mantle, roughness: 1, side: THREE.DoubleSide });
+      // 목둘레에서 어깨선을 따라 넓어졌다가 아래로 늘어진다 (위에서 12%까지가 어깨)
+      const back = new THREE.CylinderGeometry(1, 1, 1, 24, 14, true, Math.PI * .2, Math.PI * 1.6), pa = back.attributes.position;
+      for (let i = 0; i < pa.count; i++) {
+        const t = .5 - pa.getY(i), nx = pa.getX(i), nz = pa.getZ(i), k = Math.min(1, t / .12), r = t < .12 ? .11 + .19 * k * k * (3 - 2 * k) : .3 + .05 * (t - .12) / .88;
+        pa.setXYZ(i, nx * r * 1.12, -t * .92 - (t < .12 ? Math.abs(nx) * .03 * (1 - k) : 0), nz * r * (nz < 0 ? .88 : .78));
+      }
+      back.computeVertexNormals();
+      put(chest, new THREE.Mesh(back, mm), cp, [0, .27, -.02]);  // 위 끝이 목둘레에 걸친다
+      for (const sx of [-1, 1]) put(chest, new THREE.Mesh(new THREE.PlaneGeometry(.13, .92), mm), cp, [sx * .155, -.2, .165], [-.08, 0, sx * .05]);  // 어깨에서 앞으로 늘어진 두 자락
+    }
     return JH ? head : null;  // 머리를 접어 둔 뼈(동작이 크기를 되돌려도 매 장면 다시 접는다)
   }
   /* --- 자연스러운 움직임 (사용자 요청 2026-10-14) ---
@@ -653,7 +670,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     body.traverse(o => { if (o.isMesh && o.material && bare.has(o.material.name)) o.material.color.setRGB(avg[0] * tone[0], avg[1] * tone[1], avg[2] * tone[2], THREE.SRGBColorSpace); });
     return null;
   }
-  function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3, look, noHead = false, name } = {}) {
+  function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3, look, noHead = false, name, mantle = true } = {}) {
     const spec = role === 'jesus' ? (figSrc && JESUS) : figSrc && figSrc.outfits.roles[role];
     if (!spec) return person(tint || '#4a3c30', { pose, scale, visible });
     const d = figSrc.outfits.default_colors, col = { ...d };  // 색 규칙은 tools/chars/build_chars.py role_colors와 같다
@@ -684,7 +701,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
         a.reset().play(); if (F.cur && fade) F.cur.crossFadeTo(a, fade, false); else if (F.cur) F.cur.stop();
         F.cur = a; F.curName = name;
       } };
-    if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressJesus(body); }
+    if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressJesus(body, { mantle }); }
     else if (!noHead && figSrc.mhHead[spec.body === 'f' ? 'f' : 'm']) {
       const sex = spec.body === 'f' ? 'f' : 'm';
       body.traverse(o => { if (o.isMesh && ['beard', 'hair', 'circlet'].includes(o.name)) o.visible = false; });  // 마네킹용 수염·머리카락 대신 MakeHuman 것 (머리띠는 새 머리 위에 떠서 후광처럼 보인다)
@@ -1124,8 +1141,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry;
     const shape = new THREE.Shape(); shape.moveTo(-w / 2, 0); shape.lineTo(-w / 2, h * .45); shape.lineTo(0, h); shape.lineTo(w / 2, h * .45); shape.lineTo(w / 2, 0);
     const geo = new THREE.ExtrudeGeometry(shape, { depth: d, bevelEnabled: false }); geo.translate(0, 0, -d / 2);
-    const mat = new THREE.MeshStandardMaterial({ color, roughness: 1, side: THREE.DoubleSide });
-    const body = new THREE.Mesh(geo, mat); g.add(body);
+    const body = new THREE.Mesh(geo, surfMat('goat', color, { side: THREE.DoubleSide })); g.add(body);  // 염소털 천막 (짠 결과 띠)
     if (open) { const door = new THREE.Mesh(new THREE.PlaneGeometry(w * .3, h * .55), new THREE.MeshBasicMaterial({ color: '#0a0806' })); door.position.set(0, h * .28, d / 2 + .01); g.add(door); g.userData.door = door; }
     R().add(g); return g;
   }
@@ -1133,7 +1149,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   /* --- 돌 제단 --- */
   function altar({ at = [0, 0, 0], w = 1.6, h = .9 } = {}) {
     const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]);
-    const m = new THREE.MeshStandardMaterial({ color: '#8b7a66', roughness: 1, flatShading: true });
+    const m = surfMat('rock', '#8b7a66', { flatShading: true });
     for (let y = 0; y < 3; y++) for (let i = 0; i < 8; i++) {
       const a = i / 8 * Math.PI * 2 + y * .4, s = new THREE.Mesh(new THREE.DodecahedronGeometry(.26, 0), m);
       s.position.set(Math.cos(a) * w * .38, .16 + y * h / 3, Math.sin(a) * w * .3); s.scale.set(rnd(.9, 1.3), rnd(.7, 1), rnd(.9, 1.2)); s.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3)); g.add(s);
@@ -1147,15 +1163,75 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   /* --- 마을과 건물, 나무, 십자가, 무덤 (여러 인물이 같이 쓴다) --- */
   const MAT = {};
   const mat = (c, o) => { const k = c + (o ? JSON.stringify(o) : ''); return MAT[k] || (MAT[k] = new THREE.MeshStandardMaterial({ color: c, roughness: 1, ...(o || {}) })); };
+  // 건물 질감 (2026-10-14): 다듬은 돌, 흙벽 회반죽, 거친 바위, 나무, 염소털 천. 밝은 회색 무늬를 그려 두고 색(color)을 곱한다.
+  // UV 대신 물체 자리로 세 방향에서 비춰 입힌다(삼면 투영): 상자·원기둥·밀어낸 모양 어디에나 크기에 맞게 붙는다. SURF_M: 그림 한 장이 덮는 길이(m)
+  TEX.stone = () => TEX._stone || (TEX._stone = canvasTex(512, 512, (g, w, h) => {
+    g.fillStyle = 'rgb(150,145,138)'; g.fillRect(0, 0, w, h);  // 줄눈
+    const rows = 8, rh = h / rows;
+    for (let r = 0; r < rows; r++) {
+      let x = -rnd(0, 120);
+      while (x < w) {
+        const bw = rnd(90, 190), l = rnd(205, 248) | 0;
+        g.fillStyle = `rgb(${l},${l - 4},${l - 10})`; const rr = (x0, y0, ww, hh) => { g.beginPath(); if (g.roundRect) g.roundRect(x0, y0, ww, hh, 5); else g.rect(x0, y0, ww, hh); g.fill(); };
+        rr(x + 2.5, r * rh + 2.5, bw - 5, rh - 5); if (x + bw > w) rr(x - w + 2.5, r * rh + 2.5, bw - 5, rh - 5);
+        const sh = g.createLinearGradient(0, r * rh, 0, (r + 1) * rh); sh.addColorStop(0, 'rgba(255,255,255,.18)'); sh.addColorStop(1, 'rgba(0,0,0,.14)'); g.fillStyle = sh; g.fillRect(x + 2.5, r * rh + 2.5, bw - 5, rh - 5);  // 돌마다 위는 밝고 아래는 어둡게
+        x += bw;
+      }
+    }
+    blots(g, w, h, 120, 3, 12, () => `rgba(${Math.random() < .5 ? '120,115,108' : '255,255,250'},${rnd(.15, .35).toFixed(2)})`);  // 얼룩과 쪼은 자국
+    for (let i = 0; i < 6000; i++) { const l = rnd(150, 255) | 0; g.fillStyle = `rgba(${l},${l},${l},.35)`; g.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5); }
+  }));
+  TEX.plaster = () => TEX._plaster || (TEX._plaster = canvasTex(512, 512, (g, w, h) => {
+    g.fillStyle = 'rgb(236,233,226)'; g.fillRect(0, 0, w, h);
+    blots(g, w, h, 90, 20, 70, () => Math.random() < .55 ? `rgba(196,190,180,${rnd(.2, .45).toFixed(2)})` : `rgba(255,255,252,${rnd(.2, .4).toFixed(2)})`);  // 손으로 바른 흙의 얼룩
+    for (let i = 0; i < 10; i++) { const x = Math.random() * w, l = rnd(.03, .07); const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, `rgba(120,110,95,${l})`); gr.addColorStop(1, 'rgba(120,110,95,0)'); g.fillStyle = gr; g.fillRect(x, 0, rnd(16, 40), h * rnd(.2, .6)); }  // 옅은 빗물 자국
+    blots(g, w, h, 160, 6, 24, () => `rgba(${Math.random() < .5 ? '175,168,155' : '255,253,248'},${rnd(.2, .45).toFixed(2)})`);  // 흙손 자국
+    g.strokeStyle = 'rgba(95,85,72,.55)'; g.lineWidth = 1.2;
+    for (let i = 0; i < 14; i++) { let x = Math.random() * w, y = Math.random() * h; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 9; k++) { x += rnd(-9, 9); y += rnd(3, 11); g.lineTo(x, y); } g.stroke(); }  // 갈라진 금
+    for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '160,140,100' : '255,250,235'},.5)`; g.fillRect(Math.random() * w, Math.random() * h, rnd(2, 6), 1); }  // 짚 부스러기
+  }));
+  TEX.rock = () => TEX._rock || (TEX._rock = canvasTex(512, 512, (g, w, h) => {
+    g.fillStyle = 'rgb(228,226,222)'; g.fillRect(0, 0, w, h);
+    blots(g, w, h, 60, 30, 110, () => Math.random() < .5 ? `rgba(170,165,158,${rnd(.25, .5).toFixed(2)})` : `rgba(255,255,255,${rnd(.2, .4).toFixed(2)})`);
+    blots(g, w, h, 300, 3, 14, () => `rgba(${Math.random() < .6 ? '140,135,128' : '250,250,245'},${rnd(.2, .45).toFixed(2)})`);
+    g.strokeStyle = 'rgba(90,85,78,.6)'; g.lineWidth = 1.6;
+    for (let i = 0; i < 22; i++) { let x = Math.random() * w, y = Math.random() * h; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 7; k++) { x += rnd(-14, 14); y += rnd(-14, 14); g.lineTo(x, y); } g.stroke(); }  // 바위 금
+  }));
+  TEX.wood = () => TEX._wood || (TEX._wood = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = 'rgb(230,226,220)'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 60; i++) { const y0 = Math.random() * h, l = rnd(150, 225) | 0; g.strokeStyle = `rgba(${l},${l - 8},${l - 18},.7)`; g.lineWidth = rnd(1, 3); g.beginPath(); g.moveTo(0, y0); for (let x = 0; x <= w; x += 16) g.lineTo(x, y0 + Math.sin(x * .03 + i) * 3); g.stroke(); }  // 나뭇결
+    for (let i = 0; i < 5; i++) { const x = Math.random() * w, y = Math.random() * h; g.strokeStyle = 'rgba(110,95,80,.6)'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(x, y, rnd(6, 12), rnd(3, 5), 0, 0, 7); g.stroke(); }  // 옹이
+  }));
+  TEX.goat = () => TEX._goat || (TEX._goat = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = 'rgb(225,222,218)'; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 2) { g.fillStyle = `rgba(${Math.random() < .5 ? '170,165,160' : '255,255,255'},${rnd(.15, .4).toFixed(2)})`; g.fillRect(0, y, w, 1); }  // 짠 결
+    for (const y of [40, 52, 170, 182]) { g.fillStyle = 'rgba(120,112,105,.55)'; g.fillRect(0, y, w, 6); }  // 띠
+    for (let i = 0; i < 1500; i++) { g.fillStyle = 'rgba(110,105,100,.35)'; g.fillRect(Math.random() * w, Math.random() * h, rnd(2, 5), 1); }  // 털
+  }));
+  const SURF_M = { stone: 2.4, plaster: 3, rock: 3.2, wood: 1, goat: 2 };
+  function surfMat(kind, color, o = {}) {
+    const k = 'surf' + kind + color + JSON.stringify(o); if (MAT[k]) return MAT[k];
+    const m = new THREE.MeshStandardMaterial({ color, roughness: 1, map: TEX[kind](), ...o }), sc = (1 / SURF_M[kind]).toFixed(4);
+    m.onBeforeCompile = sh => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpP; varying vec3 vTpN;')
+        .replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
+          vTpP = transformed; vTpP.y += modelMatrix[3].y; vTpN = objectNormal;`);
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vTpP; varying vec3 vTpN;')
+        .replace('#include <map_fragment>', `{ vec3 bw = pow(abs(normalize(vTpN)), vec3(4.)); bw /= (bw.x + bw.y + bw.z); vec3 p = vTpP * ${sc};
+          vec4 tx = texture2D(map, p.zy) * bw.x + texture2D(map, p.xz) * bw.y + texture2D(map, p.xy) * bw.z; diffuseColor *= tx; }`);
+    };
+    m.customProgramCacheKey = () => 'tri' + kind;
+    return (MAT[k] = m);
+  }
   // 흙벽돌 집: 앞(+z)에 문, 평평한 지붕, 바깥 계단(지붕으로). 안에서도 벽이 보인다
   function house({ at = [0, 0, 0], w = 5, d = 4, h = 2.8, ry = 0, color = '#a48a69', door = true, stairs = false, roof = true, win = true } = {}) {
     const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry;
-    const m = mat(color), t = .3, dw = 1.05;
+    const m = surfMat('plaster', color), t = .3, dw = 1.05;
     box(w, h, t, null, 0, h / 2, -d / 2, g, m); box(t, h, d, null, -w / 2, h / 2, 0, g, m); box(t, h, d, null, w / 2, h / 2, 0, g, m);
     if (door) { box((w - dw) / 2, h, t, null, -(w + dw) / 4, h / 2, d / 2, g, m); box((w - dw) / 2, h, t, null, (w + dw) / 4, h / 2, d / 2, g, m); box(dw, h - 2, t, null, 0, 2 + (h - 2) / 2, d / 2, g, m); }
     else box(w, h, t, null, 0, h / 2, d / 2, g, m);
     if (win) [-1, 1].forEach(sx => box(.5, .4, .05, '#1a130e', sx * w * .28, h * .66, d / 2 + .16, g));
-    if (roof) { box(w + .3, .22, d + .3, null, 0, h + .11, 0, g, mat('#6e5a44')); box(w + .3, .35, .12, null, 0, h + .38, d / 2 + .1, g, m); }
+    if (roof) { box(w + .3, .22, d + .3, null, 0, h + .11, 0, g, surfMat('plaster', '#6e5a44')); box(w + .3, .35, .12, null, 0, h + .38, d / 2 + .1, g, m); }
     if (stairs) for (let i = 0; i < 9; i++) box(.75, .32, .32, null, w / 2 + .38, (i + .5) * h / 9, d / 2 - .4 - i * (d - .8) / 9, g, m);
     R().add(g); return g;
   }
@@ -1174,8 +1250,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   // 안이 보이는 방: 바닥·벽·천장·등잔. 바닥을 땅으로 알려 준다
   function room({ at = [0, 0, 0], w = 10, d = 8, h = 3.6, color = '#4a3d33', floor = '#3a2f27', lamps = [], ceiling = true, door = null } = {}) {
     const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]);
-    const m = mat(color);
-    box(w, .1, d, floor, 0, -.05, 0, g);
+    const m = surfMat('plaster', color);
+    box(w, .1, d, null, 0, -.05, 0, g, surfMat('stone', floor));
     box(w, h, .3, null, 0, h / 2, -d / 2, g, m); box(.3, h, d, null, -w / 2, h / 2, 0, g, m); box(.3, h, d, null, w / 2, h / 2, 0, g, m);
     if (door != null && door !== false) { const dw = 1.2; box((w - dw) / 2, h, .3, null, -(w + dw) / 4 + door, h / 2, d / 2, g, m); box((w - dw) / 2, h, .3, null, (w + dw) / 4 + door, h / 2, d / 2, g, m); box(dw, h - 2.1, .3, null, door, 2.1 + (h - 2.1) / 2, d / 2, g, m); }
     else box(w, h, .3, null, 0, h / 2, d / 2, g, m);
@@ -1185,7 +1261,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   }
   // 성벽: from → to, 망대와 성가퀴
   function cityWall({ from, to, h = 9, t = 2.4, color = '#b7a07c', towers = 40, height } = {}) {
-    const g = new THREE.Group(), m = mat(color, { flatShading: true });
+    const g = new THREE.Group(), m = surfMat('stone', color);
     const dx = to[0] - from[0], dz = to[1] - from[1], L = Math.hypot(dx, dz), ry = Math.atan2(dx, dz), n = Math.max(1, Math.round(L / 12));
     for (let i = 0; i < n; i++) {
       const k = (i + .5) / n, x = from[0] + dx * k, z = from[1] + dz * k, y = height ? height(x, z) : 0;
@@ -1198,7 +1274,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   // 성전 (헤롯 성전): 넓은 단, 주랑, 흰 돌과 금빛 성소
   function temple({ at = [0, 0, 0], ry = 0, s = 1 } = {}) {
     const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry; g.scale.setScalar(s);
-    const stone = mat('#d9ccb0', { flatShading: true }), white = mat('#efe8d8'), gold = mat('#c9a23a', { metalness: .4, roughness: .45 });
+    const stone = surfMat('stone', '#d9ccb0'), white = surfMat('stone', '#efe8d8'), gold = mat('#c9a23a', { metalness: .4, roughness: .45 });
     box(120, 14, 90, null, 0, 7, 0, g, stone);  // 성전 산의 단
     for (let i = 0; i < 24; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 9, 8), white); c.position.set(-57 + i * 5, 18.5, 44); g.add(c); }  // 주랑
     box(120, 1.2, 6, null, 0, 23.6, 43, g, white);
@@ -1413,7 +1489,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   // 십자가: 세로 기둥, 가로 들보, 죄패 (요 19:19). userData.hang = 매달린 사람이 설 자리
   function cross({ at = [0, 0, 0], h = 4.2, ry = 0, titulus = false } = {}) {
     const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry;
-    const wood = mat('#4d3a28', { flatShading: true });
+    const wood = surfMat('wood', '#5a4430');
     box(.22, h + .6, .2, null, 0, (h + .6) / 2 - .6, 0, g, wood); box(2.1, .2, .2, null, 0, h - .55, 0, g, wood);
     if (titulus) { box(.75, .32, .04, '#c9bea3', 0, h - .05, .12, g); }
     box(.3, .06, .22, null, 0, h - 1.92, .14, g, wood);  // 발판 (두 팔이 가로 들보에 닿는 높이)
@@ -1423,13 +1499,13 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   // 바위 무덤: 바위벽에 판 굴과 굴리는 돌 (요 20:1, 막 16:4). 안으로 들어갈 수 있는 방이다 (앞이 +z)
   function tomb({ at = [0, 0, 0], ry = 0 } = {}) {
     const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry;
-    const rock = mat('#9a8a74', { flatShading: true }), inner = mat('#6e6252');
+    const rock = surfMat('rock', '#9a8a74'), inner = surfMat('rock', '#6e6252');
     box(4.2, 5, 1, null, -3.2, 2.5, 0, g, rock); box(4.2, 5, 1, null, 3.2, 2.5, 0, g, rock); box(2.2, 2.6, 1, null, 0, 3.7, 0, g, rock);  // 앞벽과 문 (너비 2.2, 높이 2.4)
     box(1, 2.8, 5, null, -1.7, 1.4, -3, g, inner); box(1, 2.8, 5, null, 1.7, 1.4, -3, g, inner); box(4.4, 2.8, 1, null, 0, 1.4, -5.4, g, inner); box(4.4, .8, 6, null, 0, 3.2, -3, g, inner);  // 안쪽 방
     box(4, 6, 7, null, -4.4, 3, -3.4, g, rock); box(4, 6, 7, null, 4.4, 3, -3.4, g, rock); box(12, 2.6, 7.4, null, 0, 4.8, -3.4, g, rock);  // 바깥 바위 덩어리
     box(1, .6, 3.6, '#8a7b66', .75, .3, -3.2, g);  // 시체를 뉘던 자리
     const L = new THREE.PointLight('#d8c8a8', 1.2, 7, 2); L.position.set(0, 2, -1.2); g.add(L);
-    const stone = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, .45, 18), mat('#8c7d68', { flatShading: true })); stone.rotation.x = Math.PI / 2; stone.position.set(0, 1.4, .8); g.add(stone);
+    const stone = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, .45, 18), surfMat('rock', '#8c7d68')); stone.rotation.x = Math.PI / 2; stone.position.set(0, 1.4, .8); g.add(stone);
     g.userData.stone = stone; g.userData.shelf = new THREE.Vector3(.75, .62, -3.2);
     R().add(g);
     addGround((x, z) => { if (!shown(g)) return null; const p = g.worldToLocal(new THREE.Vector3(x, 0, z)); return Math.abs(p.x) < 1.2 && p.z < .6 && p.z > -4.9 ? at[1] : null; });
