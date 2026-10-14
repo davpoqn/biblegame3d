@@ -19,6 +19,7 @@ with sync_playwright() as p:
     pg.route('https://fonts.googleapis.com/**',lambda r: r.fulfill(body='',content_type='text/css'))
     pg.set_content(html)
     pg.wait_for_timeout(600)
+    pg.tap('#intro-go'); pg.wait_for_selector('#intro', state='detached', timeout=20000)  # 인트로(첫 화면)를 지나 인물 고르기로
     pg.tap(f'#picker [data-id="{char}"]'); pg.tap('#start-quiet')
     pg.wait_for_timeout(12000)
     print(src,char,'→',pg.inner_text('#stage-inner')[:120].replace('\n',' | '))
