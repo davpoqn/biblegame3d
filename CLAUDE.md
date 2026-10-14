@@ -33,4 +33,4 @@ python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
 
 ## 다음 할 일
 
-**전체 확장(3부 구성, 바울 추가, 인물별 게시와 허브)은 끝났다.** 게시 링크와 남은 한계는 PLAN.md 2장 끝에 있다. 사용자가 새 버전을 해 보고 주는 의견을 반영한다. 캐릭터·동물은 `assets/chars/`, 다시 만들기는 `tools/chars/make.sh`.
+**다음 작업은 시작 화면 새로 만들기다** — 요구사항은 PLAN.md 2장 끝 '다음 작업: 시작 화면 새로 만들기'. 그 밖에는 사용자가 새 버전을 해 보고 주는 의견을 반영한다. 사용자는 작업 전에 걸리는 시간을 먼저 알려 주길 원한다. 캐릭터·동물은 `assets/chars/`, 다시 만들기는 `tools/chars/make.sh`.
