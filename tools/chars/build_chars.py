@@ -344,6 +344,8 @@ def dress(body, arm, sex):
     if sex == 'm':
         robe('tunic_short', z_knee + 0.04, 0.012, 0.025, 'tunic', sleeve=0.12)
     robe('mantle', (z_knee + z_ankle) / 2 - 0.05, 0.035, 0.07, 'mantle', open_front=0.35)
+    if sex == 'm':  # 예수님 겉옷 (사용자가 보낸 그림, 2026-10-14): 두꺼운 양털, 무릎 아래까지, 앞이 넓게 트이고 어깨와 위팔을 덮는다. 줄무늬·주름은 엔진이 그린다
+        robe('mantle_j', z_knee - 0.07, 0.042, 0.1, 'mantle_j', open_front=0.55, sleeve=0.2)
     belt = band('belt', z_waist - 0.025, z_waist + 0.025, 0.03, 'belt')
     skin(belt, body, {'pelvis', 'spine_01', 'spine_02'}, 'spine_01')
 

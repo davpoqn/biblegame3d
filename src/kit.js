@@ -482,10 +482,25 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   const figs = [];
   // 예수님(연출: 성경에는 생김새가 없어 전통 그림을 따른다): 흰 옷, 붉은 겉옷, 어깨까지 오는 머리, 수염, 인자한 눈과 입
   // 예수님(연출: 성경에는 생김새가 없다). 사용자가 보낸 그림(2026-10-14)처럼 평범한 갈릴리 사람: 거친 베 속옷, 붉은 줄무늬 띠, 두 어깨에 두른 줄무늬 올리브색 겉옷, 가죽끈 샌들. 후광은 없다
-  const JESUS = { name: '예수 (연출)', body: 'm', wear: ['tunic_long', 'belt', 'sandals', 'beard'], under: '#d8ccb6', colors: { tunic: '#d8ccb6', belt: '#8a3328', beard: '#4a3122' } };
-  const JESUS_MANTLE = '#6f6c3a', JESUS_HAIR = '#3f2a1c';
+  const JESUS = { name: '예수 (연출)', body: 'm', wear: ['tunic_long', 'belt', 'sandals', 'beard', 'mantle_j'], under: '#d8ccb6', colors: { tunic: '#d8ccb6', belt: '#8a3328', beard: '#4a3122', mantle_j: '#6f6c3a' } };
+  const JESUS_HAIR = '#3f2a1c';
+  // 예수님 겉옷(mantle_j, build_chars.py가 뼈에 붙여 만든 옷)에 줄무늬와 주름을 그린다: 아랫단 두 줄, 앞자락 두 줄, 아래로 갈수록 깊은 세로 주름.
+  // 옷의 원래 자리(뼈로 움직이기 전)를 기준으로 하므로 걷거나 팔을 들어도 무늬가 옷을 따라간다
+  function mantleStripes(o) {
+    o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox, U = new THREE.Vector4(bb.min.y, bb.max.y, (bb.min.x + bb.max.x) / 2, (bb.min.z + bb.max.z) / 2);
+    o.material.onBeforeCompile = sh => {
+      sh.uniforms.uBB = { value: U };
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRest;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvRest = position;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vRest; uniform vec4 uBB;').replace('#include <color_fragment>', `#include <color_fragment>
+        float t = (vRest.y - uBB.x) / (uBB.y - uBB.x), a = atan(vRest.x - uBB.z, vRest.z - uBB.w), ea = abs(a);
+        diffuseColor.rgb *= 1. + sin(a * 9. + sin(t * 9.) * .9) * .13 * (1.1 - t);  // 주름
+        float band = step(.03, t) * step(t, .055) + step(.08, t) * step(t, .1) + (step(.9, ea) * step(ea, .99) + step(1.06, ea) * step(ea, 1.13)) * step(t, .82);
+        diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(.42, .46, .3), clamp(band, 0., 1.));`);
+    };
+    o.material.customProgramCacheKey = () => 'mantle_j';
+  }
   const JHEAD = { y: .122, z: .136 };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준, 예전 얼굴의 눈 자리)
-  function dressJesus(body, { mantle = true } = {}) {
+  function dressJesus(body) {
     body.updateMatrixWorld(true);  // 지금 동작 자세 그대로 머리·가슴 뼈에 붙인다 (skeleton.pose()는 뼈 크기가 달라진다)
     const head = body.getObjectByName('Head'), chest = body.getObjectByName('spine_03'), hp = head.getWorldPosition(new THREE.Vector3()), cp = chest.getWorldPosition(new THREE.Vector3());
     const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: .85 });
@@ -513,26 +528,6 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     // 머리카락: 정수리를 덮고, 옆과 뒤로 어깨까지 내려온다. 가운데 가르마
     put(head, new THREE.Mesh(new THREE.SphereGeometry(1, 18, 10, 0, Math.PI * 2, 0, Math.PI * .5), hairM), hp, [0, .105, .03], [-.55, 0, 0], [.118, .172, .142]);  // 정수리 (이마 선은 높고 뒤는 낮게)
     put(head, new THREE.Mesh(new THREE.CylinderGeometry(.1, .118, .21, 18, 1, true, Math.PI * .3, Math.PI * 1.4), hairM), hp, [0, .005, .03], null, [1, 1, 1.05]);  // 옆과 뒤로 어깨까지 (얼굴 쪽은 트였다)
-    }
-    // 겉옷: 두 어깨에 두르고 앞은 열려 속옷과 띠가 보인다. 두꺼운 양털, 아랫단과 앞자락에 짙은 줄. 겉옷을 벗은 장면(요 13:4, 19:23)에는 두르지 않는다
-    if (mantle) {
-      TEX.mantle = TEX.mantle || canvasTex(256, 256, (g, w, h) => {
-        g.fillStyle = 'rgb(236,234,226)'; g.fillRect(0, 0, w, h);
-        for (let y = 0; y < h; y += 2) { g.fillStyle = `rgba(${Math.random() < .5 ? '190,188,180' : '255,255,250'},${rnd(.15, .35).toFixed(2)})`; g.fillRect(0, y, w, 1); }  // 짠 결
-        for (let x = 0; x < w; x++) { const f = Math.sin(x / w * 6.283 * 7 + Math.sin(x * .09) * 1.3), a = f > 0 ? f * .22 : -f * .16; g.fillStyle = f > 0 ? `rgba(255,255,250,${a.toFixed(3)})` : `rgba(40,38,30,${a.toFixed(3)})`; g.fillRect(x, 0, 1, h); }  // 세로로 늘어진 주름의 밝고 어두운 면
-        g.fillStyle = 'rgba(70,72,40,.75)'; for (const y of [h - 30, h - 18]) g.fillRect(0, y, w, 6);  // 아랫단 줄 (v=0이 아래)
-        for (const x of [10, 22, w - 28, w - 16]) g.fillRect(x, 0, 6, h);  // 앞자락 줄
-      });
-      const mm = new THREE.MeshStandardMaterial({ color: JESUS_MANTLE, map: TEX.mantle, roughness: 1, side: THREE.DoubleSide });
-      // 목둘레에서 어깨선을 따라 넓어졌다가 아래로 늘어진다 (위에서 12%까지가 어깨)
-      const back = new THREE.CylinderGeometry(1, 1, 1, 24, 14, true, Math.PI * .2, Math.PI * 1.6), pa = back.attributes.position;
-      for (let i = 0; i < pa.count; i++) {
-        const t = .5 - pa.getY(i), nx = pa.getX(i), nz = pa.getZ(i), k = Math.min(1, t / .12), r = t < .12 ? .11 + .19 * k * k * (3 - 2 * k) : .3 + .05 * (t - .12) / .88;
-        pa.setXYZ(i, nx * r * 1.12, -t * .92 - (t < .12 ? Math.abs(nx) * .03 * (1 - k) : 0), nz * r * (nz < 0 ? .88 : .78));
-      }
-      back.computeVertexNormals();
-      put(chest, new THREE.Mesh(back, mm), cp, [0, .27, -.02]);  // 위 끝이 목둘레에 걸친다
-      for (const sx of [-1, 1]) put(chest, new THREE.Mesh(new THREE.PlaneGeometry(.13, .92), mm), cp, [sx * .155, -.2, .165], [-.08, 0, sx * .05]);  // 어깨에서 앞으로 늘어진 두 자락
     }
     return JH ? head : null;  // 머리를 접어 둔 뼈(동작이 크기를 되돌려도 매 장면 다시 접는다)
   }
@@ -671,7 +666,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     return null;
   }
   function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3, look, noHead = false, name, mantle = true } = {}) {
-    const spec = role === 'jesus' ? (figSrc && JESUS) : figSrc && figSrc.outfits.roles[role];
+    const spec = role === 'jesus' ? (figSrc && (mantle ? JESUS : { ...JESUS, wear: JESUS.wear.filter(w => w !== 'mantle_j') })) : figSrc && figSrc.outfits.roles[role];
     if (!spec) return person(tint || '#4a3c30', { pose, scale, visible });
     const d = figSrc.outfits.default_colors, col = { ...d };  // 색 규칙은 tools/chars/build_chars.py role_colors와 같다
     for (const u of UNDER) col[u] = spec.under || d.tunic;
@@ -701,7 +696,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
         a.reset().play(); if (F.cur && fade) F.cur.crossFadeTo(a, fade, false); else if (F.cur) F.cur.stop();
         F.cur = a; F.curName = name;
       } };
-    if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressJesus(body, { mantle }); }
+    if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressJesus(body); body.traverse(o => { if (o.isMesh && o.name === 'mantle_j') mantleStripes(o); }); }
     else if (!noHead && figSrc.mhHead[spec.body === 'f' ? 'f' : 'm']) {
       const sex = spec.body === 'f' ? 'f' : 'm';
       body.traverse(o => { if (o.isMesh && ['beard', 'hair', 'circlet'].includes(o.name)) o.visible = false; });  // 마네킹용 수염·머리카락 대신 MakeHuman 것 (머리띠는 새 머리 위에 떠서 후광처럼 보인다)
