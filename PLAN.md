@@ -92,7 +92,7 @@
     6. 내 손이 보이고 진짜 손처럼. 다른 인물들의 손도.
     7. 물의 질감(해 질 녘 물결과 반사).
     8. 동물을 실사처럼 리얼하게.
-    - 메모 (2026-10-14 확인): 참고 사진은 PC용 언리얼 게임이라 한 장짜리 HTML(아티팩트 16MB 한도, 휴대폰)로는 똑같이 만들 수 없고 가까이 가는 것까지다. `assets/raw/jesus/`의 MakeHuman 모델에는 머리뿐 아니라 몸 전체(손가락 있는 손, 발)가 들어 있어서 진짜 같은 손·발은 여기서 떼어 쓸 수 있다(손가락을 굽히려면 마네킹 뼈에 가중치를 옮기는 작업이 필요). 제자마다 다른 얼굴은 인물마다 MakeHuman 모델이 하나씩 필요하다. 이 클라우드 환경에서는 `download.blender.org`, `files.makehumancommunity.org`가 막혀 있어(403) Blender·MakeHuman을 설치할 수 없다 — 사용자가 Allowed domains에 넣거나, 예수님 때처럼 사용자 PC의 MakeHuman으로 만들어 보낸다. 실사 동물은 CC0 자료가 드물고 크다. 물·길·등잔불은 자료 없이 코드로 할 수 있다.
+    - 메모 (2026-10-14 확인): 참고 사진은 PC용 언리얼 게임이라 한 장짜리 HTML(아티팩트 16MB 한도, 휴대폰)로는 똑같이 만들 수 없고 가까이 가는 것까지다. `assets/raw/jesus/`의 MakeHuman 모델에는 머리뿐 아니라 몸 전체(손가락 있는 손, 발)가 들어 있어서 진짜 같은 손·발은 여기서 떼어 쓸 수 있다(손가락을 굽히려면 마네킹 뼈에 가중치를 옮기는 작업이 필요). 제자마다 다른 얼굴은 인물마다 MakeHuman 모델이 하나씩 필요하다. 사용자가 클라우드 환경의 Allowed domains에 `download.blender.org`, `files.makehumancommunity.org`를 넣었다(2026-10-14, 열리는 것 확인). 그래서 여기서 Blender 4.2 + MPFB2(MakeHuman의 Blender판, `git clone https://github.com/makehumancommunity/mpfb2`는 됨, github 릴리스 페이지는 막힘) + CC0 기본 자산(`https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip`, 280MB)으로 직접 만들 수 있다. 실사 동물은 CC0 자료가 드물고 크다. 물·길·등잔불은 자료 없이 코드로 할 수 있다.
   - 사이트는 누구나 볼 수 있다(아티팩트는 비공개). 앱·스팀과 엔진 이전(Godot)은 나중에 정한다. 지금은 이야기와 그래픽 완성도를 높인다.
 - **다음 작업: 사용자가 새 버전을 해 보고 주는 의견을 반영한다.**
 
