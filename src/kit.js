@@ -1127,6 +1127,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   }
   function stepFires(dt) {
     fires.forEach(f => {
+      if (f.owner) f.g.visible = shown(f.owner);  // 제단을 숨기면 그 위 장작도 숨긴다 (장작만 공중에 떠 보이던 것)
       const amt = (f.useEnv ? env.fire : 1) * f.level;
       if (!shown(f.g) || amt < .02) { f.L.intensity = 0; if (f.coalMat) f.coalMat.color.setRGB(.05, .03, .02); return; }
       const p = f.g.position, s = f.size;
@@ -1259,7 +1260,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     }
     const top = new THREE.Mesh(new THREE.CylinderGeometry(w * .45, w * .5, .2, 10), m); top.position.y = h; g.add(top);
     R().add(g);
-    g.userData.fire = fire([at[0], at[1] + h + .1, at[2]], { ring: false, smoke: true, size: 1.4, light: 10 });
+    g.userData.fire = fire([at[0], at[1] + h + .1, at[2]], { ring: false, smoke: true, size: 1.4, light: 10 }); g.userData.fire.owner = g;
     return g;
   }
 
