@@ -37,17 +37,23 @@ def sculpt(V, G):
     g = lambda cx, cy, rx, ry: np.exp(-((ax - cx) / rx) ** 2 / 2 - ((y - cy) / ry) ** 2 / 2)
     front = ss(-.9, -.2, z)                                     # 얼굴 앞쪽만 (뒷머리·귀 뒤는 그대로)
     d = np.zeros_like(q)
-    d[:, 2] -= SC['side'] * ss(.42, 1.05, ax) * ss(-1.9, -1.2, y) * (1 - ss(.7, 1.2, y)) * front   # 볼 옆면을 뒤로 → 위에서 보면 V자
+    d[:, 2] -= SC['side'] * ss(.42, 1.05, ax) * ss(-1.2, -.6, y) * (1 - ss(.7, 1.2, y)) * front   # 눈·광대 높이의 볼 옆면을 뒤로 (입 높이는 그대로 — 거기까지 밀면 주둥이가 튀어나와 보인다)
     cb = g(.84, -.4, .26, .2) * front                            # 광대뼈
     d[:, 0] += sx * SC['cheekbone'] * cb; d[:, 2] += SC['cheekbone'] * .8 * cb
     hc = g(.72, -.98, .28, .24) * front                          # 광대 아래 볼은 들어가게
     d[:, 0] -= sx * SC['hollow'] * hc; d[:, 2] -= SC['hollow'] * .6 * hc
+    d[:, 2] -= SC['lower'] * ss(.55, 1.05, -y) * (1 - ss(.7, 1.3, ax)) * front   # 하관(입·턱)을 뒤로
+    d[:, 2] -= SC['lips'] * g(0, -.95, .4, .2) * front           # 입술을 조금 더 뒤로
     d[:, 0] -= x * SC['jaw'] * ss(-.95, -1.6, -y) * ss(.3, .7, ax)   # 턱선을 조금 좁게
-    d[eyes] = 0                                                  # 눈알 모양은 그대로
-    return V + d * ed
+    q2 = q + d
+    # 얼굴 폭 줄이기: 두 눈은 그대로 두고 눈 바깥쪽(관자놀이·볼·턱·귀·뒷머리)을 안으로. 폭이 매끄럽게 줄도록 x를 적분한 꼴로 옮긴다
+    a0, a1, a = .6, .95, np.abs(q2[:, 0]); u = np.clip((a - a0) / (a1 - a0), 0, 1)
+    q2[:, 0] = np.sign(q2[:, 0]) * (a - (1 - SC['narrow']) * ((a1 - a0) * (u ** 3 - u ** 4 / 2) + np.maximum(a - a1, 0)))
+    q2[eyes] = q[eyes]                                           # 눈알 모양·자리는 그대로
+    return mid + q2 * ed
 
 
-SC = {'side': .16, 'cheekbone': .09, 'hollow': .11, 'jaw': .07}
+SC = {'narrow': .55, 'side': .12, 'cheekbone': .08, 'hollow': .07, 'lower': .2, 'lips': .06, 'jaw': .12}
 V = sculpt(V, G)
 keep = {
     'base.obj': lambda f: min(V[i][1] for i, _ in f) >= NECK_Y,
