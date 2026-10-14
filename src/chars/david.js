@@ -378,7 +378,7 @@ async function world(kit, { audio, sleep }) {
   const HOUSE = v3(38, h0(38, -48), -48);
   const yard = new THREE.Group(); yard.position.copy(HOUSE); scene.add(yard);
   kit.box(8, 3.4, 6, '#9a8b74', 0, 1.7, -6, yard); kit.box(8.6, .3, 6.6, '#7d6d58', 0, 3.5, -6, yard);
-  kit.glow(1.1, 1.9, 2.2, 1.3, .6, 1.4, .95, -2.98, yard);
+  kit.glow(1.1, 1.9, .85, .42, .15, 1.4, .95, -2.98, yard);  // 열린 문 안의 등잔 불빛 (하얗게 타지 않게 어둑한 주황)
   kit.box(14, 1, .5, '#8c7d68', 0, .5, 4, yard);
   const samuel = kit.figure('elder', { tint: '#cfc6b5', visible: true }); samuel.position.set(.6, 0, -1.6); yard.add(samuel);
   const jesse = kit.figure('elder', { tint: '#5b4a3a', visible: true }); jesse.position.set(-1.6, 0, -2.2); yard.add(jesse);
@@ -457,7 +457,7 @@ async function world(kit, { audio, sleep }) {
   const town = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: '#9a8a74', roughness: 1 }), 220);
   const wins = []; { const d = new THREE.Object3D(); for (let i = 0; i < 220; i++) { let x, z; do { x = rnd(-90, 90); z = rnd(-110, 60); } while (Math.hypot(x, z) < 14); const w = rnd(4, 9), hh = rnd(3, 6), dd = rnd(4, 9); const y = h3(X3 + x, z); d.position.set(X3 + x, y + hh / 2 - .5, z); d.rotation.y = rnd(-.2, .2); d.scale.set(w, hh, dd); d.updateMatrix(); town.setMatrixAt(i, d.matrix); if (i % 4 === 0) wins.push(kit.glow(.5, .7, 3, 1.7, .7, X3 + x, y + hh * .55, z + dd / 2 + .02)); } }
   scene.add(town); wins.forEach(w => { w.visible = false; });
-  const farLamp = kit.glow(.5, .4, 3.4, 2, .8, X3 + 26, h3(X3 + 26, -48) + 2.4, -44);
+  const farLamp = kit.glow(.5, .4, 1.8, .9, .3, X3 + 26, h3(X3 + 26, -48) + 2.4, -44);
   const servant = kit.person('#4a3d31'); servant.position.set(X3 + 2.5, 6, 1.5);
   const HALL = v3(X3 + 60, 0, 40);
   const hall = new THREE.Group(); hall.position.copy(HALL); scene.add(hall);
@@ -466,6 +466,8 @@ async function world(kit, { audio, sleep }) {
   [-4, 4].forEach(x => [-3, 2].forEach(z => kit.box(.6, 6, .6, '#6a5a48', x, 3, z, hall)));
   const hallLights = [[-3, -5], [3, -5], [0, 4]].map(([x, z]) => { const L = new THREE.PointLight('#ffb070', 4, 12, 2); L.position.set(x, 1.8, z + .4); hall.add(L); kit.lampAt(L, { hang: .9 }); return L; });  // 매단 등잔
   const nathan = kit.figure('elder', { tint: '#6e665a', visible: true }); nathan.position.set(.3, 0, -2.6); hall.add(nathan);
+  kit.addFloor(HALL.x, HALL.z, 16, 14, 0, hall);  // 바닥 높이 (없으면 아래 땅을 읽어 앉은 다윗이 선 자세가 된다)
+  kit.box(.64, .45, .52, '#4a3424', 0, .225, 2.72, hall); kit.box(.64, .95, .08, '#4a3424', 0, .925, 3.02, hall);  // 다윗이 앉은 나무 의자
 
   /* --- 6 · 마하나임 성문 --- */
   const X4 = SITE[4];
@@ -635,7 +637,7 @@ async function world(kit, { audio, sleep }) {
       if (where === 'elah') { kit.setEnv(Object.assign(at(X1, 1), { camH: 1.65 + h1(X1, 1) }), 0); goliath.position.set(GOL0.x, h1(GOL0.x, GOL0.z), GOL0.z); goliath.rotation.set(0, 0, 0); gw.idle(); goliath.visible = bearer.visible = true; bearer.position.set(GOL0.x + 1.6, h1(GOL0.x + 1.6, GOL0.z + 2.6), GOL0.z + 2.6); bearer.rotation.set(0, 0, 0); bw.idle(); armyHome(); }
       if (where === 'cave') { kit.setEnv(Object.assign(at(X2, 1.4), { camH: 1.05 }), 0); saulCave.visible = false; saulCave.position.set(X2 + .4, 0, -9.6); saulCave.rotation.set(0, Math.PI, 0); }
       if (where === 'roof') kit.setEnv(Object.assign(at(X3 - 1, 3), { camH: 7.65 }), 0);
-      if (where === 'hall') kit.setEnv(Object.assign(at(HALL.x, HALL.z + 2.4), { camH: 1.15 }), 0);
+      if (where === 'hall') kit.setEnv(Object.assign(at(HALL.x, HALL.z + 2.4), { camH: 1.15, camY: 0 }), 0);
       if (where === 'gate') { kit.setEnv(Object.assign(at(X4, .8), { camH: 1.05 }), 0); runners.forEach(r => { r.g.visible = false; }); }
     },
     async callRunner() { runner.visible = true; await rw.go(v3(HOUSE.x - 6, 0, HOUSE.z + 4), v3(1.2, 0, -5.5), 9); },

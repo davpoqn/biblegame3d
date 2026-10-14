@@ -486,7 +486,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     const halo = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.4, .7, .25), transparent: true, opacity: .35, depthWrite: false, fog: false }));
     halo.position.copy(fl.position); g.add(halo);
     let L = light;
-    if (!L) { L = new THREE.PointLight('#ffb070', power, 9, 2); parent.add(L); }
+    if (light === false) L = { intensity: 1, userData: {}, position: new THREE.Vector3() };  // 불빛은 다른 등이 맡고 불꽃만 (빛을 너무 많이 두지 않게)
+    else if (!L) { L = new THREE.PointLight('#ffb070', power, 9, 2); parent.add(L); }
     L.position.set(at[0], at[1] + .15, at[2]);
     flames.push({ fl, halo, L, base: L.intensity, seed: Math.random() * 9 });
     return g;
@@ -584,7 +585,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   const JHEAD = { y: .122, z: .136 };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준, 예전 얼굴의 눈 자리)
   function dressJesus(body) {
     body.updateMatrixWorld(true);  // 지금 동작 자세 그대로 머리·가슴 뼈에 붙인다 (skeleton.pose()는 뼈 크기가 달라진다)
-    const head = body.getObjectByName('Head'), chest = body.getObjectByName('spine_03'), hp = head.getWorldPosition(new THREE.Vector3()), cp = chest.getWorldPosition(new THREE.Vector3());
+    const head = body.getObjectByName('Head'), chest = body.getObjectByName('spine_03'), hp = body.worldToLocal(head.getWorldPosition(new THREE.Vector3())), cp = body.worldToLocal(chest.getWorldPosition(new THREE.Vector3()));  // 몸 기준 좌표 (앉은 사람은 몸이 내려가 있다)
     const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: .85 });
     const put = (bone, mesh, base, [x, y, z], rot, sc) => { mesh.position.set(base.x + x, base.y + y, base.z + z); if (rot) mesh.rotation.set(...rot); if (sc) mesh.scale.set(...sc); mesh.frustumCulled = false; body.add(mesh); mesh.updateMatrixWorld(true); bone.attach(mesh); return mesh; };
     const JH = figSrc && figSrc.jesusHead;
@@ -721,7 +722,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   function dressHead(body, sex, spec, L) {
     const src = figSrc.mhHead[sex]; if (!src) return null;
     body.updateMatrixWorld(true);
-    const head = body.getObjectByName('Head'), hp = head.getWorldPosition(new THREE.Vector3());
+    const head = body.getObjectByName('Head'), hp = body.worldToLocal(head.getWorldPosition(new THREE.Vector3()));  // 몸 기준 좌표 (앉은 사람은 몸이 내려가 있어 그대로 쓰면 얼굴이 가슴께로 간다)
     const h = src.clone(true), root = h.getObjectByName('mh_head_' + sex) || h, ex = root.userData || {}, A = MHEAD[sex];
     const k = A.eye / (ex.eyeDist || .064), mid = new THREE.Vector3(...(ex.eyeMid || [0, 1.64, .1]));
     h.scale.setScalar(k); h.position.set(hp.x - mid.x * k, hp.y + A.y - mid.y * k, hp.z + A.z - mid.z * k);
@@ -804,7 +805,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     me.g = g; me.head = g.userData.fig.bone('Head'); me.neck = g.userData.fig.bone('neck_01'); me.pose = ''; me.lx = env.camX; me.lz = env.camZ; me.yaw = env.camY + Math.PI;
     return g;
   }
-  const _e = new THREE.Vector3();
+  const _e = new THREE.Vector3(), _cf = new THREE.Vector3();
   function stepSelf(dt) {
     const g = me.g; if (!g) return;
     const F = g.userData.fig, cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
@@ -821,7 +822,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     me.yaw += (want - me.yaw) * Math.min(1, dt * 4);
     g.rotation.set(0, me.yaw, 0); g.position.set(cx, cy, cz); g.updateMatrixWorld(true);
     me.head.getWorldPosition(_e);
-    const fx = Math.sin(me.yaw), fz = Math.cos(me.yaw), s = g.scale.x;
+    camera.updateMatrixWorld(); camera.getWorldDirection(_cf);  // 머리 앞이 아니라 눈이 보는 쪽으로 옮긴다 (고개를 돌려도 내 어깨가 눈앞을 가리지 않게)
+    const fl = Math.hypot(_cf.x, _cf.z) || 1, fx = _cf.x / fl, fz = _cf.z / fl, s = g.scale.x;
     // 눈 = 머리 뼈 + 위로 0.11. 카메라를 머리보다 0.24 앞에 두어, 아래를 보면 배에 가리지 않고 다리와 발이 보이게 한다
     const fwd = me.pose === 'sit' ? .2 : .24;
     g.position.x += cx - (_e.x + fx * fwd * s); g.position.z += cz - (_e.z + fz * fwd * s); g.position.y += cy - (_e.y + .11 * s);

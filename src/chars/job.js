@@ -242,32 +242,32 @@ async function world(kit, { audio, sleep }) {
   const SERVANT_C = ['#3d3127', '#47392c', '#33291f', '#4b3d30'];
   const at = (x, z) => new THREE.Vector3(x, heightAt(x, z), z);
   const servants = {
-    yard: [[5.5, -6], [6.8, -8.5], [-6.2, -7.5], [-4.6, -12]].map(([x, z], i) => { const g = kit.person(SERVANT_C[i % 4]); g.position.copy(at(x, z)); return g; }),
-    field: [[-6, -88], [3, -86], [14, -95], [24, -84]].map(([x, z], i) => { const g = kit.person(SERVANT_C[(i + 1) % 4]); g.position.copy(at(x, z)); return g; }),
-    flock: [[-52, -88], [-72, -104], [-60, -110], [-78, -90]].map(([x, z], i) => { const g = kit.person(SERVANT_C[(i + 2) % 4]); g.position.copy(at(x, z)); return g; }),
-    camels: [[104, -188], [126, -204], [114, -206]].map(([x, z], i) => { const g = kit.person(SERVANT_C[(i + 3) % 4]); g.position.copy(at(x, z)); return g; })
+    yard: [[5.5, -6], [6.8, -8.5], [-6.2, -7.5], [-4.6, -12]].map(([x, z], i) => { const g = kit.figure('shepherd', { tint: SERVANT_C[i % 4] }); g.position.copy(at(x, z)); return g; }),
+    field: [[-6, -88], [3, -86], [14, -95], [24, -84]].map(([x, z], i) => { const g = kit.figure('shepherd', { tint: SERVANT_C[(i + 1) % 4] }); g.position.copy(at(x, z)); return g; }),
+    flock: [[-52, -88], [-72, -104], [-60, -110], [-78, -90]].map(([x, z], i) => { const g = kit.figure('shepherd', { tint: SERVANT_C[(i + 2) % 4] }); g.position.copy(at(x, z)); return g; }),
+    camels: [[104, -188], [126, -204], [114, -206]].map(([x, z], i) => { const g = kit.figure('shepherd', { tint: SERVANT_C[(i + 3) % 4] }); g.position.copy(at(x, z)); return g; })
   };
   const allServants = () => Object.values(servants).flat();
 
   /* --- 자녀 열 명과 제단 (욥기 1:2, 1:5) --- */
   const KID_C = ['#5b4636', '#4e3d31', '#62483a', '#4a3a2e', '#58402f', '#503e33', '#5e4a3b', '#7b4a3c', '#6d5470', '#8a6a4a'];
   const KID_AT = [[-5.2, -10.2], [-4, -11], [-2.7, -11.6], [-1.3, -12], [0, -12.1], [1.3, -12], [2.7, -11.6], [4, -11], [5.2, -10.2], [-6.2, -9.1]];
-  const kids = KID_AT.map(([x, z], i) => { const g = kit.person(KID_C[i], { scale: i >= 7 ? .93 : rnd(.98, 1.04) }); g.position.copy(at(x, z)); g.rotation.y = Math.atan2(-x, -z); return { g, w: kit.walker(g, { height: heightAt, pace: 5, amp: .03, lean: .05, standLean: .02 }), home: at(x, z) }; });
-  const newKids = KID_AT.map(([x, z], i) => { const xx = x * 1.15 + 1.5, zz = z + 3.2; const g = kit.person(['#6a5344', '#5d4a3d', '#6f5646', '#59473b', '#665041', '#5f4b3f', '#6b5545', '#8e5544', '#7b6082', '#9c7a56'][i], { scale: i >= 7 ? .93 : 1 }); g.position.copy(at(xx, zz)); g.rotation.y = Math.atan2(-xx, -zz); return g; });
+  const kids = KID_AT.map(([x, z], i) => { const g = kit.figure(i >= 7 ? 'woman' : 'man', { tint: KID_C[i], scale: i >= 7 ? .97 : rnd(.98, 1.04) });  /* 아들 일곱, 딸 셋 (욥 1:2) */ g.position.copy(at(x, z)); g.rotation.y = Math.atan2(-x, -z); return { g, w: kit.walker(g, { height: heightAt, pace: 5, amp: .03, lean: .05, standLean: .02 }), home: at(x, z) }; });
+  const newKids = KID_AT.map(([x, z], i) => { const xx = x * 1.15 + 1.5, zz = z + 3.2; const g = kit.figure(i >= 7 ? 'woman' : 'man', { tint: ['#6a5344', '#5d4a3d', '#6f5646', '#59473b', '#665041', '#5f4b3f', '#6b5545', '#8e5544', '#7b6082', '#9c7a56'][i], scale: i >= 7 ? .97 : 1 }); g.position.copy(at(xx, zz)); g.rotation.y = Math.atan2(-xx, -zz); return g; });
   const ALTAR_Z = -8;
   const altar = kit.altar({ at: [0, heightAt(0, ALTAR_Z), ALTAR_Z] });
   // 다시 찾아온 형제자매와 아는 사람들 (욥기 42:11)
   const tables = new THREE.Group(); scene.add(tables); tables.visible = false;
-  [[-4, -15], [4, -15], [0, -17.5]].forEach(([x, z]) => { kit.box(3.2, .08, 1.1, '#5a4636', x, .72, z, tables); kit.box(.12, .7, .12, '#3d2f24', x - 1.4, .35, z, tables); kit.box(.12, .7, .12, '#3d2f24', x + 1.4, .35, z, tables); kit.glow(.12, .16, 4, 2.2, .9, x, .86, z + .3, tables); });
+  [[-4, -15], [4, -15], [0, -17.5]].forEach(([x, z]) => { kit.box(3.2, .08, 1.1, '#5a4636', x, .72, z, tables); kit.box(.12, .7, .12, '#3d2f24', x - 1.4, .35, z, tables); kit.box(.12, .7, .12, '#3d2f24', x + 1.4, .35, z, tables); kit.lamp({ at: [x, .76, z + .3], parent: tables, light: false }); });  // 상 위의 진흙 등잔
   const guests = kit.throng({ n: 26, height: heightAt, place: i => { const a = (i / 26) * Math.PI * 1.6 + Math.PI * 1.2, r = 7 + (i % 3) * 1.2; return [Math.cos(a) * r * 1.2, -15 + Math.sin(a) * r * .55]; } });
   guests.visible = false;
 
   /* --- 소식을 전하는 사람들, 아내, 친구들 --- */
   const MSG_X = [-2.1, -.7, .7, 2.1];
-  const msgs = MSG_X.map((x, i) => { const g = kit.person(['#2b241f', '#33281f', '#28221e', '#3a2c22'][i], { scale: rnd(.97, 1.05) }); return { g, w: kit.walker(g, { height: heightAt }), to: new THREE.Vector3(x, 0, -6.4 - Math.abs(x) * .35) }; });
+  const msgs = MSG_X.map((x, i) => { const g = kit.figure('shepherd', { tint: ['#2b241f', '#33281f', '#28221e', '#3a2c22'][i], scale: rnd(.97, 1.05) }); return { g, w: kit.walker(g, { height: heightAt }), to: new THREE.Vector3(x, 0, -6.4 - Math.abs(x) * .35) }; });
   const wifeG = kit.figure('woman', { tint: '#dcd3c0', scale: .96 });
   const wife = { g: wifeG, w: kit.walker(wifeG, { height: heightAt, pace: 5, amp: .03, lean: .04, standLean: .02 }) };
-  const friends = [[-2.3, -3.4], [.25, -4.7], [2.5, -3.3]].map(([x, z], i) => { const g = kit.figure('elder', { tint: ['#2e2a26', '#3b3128', '#2a2b2e'][i], pose: 'seat' }); g.position.set(x, 0, z); g.rotation.y = Math.atan2(-x, -z); return g; });
+  const friends = [[-2.3, -3.4], [.25, -4.7], [2.5, -3.3]].map(([x, z], i) => { const g = kit.figure('elder', { tint: ['#2e2a26', '#3b3128', '#2a2b2e'][i], colors: { ...Object.fromEntries(['tunic', 'under_chest', 'under_body', 'under_arm', 'under_thigh', 'under_calf'].map(k => [k, ['#7d7368', '#6f665c', '#857a6c'][i]])), headcloth: ['#5a5249', '#6b6157', '#4f4a44'][i] }, pose: 'seat' });  /* 속옷·머릿수건이 살색이면 맨몸처럼 보인다 */ g.position.set(x, 0, z); g.rotation.y = Math.atan2(-x, -z); return g; });
   const lift = { v: 0 };
 
   /* --- 모닥불과 잿더미 --- */
@@ -551,7 +551,7 @@ async function world(kit, { audio, sleep }) {
       if (kind === 'gust') { audio.wind(.9, .8); kit.setEnv({ wind: 1, ash: .95 }, 1.2); setTimeout(() => { audio.wind(.2, 3); kit.setEnv({ wind: .2, ash: .3 }, 3); }, 2600); }
       if (kind === 'friendsLook') { kit.tween(lift, { v: 1 }, 1.4); setTimeout(() => kit.tween(lift, { v: 0 }, 2), 3200); }
       if (kind === 'wifeLook') { const g = wife.g; wife.w.idle(); kit.tween(g.rotation, { x: -.06 }, 1); setTimeout(() => kit.tween(g.rotation, { x: .1 }, 1.6), 2400); }
-      if (kind === 'servantsLook') msgs.forEach((m, i) => { if (m.g.visible) { m.w.idle(); kit.tween(m.g.rotation, { x: .55 }, 1.4 + i * .2); } });
+      if (kind === 'servantsLook') msgs.forEach((m, i) => { if (m.g.visible) { m.w.idle(); setTimeout(() => kit.gesture(m.g, [['bow', 9]]), i * 200); } });  /* 고개를 떨군다 */
       if (kind === 'fireFlare') { campfire.level = 2.4; for (let j = 0; j < 60; j++) sparks.emit(.15, .3, -2.6, { vx: rnd(-.6, .6), vy: rnd(2, 4), vz: rnd(-.6, .6), c: [3, 1.5, .4], life: rnd(1, 2), size: .05, g: -.3, drag: .3 }); setTimeout(() => { campfire.level = 1; }, 1600); }
       if (kind === 'stars') kit.setEnv({ sing: 1.4 }, 1.5).then(() => kit.setEnv({ sing: .6 }, 4));
     },
