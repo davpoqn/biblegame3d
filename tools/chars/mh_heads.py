@@ -94,6 +94,10 @@ for sex in ('m', 'f'):
     eye_y = float(D['eyes_V'][:, 1].mean())  # Blender에서 얼굴은 -Y 쪽
     P['face_cov'] = part(to_gltf(bv), D['body_T'], D['body_UV'], keep=(bv[:, 2] > eye_z - NECK) & (bv[:, 2] < eye_z + .045) & (bv[:, 1] < eye_y + .07))
     for k in ('eyes', 'brows', 'lashes'): P[k] = part(to_gltf(D[f'{k}_V'].astype(float)), D[f'{k}_T'], D[f'{k}_UV'])
+    # 눈: 바깥 각막 껍질은 그림의 투명한 곳을 쓴다. 불투명하게 그리면 눈동자를 덮어 흰자만 보이는 멍한 눈이 되므로 뺀다
+    T, UV = D['eyes_T'], D['eyes_UV']; ea = np.asarray(tex(sex, 'eyes').convert('RGBA'))[..., 3]; c = UV.mean(1)
+    sel = ea[np.clip(((1 - c[:, 1]) * ea.shape[0]).astype(int), 0, ea.shape[0] - 1), np.clip((c[:, 0] * ea.shape[1]).astype(int), 0, ea.shape[1] - 1)] >= 128
+    P['eyes'] = part(to_gltf(D['eyes_V'].astype(float)), T[sel], UV[sel])
     hairs = [k[:-2] for k in D.files if k.startswith('hair_') and k.endswith('_V')]
     for k in hairs:
         hv = D[f'{k}_V'].astype(float)

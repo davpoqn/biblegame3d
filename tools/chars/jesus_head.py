@@ -72,6 +72,10 @@ eye = np.asarray(Image.open(RAW / 'textures/blue_eye.webp').convert('RGBA')).ast
 m = (eye[..., 2] - eye[..., 0]) > 28; lum = eye[..., :3].mean(-1)
 for c, (b0, s) in enumerate([(62, .62), (36, .38), (20, .2)]): eye[..., c] = np.where(m, b0 + lum * s, eye[..., c])
 eyeT = Image.fromarray(np.clip(eye, 0, 255).astype(np.uint8), 'RGBA').resize((256, 256), Image.LANCZOS)
+# 바깥 각막 껍질은 그림의 투명한 곳을 쓴다. 불투명하게 그리면 눈이 새까맣게 보이므로 뺀다
+_p, _n, _u, _t = prims['high-poly.obj']; _t = _t.reshape(-1, 3); _c = _u[_t].mean(1); _a = np.asarray(eyeT)[..., 3]
+_k = _a[np.clip((_c[:, 1] * 256).astype(int), 0, 255), np.clip((_c[:, 0] * 256).astype(int), 0, 255)] >= 128
+prims['high-poly.obj'] = (_p, _n, _u, _t[_k].ravel()); print('eyes: kept', int(_k.sum()), 'of', len(_k), 'triangles')
 hairT = tint(Image.open(RAW / 'textures/long01_diffuse.webp'), [.95, .9, .86]).resize((1024, 1024), Image.LANCZOS)
 browT = tint(Image.open(RAW / 'textures/eyebrow001.png'), [.42, .3, .22]).resize((256, 256), Image.LANCZOS)
 beardT = tint(Image.open(RAW / 'textures/beard_sigmund_diffuse.webp'), [.5, .36, .26]).resize((512, 512), Image.LANCZOS)
