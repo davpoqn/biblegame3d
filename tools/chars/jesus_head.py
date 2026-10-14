@@ -25,6 +25,30 @@ def load_obj(p):
 
 
 V, T, G = load_obj(RAW / 'jesus1.exports.obj')
+
+
+def sculpt(V, G):
+    """얼굴을 덜 납작하게 (사용자 요청 2026-10-14: 광대뼈가 조금 나오고 볼은 갸름하게).
+    두 눈 사이 거리(ed)를 단위로, 두 눈 가운데를 원점으로 하는 공간 변형을 얼굴·눈썹·수염·머리카락에 똑같이 줘서 서로 어긋나지 않게 한다"""
+    eyes = np.array(sorted({v for f in G['high-poly.obj'] for v, _ in f}))
+    E = V[eyes]; L, R = E[E[:, 0] > 0].mean(0), E[E[:, 0] < 0].mean(0); mid, ed = (L + R) / 2, np.linalg.norm(L - R)
+    q = (V - mid) / ed; x, y, z = q[:, 0], q[:, 1], q[:, 2]; ax, sx = np.abs(x), np.sign(x)
+    ss = lambda a, b, t: np.clip((t - a) / (b - a), 0, 1) ** 2 * (3 - 2 * np.clip((t - a) / (b - a), 0, 1))
+    g = lambda cx, cy, rx, ry: np.exp(-((ax - cx) / rx) ** 2 / 2 - ((y - cy) / ry) ** 2 / 2)
+    front = ss(-.9, -.2, z)                                     # 얼굴 앞쪽만 (뒷머리·귀 뒤는 그대로)
+    d = np.zeros_like(q)
+    d[:, 2] -= SC['side'] * ss(.42, 1.05, ax) * ss(-1.9, -1.2, y) * (1 - ss(.7, 1.2, y)) * front   # 볼 옆면을 뒤로 → 위에서 보면 V자
+    cb = g(.84, -.4, .26, .2) * front                            # 광대뼈
+    d[:, 0] += sx * SC['cheekbone'] * cb; d[:, 2] += SC['cheekbone'] * .8 * cb
+    hc = g(.72, -.98, .28, .24) * front                          # 광대 아래 볼은 들어가게
+    d[:, 0] -= sx * SC['hollow'] * hc; d[:, 2] -= SC['hollow'] * .6 * hc
+    d[:, 0] -= x * SC['jaw'] * ss(-.95, -1.6, -y) * ss(.3, .7, ax)   # 턱선을 조금 좁게
+    d[eyes] = 0                                                  # 눈알 모양은 그대로
+    return V + d * ed
+
+
+SC = {'side': .16, 'cheekbone': .09, 'hollow': .11, 'jaw': .07}
+V = sculpt(V, G)
 keep = {
     'base.obj': lambda f: min(V[i][1] for i, _ in f) >= NECK_Y,
     'long01.obj': lambda f: min(V[i][1] for i, _ in f) >= HAIR_Y,
