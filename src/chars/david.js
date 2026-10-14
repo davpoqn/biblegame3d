@@ -578,6 +578,7 @@ async function world(kit, { audio, sleep }) {
   siteD('ascent');
   const hAs = (x, z) => { const lx = x - AS; return -6 * Math.exp(-(lx * lx) / 60) + 30 * smooth(0, 140, lx) + 3 * (vnoise(lx * .02, z * .02) - .5) + 8 * smooth(-40, -160, lx) + 14 * smooth(240, 360, Math.hypot(lx, z)); };
   kit.terrain({ height: hAs, size: 700, seg: 150, at: [AS + 40, 0], lo: '#6a5a42', hi: '#b8a27a', yMul: .015 });
+  kit.path([[AS - 10, -.9], [AS + 4, .2], [AS + 30, 1.6], [AS + 70, 3.4], [AS + 110, 4.8]], { width: 2.4, height: hAs });  // 감람산 길 (삼하 15:30)
   kit.water({ y: hAs(AS, 0) + .5, size: 14, seg: 4, at: [AS, 0], deep: '#2a4a40' });  // 기드론 시내
   kit.cityWall({ from: [AS - 90, -80], to: [AS - 90, 80], height: hAs });
   kit.village({ center: [AS - 140, 0], n: 40, rMin: 10, rMax: 50, height: hAs, seed: 51 });

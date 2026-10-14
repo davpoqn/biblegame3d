@@ -1057,6 +1057,7 @@ async function world(kit, { audio, sleep }) {
   const carried = kit.cross({ at: [0, 0, 0], h: 3.6 }); sites.jer.add(carried); carried.visible = false;
   // 동산의 무덤 (요 19:41, 20:1)
   const TB = v3(JR - 318, 0, 112); TB.y = hJr(TB.x, TB.z);
+  kit.path([[JR - 268, 52], [JR - 282, 70], [JR - 302, 94], [TB.x + .2, TB.z - 6.8], [TB.x, TB.z - 2.4]], { width: 1.8, height: hJr });  // 무덤으로 가는 동산 길 (요 20:3–4)
   const tomb = kit.tomb({ at: [TB.x, TB.y, TB.z], ry: Math.PI });
   tomb.userData.stone.position.x += 2.6; tomb.userData.stone.rotation.z = .1;  // 돌이 굴려져 있다 (요 20:1)
   tomb.updateMatrixWorld(true);

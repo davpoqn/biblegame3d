@@ -443,6 +443,7 @@ async function world(kit, { audio, sleep }) {
   const SUM = v3(X4, h4(X4, MOUNT.z), MOUNT.z);
   // 산을 오르는 길(굽이진 오솔길)과 사흘 길의 큰길
   const CP = [[X4, -104], [X4 + 5, -116], [X4 - 3, -128], [X4 + 2, -139], [X4, SUM.z + 3.2]];
+  kit.path([[CP[0][0], CP[0][1] + 10], ...CP.slice(0, -1), [SUM.x + 1, SUM.z + 3]], { width: 1.8, height: h4 });  // 산으로 오르는 흙길 (사용자가 보낸 사진처럼)
   const pathX = z => { for (let i = 1; i < CP.length; i++) { const [ax, az] = CP[i - 1], [bx, bz] = CP[i]; if (z <= az && z >= bz) return ax + (bx - ax) * (z - az) / (bz - az); } return X4; };
   const nearPath = (x, z, m) => (z < -100 && z > SUM.z && Math.abs(x - pathX(z)) < m) || (z > -104 && z < 8 && Math.abs(x - X4) < m) || Math.hypot(x - SUM.x, z - SUM.z) < 9;
   const pick = (gen, m = 3) => { for (let k = 0; k < 30; k++) { const p = gen(); if (!nearPath(p[0], p[1], m)) return p; } return gen(); };

@@ -435,6 +435,7 @@ async function world(kit, { audio, sleep }) {
   site('dam');
   const hD = (x, z) => { const lx = x - D; return 2.4 * (vnoise(lx * .015, z * .015) - .5) + 10 * smooth(30, 120, Math.abs(lx)) * vnoise(lx * .01 + 5, z * .01) + 16 * smooth(260, 340, Math.hypot(lx, z + 100)); };
   kit.terrain({ height: hD, size: 760, seg: 150, at: [D, -100], lo: '#8a7656', hi: '#d6c19a', yMul: .02 });
+  kit.path([[D, 74], [D + .8, 50], [D - .6, 28], [D + .4, 6], [D, -20], [D - .5, -48]], { width: 3.2, height: hD });  // 다메섹으로 가는 길
   kit.rocks({ n: 80, height: hD, center: [D, -60], rMin: 8, rMax: 180, sMax: .6, avoid: (x, z) => Math.abs(x - D) < 7 });
   const DW = -230;  // 다메섹 성벽
   kit.cityWall({ from: [D - 120, DW], to: [D - 6, DW], height: hD, towers: 14 }); kit.cityWall({ from: [D + 6, DW], to: [D + 120, DW], height: hD, towers: 14 });

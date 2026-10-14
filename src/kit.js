@@ -160,9 +160,89 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
 
   /* --- 빛 --- */
   const sun = new THREE.DirectionalLight('#ffffff', 2); scene.add(sun);
+  // 그림자: 나무 아래 얼룩진 그림자, 사람·바위 그림자. 카메라 둘레 28m만 그린다(휴대폰은 작은 그림자 지도)
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const SHM = window.matchMedia && matchMedia('(pointer: coarse)').matches ? 1024 : 2048, SHR = 28;
+  sun.castShadow = true; sun.shadow.mapSize.set(SHM, SHM);
+  Object.assign(sun.shadow.camera, { left: -SHR, right: SHR, top: SHR, bottom: -SHR, near: 1, far: 260 }); sun.shadow.camera.updateProjectionMatrix();
+  sun.shadow.bias = -.0005; sun.shadow.normalBias = .04; scene.add(sun.target);
+  let shadowSweepAt = 0;
+  function shadowSweep() {  // 새로 생긴 물체에도 그림자를 켠다 (1.5초마다). userData.noCast: 그림자를 드리우지 않음(풀, 땅)
+    scene.traverse(o => {
+      if (!(o.isMesh || o.isInstancedMesh) || o.userData.shadowSet) return;
+      const m = Array.isArray(o.material) ? o.material[0] : o.material;
+      if (!m || !(m.isMeshStandardMaterial || m.isMeshLambertMaterial)) return;
+      o.userData.shadowSet = true; o.castShadow = !o.userData.noCast && !m.transparent; o.receiveShadow = true;
+    });
+  }
   const hemi = new THREE.HemisphereLight('#ffffff', '#332211', .6); scene.add(hemi);
   const moon = new THREE.AmbientLight('#9aa8d0', 0); scene.add(moon);  // 어두운 장면에서도 사람과 사물이 보이게 하는 고른 빛
 
+  /* --- 자연 질감 (2026-10-14, 사용자가 보낸 사진: 나무 사이 흙길, 바위 언덕의 흙길, 해 질 녘 물결) ---
+     그림 파일 없이 캔버스로 그린다. repeat: 이어 붙여도 이음매가 없게 가장자리를 넘는 점은 반대편에도 그린다 */
+  const windU = { value: 0 };
+  function canvasTex(w, h, draw, { srgb = true } = {}) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; t.userData.canvas = c; return t;
+  }
+  // 잎·풀처럼 투명한 곳을 잘라 그리는 그림: 작은 밉맵에서 투명도가 평균 나며 잎이 사라지지 않게, 밉맵마다 투명도를 다시 세운다
+  function cutoutTex(w, h, draw) {
+    const t = canvasTex(w, h, draw), src = t.userData.canvas, mips = [];
+    let cw = w, ch = h, prev = src;
+    while (cw > 1 || ch > 1) {
+      cw = Math.max(1, cw >> 1); ch = Math.max(1, ch >> 1);
+      const c = document.createElement('canvas'); c.width = cw; c.height = ch; const g = c.getContext('2d'); g.drawImage(prev, 0, 0, cw, ch);
+      const im = g.getImageData(0, 0, cw, ch), d = im.data; for (let i = 3; i < d.length; i += 4) d[i] = Math.min(255, d[i] * 1.6);  // 덮인 넓이가 줄지 않게
+      g.putImageData(im, 0, 0); mips.push(c); prev = c;
+    }
+    t.mipmaps = [src, ...mips]; t.generateMipmaps = false; t.minFilter = THREE.LinearMipmapLinearFilter;
+    return t;
+  }
+  function wrapDraw(g, w, h, x, y, r, fn) { for (const dx of [-w, 0, w]) for (const dy of [-h, 0, h]) if (x + dx > -r && x + dx < w + r && y + dy > -r && y + dy < h + r) fn(x + dx, y + dy); }
+  function blots(g, w, h, n, r0, r1, col) {
+    for (let i = 0; i < n; i++) {
+      const x = Math.random() * w, y = Math.random() * h, r = rnd(r0, r1), c = col();
+      wrapDraw(g, w, h, x, y, r, (px, py) => { const gr = g.createRadialGradient(px, py, 0, px, py, r); gr.addColorStop(0, c); gr.addColorStop(1, c.replace(/[\d.]+\)$/, '0)')); g.fillStyle = gr; g.fillRect(px - r, py - r, r * 2, r * 2); });
+    }
+  }
+  // 밝기 그림 → 법선 지도 (울퉁불퉁한 느낌)
+  function normalFrom(tex, k = 2.2) {
+    const src = tex.userData.canvas, w = src.width, h = src.height, d = src.getContext('2d').getImageData(0, 0, w, h).data;
+    return canvasTex(w, h, g => {
+      const out = g.createImageData(w, h), L = (x, y) => d[(((y + h) % h) * w + ((x + w) % w)) * 4] / 255;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const dx = (L(x - 1, y) - L(x + 1, y)) * k, dy = (L(x, y - 1) - L(x, y + 1)) * k, n = Math.hypot(dx, dy, 1), i = (y * w + x) * 4;
+        out.data[i] = (dx / n * .5 + .5) * 255; out.data[i + 1] = (dy / n * .5 + .5) * 255; out.data[i + 2] = (1 / n * .5 + .5) * 255; out.data[i + 3] = 255;
+      }
+      g.putImageData(out, 0, 0);
+    }, { srgb: false });
+  }
+  const TEX = {};
+  // 흙: 밝기 0.8~1.05의 얼룩, 잔돌, 모래알. 땅 색(정점 색)에 곱한다
+  TEX.soil = () => TEX._soil || (TEX._soil = canvasTex(512, 512, (g, w, h) => {
+    g.fillStyle = 'rgb(236,236,236)'; g.fillRect(0, 0, w, h);
+    blots(g, w, h, 70, 30, 90, () => Math.random() < .5 ? `rgba(200,200,200,${rnd(.2, .45).toFixed(2)})` : `rgba(255,255,255,${rnd(.15, .35).toFixed(2)})`);
+    blots(g, w, h, 260, 4, 14, () => `rgba(${Math.random() < .6 ? '185,185,185' : '255,255,255'},${rnd(.25, .5).toFixed(2)})`);
+    for (let i = 0; i < 520; i++) {  // 잔돌
+      const x = Math.random() * w, y = Math.random() * h, r = rnd(1.2, 4.2), l = rnd(150, 245) | 0;
+      wrapDraw(g, w, h, x, y, r + 2, (px, py) => { g.fillStyle = 'rgba(90,90,90,.35)'; g.beginPath(); g.ellipse(px + .8, py + 1, r, r * .75, 0, 0, 7); g.fill(); g.fillStyle = `rgb(${l},${l},${l})`; g.beginPath(); g.ellipse(px, py, r, r * .75, rnd(0, 3), 0, 7); g.fill(); });
+    }
+    for (let i = 0; i < 9000; i++) { const l = rnd(170, 255) | 0; g.fillStyle = `rgba(${l},${l},${l},.5)`; g.fillRect(Math.random() * w, Math.random() * h, 1, 1); }
+  }));
+  TEX.soilN = () => TEX._soilN || (TEX._soilN = normalFrom(TEX.soil(), 3));
+  // 흙길: 가운데가 밟혀 밝고 매끈하고, 가장자리는 풀과 섞이며 흐려진다 (가로 = 길 폭, 세로 = 길 방향)
+  TEX.path = () => TEX._path || (TEX._path = canvasTex(256, 512, (g, w, h) => {
+    g.fillStyle = 'rgb(198,170,128)'; g.fillRect(0, 0, w, h);
+    blots(g, w, h, 60, 10, 40, () => Math.random() < .5 ? `rgba(160,130,92,${rnd(.25, .5).toFixed(2)})` : `rgba(222,200,160,${rnd(.25, .5).toFixed(2)})`);
+    for (const cx of [.36, .64]) { const gr = g.createLinearGradient(w * (cx - .12), 0, w * (cx + .12), 0); gr.addColorStop(0, 'rgba(232,212,176,0)'); gr.addColorStop(.5, 'rgba(232,212,176,.45)'); gr.addColorStop(1, 'rgba(232,212,176,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }  // 밟힌 두 줄
+    for (let i = 0; i < 260; i++) { const x = Math.random() * w, y = Math.random() * h, r = rnd(1, 3.4), l = rnd(120, 230) | 0; wrapDraw(g, w, h, x, y, r, (px, py) => { g.fillStyle = `rgb(${l},${l * .92 | 0},${l * .8 | 0})`; g.beginPath(); g.ellipse(px, py, r, r * .7, rnd(0, 3), 0, 7); g.fill(); }); }
+    const img = g.getImageData(0, 0, w, h), d = img.data;  // 가장자리: 들쭉날쭉하게 투명해진다
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const e = Math.abs(x / w - .5) * 2, wob = vnoise(x * .05, y * .02) * .28 + vnoise(x * .2, y * .2) * .1;
+      d[(y * w + x) * 4 + 3] = clamp((1 - e - wob * .9) * 4.2, 0, 1) * 255;
+    }
+    g.putImageData(img, 0, 0);
+  }));
   /* --- 입자 풀 (불꽃, 흙먼지, 연기) --- */
   const PV = `attribute vec3 aColor; attribute float aSize; attribute float aAlpha; uniform float uPR;
     varying vec3 vC; varying float vA;
@@ -327,8 +407,10 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
-    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }));
-    R().add(m);
+    const uvA = new Float32Array(p.count * 2); for (let i = 0; i < p.count; i++) { uvA[i * 2] = p.getX(i) / 2.6; uvA[i * 2 + 1] = p.getZ(i) / 2.6; }
+    g.setAttribute('uv', new THREE.BufferAttribute(uvA, 2));
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, map: TEX.soil(), normalMap: TEX.soilN(), normalScale: new THREE.Vector2(.7, .7) }));
+    m.userData.noCast = true; R().add(m);
     addGround((x, z) => shown(m) && Math.abs(x - at[0]) <= size / 2 && Math.abs(z - at[1]) <= size / 2 ? height(x, z) : null);
     return m;
   }
@@ -342,10 +424,16 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       c.copy(a).lerp(b, vnoise(x * .8, z * .8)); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
-    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 })); m.position.set(at[0], y, at[1]); R().add(m); return m;
+    const uvA = g.attributes.uv; for (let i = 0; i < p.count; i++) uvA.setXY(i, (p.getX(i) + at[0]) / 2.6, (p.getZ(i) + at[1]) / 2.6);
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, map: TEX.soil(), normalMap: TEX.soilN(), normalScale: new THREE.Vector2(.6, .6) })); m.userData.noCast = true; m.position.set(at[0], y, at[1]); R().add(m); return m;
   }
   function rocks({ n = 160, height, color = '#7b6856', rMin = 4, rMax = 110, center = [0, 0], avoid, big = .08, sMin = .12, sMax = .8 } = {}) {
-    const m = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), new THREE.MeshStandardMaterial({ color, roughness: 1, flatShading: true }), n);
+    if (!TEX._rockGeo) {  // 둥근 돌을 잡음으로 울퉁불퉁하게 (한 번 만들어 같이 쓴다)
+      const rg = new THREE.IcosahedronGeometry(1, 2), pa = rg.attributes.position;
+      for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), y = pa.getY(i), z = pa.getZ(i), k = .78 + vnoise(x * 1.6 + 7, y * 1.6 + z * 1.3) * .38 + vnoise(x * 4 + z * 3, y * 4) * .1; pa.setXYZ(i, x * k, y * k * (y < -.3 ? .7 : 1), z * k); }
+      rg.computeVertexNormals(); TEX._rockGeo = rg;
+    }
+    const m = new THREE.InstancedMesh(TEX._rockGeo, new THREE.MeshStandardMaterial({ color, roughness: .95, map: TEX.soil(), normalMap: TEX.soilN(), normalScale: new THREE.Vector2(1.2, 1.2) }), n);
     const d = new THREE.Object3D();
     for (let i = 0; i < n; i++) {
       let x, z, tries = 0;
@@ -946,7 +1034,13 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   }
   function water({ y = 0, size = 1400, seg = 220, deep = '#16303a', at = [0, 0] } = {}) {
     const g = new THREE.PlaneGeometry(size, size, seg, seg); g.rotateX(-Math.PI / 2); g.translate(at[0], 0, at[1]);
-    const u = { uBoat: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uBoatL: { value: [0, 0, 0, 0] }, uBoatN: { value: 0 }, uTime: { value: 0 }, uAmp: { value: 0 }, uY: { value: y }, uDeep: { value: new THREE.Color(deep) }, uTop: { value: new THREE.Color() }, uHorizon: { value: new THREE.Color() }, uSun: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3() }, uFog: { value: new THREE.Color() }, uFogD: { value: .006 }, uCam: { value: new THREE.Vector3() }, uStars: { value: 0 } };
+    TEX.ripple = TEX.ripple || canvasTex(256, 256, (g, w, h) => {  // 이어 붙여도 이음매 없는 잔물결 높이 (정수 주파수 사인의 합)
+      const img = g.createImageData(w, h), W = [[1, 2, .9], [3, 1, .6], [2, 5, .35], [5, 3, .3], [7, 2, .2], [4, 7, .18], [9, 6, .12], [11, 13, .08]].map(([a, b2, am]) => [a, b2, am, Math.random() * 6.28]);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = 0; for (const [a, b2, am, ph] of W) v += am * Math.sin((a * x / w + b2 * y / h) * 6.283 + ph); const l = (v / 2.6 * .5 + .5) * 255, i = (y * w + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = l; img.data[i + 3] = 255; }
+      g.putImageData(img, 0, 0);
+    }, { srgb: false });
+    TEX.rippleN = TEX.rippleN || normalFrom(TEX.ripple, 4);
+    const u = { uRip: { value: TEX.rippleN }, uBoat: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uBoatL: { value: [0, 0, 0, 0] }, uBoatN: { value: 0 }, uTime: { value: 0 }, uAmp: { value: 0 }, uY: { value: y }, uDeep: { value: new THREE.Color(deep) }, uTop: { value: new THREE.Color() }, uHorizon: { value: new THREE.Color() }, uSun: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3() }, uFog: { value: new THREE.Color() }, uFogD: { value: .006 }, uCam: { value: new THREE.Vector3() }, uStars: { value: 0 } };
     const wl = WAVES.map(w => `h += ${w[3].toFixed(2)} * sin(dot(vec2(${w[0].toFixed(2)}, ${w[1].toFixed(2)}), p) * ${w[2].toFixed(2)} + uTime * ${w[4].toFixed(2)}); d += ${w[3].toFixed(2)} * ${w[2].toFixed(2)} * cos(dot(vec2(${w[0].toFixed(2)}, ${w[1].toFixed(2)}), p) * ${w[2].toFixed(2)} + uTime * ${w[4].toFixed(2)}) * vec2(${w[0].toFixed(2)}, ${w[1].toFixed(2)});`).join('\n');
     const m = new THREE.Mesh(g, new THREE.ShaderMaterial({
       uniforms: u,
@@ -955,7 +1049,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
           ${wl}
           float k = .06 + uAmp; w.y = uY + h * k; vN = normalize(vec3(-d.x * k, 1., -d.y * k)); vW = w.xyz;
           gl_Position = projectionMatrix * viewMatrix * w; }`,
-      fragmentShader: `uniform vec3 uDeep, uTop, uHorizon, uSun, uSunDir, uFog, uCam; uniform float uFogD, uTime, uStars; varying vec3 vW; varying vec3 vN;
+      fragmentShader: `uniform vec3 uDeep, uTop, uHorizon, uSun, uSunDir, uFog, uCam; uniform float uFogD, uTime, uStars; uniform sampler2D uRip; varying vec3 vW; varying vec3 vN;
         uniform vec4 uBoat[4]; uniform float uBoatL[4]; uniform int uBoatN;
         void main(){
           for (int i = 0; i < 4; i++) { if (i >= uBoatN) break;
@@ -964,11 +1058,15 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
             if ((az <= uBoatL[i] && abs(lx) < hw) || (az > uBoatL[i] && e * e + (lx / hw) * (lx / hw) < 1.)) discard;  // 배 안에는 물이 없다
           }
           vec3 v = normalize(uCam - vW);
-          vec3 n = normalize(vN + vec3(sin(vW.x * 1.7 + uTime * 1.3) * .035, 0., cos(vW.z * 1.9 + uTime * 1.1) * .035));
+          vec2 r1 = texture2D(uRip, vW.xz * .045 + uTime * vec2(.012, .007)).xy * 2. - 1., r2 = texture2D(uRip, vW.xz * .13 - uTime * vec2(.01, .019)).xy * 2. - 1., r3 = texture2D(uRip, vW.xz * .41 + uTime * vec2(-.03, .02)).xy * 2. - 1.;
+          float dist = length(uCam - vW), fine = 1. - smoothstep(20., 120., dist);  // 멀어질수록 잔물결은 줄인다 (반짝이가 지글거리지 않게)
+          vec2 rip = r1 * .55 + r2 * .35 * (.4 + .6 * fine) + r3 * .22 * fine;
+          vec3 n = normalize(vN + vec3(rip.x, 0., rip.y) * .32);
           float fr = pow(1. - max(dot(v, n), 0.), 4.) * .9 + .05;
           vec3 r = reflect(-v, n); vec3 sky = mix(uHorizon, uTop, clamp(r.y * 1.6, 0., 1.));
-          vec3 col = mix(uDeep * (.35 + .65 * length(uHorizon)), sky, fr);
-          vec3 sd = normalize(uSunDir); col += uSun * pow(max(dot(r, sd), 0.), 220.) * 4. * step(-.02, sd.y);
+          vec3 deep = uDeep * (.35 + .65 * length(uHorizon)), shallow = deep * vec3(1.15, 1.35, 1.25) + vec3(.02, .04, .035);
+          vec3 col = mix(mix(shallow, deep, smoothstep(2., 30., dist)), sky, fr);  // 가까운 물은 조금 맑고 푸르다
+          vec3 sd = normalize(uSunDir); col += uSun * pow(max(dot(r, sd), 0.), 260.) * 5.5 * step(-.02, sd.y);  // 햇빛 반짝임
           col += uSun * pow(max(dot(r, sd), 0.), 18.) * .12 * step(-.02, sd.y);
           float dd = length(uCam - vW); float f = 1. - exp(-uFogD * uFogD * dd * dd); col = mix(col, uFog, f);
           gl_FragColor = vec4(col, 1.); }`
@@ -1111,39 +1209,206 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     box(8, 14, .5, '#3a2a1c', 0, 29, 10.3, g);  // 들어가는 문
     R().add(g); return g;
   }
-  // 나무: 감람나무, 종려나무, 무화과나무, 위성류. 같은 종류는 한꺼번에 그린다
+  // 나무: 감람나무, 무화과나무, 위성류, 마른 나무, 종려나무 (사용자가 보낸 사진처럼 가지와 잎이 있는 나무).
+  // 줄기·가지는 휘어지며 가늘어지는 관, 잎은 잎 그림을 붙인 판 여러 장(빛을 받는 방향은 나무 바깥쪽). 종류마다 세 가지 모양을 만들어 돌려 쓴다. 잎은 바람에 흔들린다
   const TREE = {
-    olive: { trunk: '#5a4a3a', leaf: '#7b8a63', h: 3.2, crown: [[0, 3.2, 0, 1.7], [.9, 2.8, .4, 1.1], [-.8, 2.9, -.3, 1.2]] },
-    fig: { trunk: '#6a5a48', leaf: '#4f6b34', h: 2.6, crown: [[0, 2.8, 0, 1.9], [1, 2.4, .5, 1.2], [-1, 2.5, -.4, 1.2]] },
-    palm: { trunk: '#7a6248', leaf: '#5d7a3c', h: 8, palm: true },
-    tamarisk: { trunk: '#5e4e3e', leaf: '#8a9470', h: 4, crown: [[0, 4.2, 0, 2], [.8, 3.6, .6, 1.4]] },
-    bare: { trunk: '#5a4a3a', leaf: '#5a4a3a', h: 2.6, crown: [[0, 2.7, 0, .5], [.6, 2.4, .3, .35], [-.5, 2.3, -.2, .3]] }  // 잎이 없는 (마른) 나무
+    olive: { trunk: '#6b5d4c', leaf: '#93a07c', h: 2.4, r: .3, branches: 5, spread: 1.8, rise: .9, crown: 2.4, leafS: 1.15, leafTex: 'olive', twist: .38, fill: 16 },
+    fig: { trunk: '#8a7a66', leaf: '#5d7a3e', h: 2.1, r: .24, branches: 5, spread: 2.1, rise: .75, crown: 2.5, leafS: 1.35, leafTex: 'fig', twist: .16, fill: 18 },
+    palm: { trunk: '#7a6248', leaf: '#6b8a44', h: 8, palm: true },
+    tamarisk: { trunk: '#64543f', leaf: '#97a387', h: 3.2, r: .2, branches: 6, spread: 1.6, rise: 1.4, crown: 2.3, leafS: 1.25, leafTex: 'tamarisk', twist: .22, fill: 22, droop: true },
+    bare: { trunk: '#5a4a3a', h: 2.3, r: .2, branches: 4, spread: 1.4, rise: 1.1, crown: 0, twist: .32, bare: true }
   };
+  const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+  function mergeGeo(list) {
+    let nv = 0, ni = 0; for (const g of list) { nv += g.attributes.position.count; ni += g.index.count; }
+    const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), U = new Float32Array(nv * 2), I = new Uint32Array(ni); let ov = 0, oi = 0;
+    for (const g of list) {
+      P.set(g.attributes.position.array, ov * 3); N.set(g.attributes.normal.array, ov * 3); U.set(g.attributes.uv.array, ov * 2);
+      const ix = g.index.array; for (let k = 0; k < ix.length; k++) I[oi + k] = ix[k] + ov;
+      ov += g.attributes.position.count; oi += ix.length; g.dispose();
+    }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.BufferAttribute(P, 3)); out.setAttribute('normal', new THREE.BufferAttribute(N, 3)); out.setAttribute('uv', new THREE.BufferAttribute(U, 2)); out.setIndex(new THREE.BufferAttribute(I, 1));
+    return out;
+  }
+  function tubeGeo(a, b, r0, r1, seg = 7) {
+    const len = a.distanceTo(b), g = new THREE.CylinderGeometry(r1, r0, len, seg, 2, true);
+    const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * len * .9);
+    g.translate(0, len / 2, 0); g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(V3(0, 1, 0), b.clone().sub(a).normalize())); g.translate(a.x, a.y, a.z);
+    return g;
+  }
+  // 바람에 흔들림: 정점 셰이더에서 높이(weight)만큼 옆으로 민다. 사람마다 다른 자리라 흔들림이 어긋난다
+  function sway(m, amt, weight) {
+    m.onBeforeCompile = sh => {
+      sh.uniforms.uWind = windU;
+      sh.vertexShader = 'uniform float uWind;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+        #ifdef USE_INSTANCING
+          vec4 ip = instanceMatrix * vec4(0., 0., 0., 1.);
+        #else
+          vec4 ip = vec4(0.);
+        #endif
+        float sw = sin(uWind * 1.7 + ip.x * .37 + ip.z * .29 + position.x) + sin(uWind * 2.9 + ip.x * .11 - ip.z * .23) * .5;
+        transformed.xz += vec2(sw, sw * .6) * ${amt.toFixed(3)} * (${weight});`);
+    };
+    m.customProgramCacheKey = () => 'sway' + amt + weight;
+    return m;
+  }
+  // 잎 그림: 잎 여러 장이 모인 덩어리 (투명한 바탕)
+  function leafTex(kind, base) {
+    const key = 'leaf_' + kind;
+    return TEX[key] || (TEX[key] = cutoutTex(256, 256, (g, w, h) => {
+      const c0 = new THREE.Color(base), hsl = {}; c0.getHSL(hsl);
+      const col = (dl, ds = 0) => { const c = new THREE.Color().setHSL(hsl.h + rnd(-.02, .02), clamp(hsl.s + ds, 0, 1), clamp(hsl.l + dl, 0, 1)); return `rgb(${c.r * 255 | 0},${c.g * 255 | 0},${c.b * 255 | 0})`; };
+      const R0 = 112, inC = () => { const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * R0; return [w / 2 + Math.cos(a) * r, h / 2 + Math.sin(a) * r * .9]; };
+      g.strokeStyle = 'rgba(70,55,40,.8)'; g.lineWidth = 1.4;
+      for (let i = 0; i < 9; i++) { const [x, y] = inC(); g.beginPath(); g.moveTo(w / 2, h / 2 + 40); g.quadraticCurveTo((x + w / 2) / 2, y + 10, x, y); g.stroke(); }  // 잔가지
+      if (kind === 'fig') for (let i = 0; i < 26; i++) {  // 넓고 갈라진 잎
+        const [x, y] = inC(), a = rnd(0, 6.283), s = rnd(12, 20); g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = col(rnd(-.12, .08));
+        for (const [dx, dy, rr] of [[0, 0, 1], [-.7, -.5, .7], [.7, -.5, .7], [0, -.9, .65]]) { g.beginPath(); g.ellipse(dx * s, dy * s, s * rr * .75, s * rr, 0, 0, 7); g.fill(); }
+        g.strokeStyle = col(.12); g.lineWidth = 1; g.beginPath(); g.moveTo(0, s * .8); g.lineTo(0, -s * 1.3); g.stroke(); g.restore();
+      }
+      else if (kind === 'tamarisk') for (let i = 0; i < 230; i++) {  // 깃털처럼 가늘고 늘어진 잎
+        const [x, y] = inC(); g.strokeStyle = col(rnd(-.1, .12), -.05); g.lineWidth = rnd(1.2, 2.4); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + rnd(-6, 6), y + 8, x + rnd(-4, 4), y + rnd(14, 26)); g.stroke();
+      }
+      else for (let i = 0; i < 170; i++) {  // 감람나무: 좁고 긴 잎, 앞은 짙고 뒤는 은빛
+        const [x, y] = inC(), a = rnd(0, 6.283), L = rnd(7, 11); g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = Math.random() < .4 ? col(rnd(.12, .22), -.12) : col(rnd(-.14, .04)); g.beginPath(); g.ellipse(0, 0, L, L * .24, 0, 0, 7); g.fill(); g.restore();
+      }
+    }));
+  }
+  TEX.bark = () => TEX._bark || (TEX._bark = canvasTex(128, 256, (g, w, h) => {
+    g.fillStyle = 'rgb(225,220,212)'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 70; i++) { const x = Math.random() * w, l = rnd(110, 200) | 0; g.strokeStyle = `rgba(${l},${l - 8},${l - 16},${rnd(.4, .8).toFixed(2)})`; g.lineWidth = rnd(1.5, 5); g.beginPath(); g.moveTo(x, 0); for (let y = 0; y <= h; y += 16) g.lineTo(x + Math.sin(y * .05 + i) * 5, y); g.stroke(); }  // 세로로 갈라진 껍질
+    blots(g, w, h, 20, 6, 16, () => `rgba(90,80,70,${rnd(.25, .5).toFixed(2)})`);  // 옹이
+  }));
+  TEX.palmBark = () => TEX._palmBark || (TEX._palmBark = canvasTex(64, 128, (g, w, h) => {
+    g.fillStyle = 'rgb(220,210,195)'; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 16) { g.fillStyle = 'rgba(110,95,78,.7)'; g.fillRect(0, y, w, 4); for (let x = 0; x < w; x += 16) { g.fillStyle = 'rgba(150,130,105,.6)'; g.beginPath(); g.moveTo(x, y + 4); g.lineTo(x + 8, y + 14); g.lineTo(x + 16, y + 4); g.fill(); } }  // 잎이 떨어진 자리의 고리
+  }));
+  TEX.frond = () => TEX._frond || (TEX._frond = cutoutTex(64, 256, (g, w, h) => {
+    g.strokeStyle = 'rgb(120,130,80)'; g.lineWidth = 3; g.beginPath(); g.moveTo(w / 2, 0); g.lineTo(w / 2, h); g.stroke();  // 잎줄기
+    for (let y = 6; y < h - 4; y += 5) for (const sd of [-1, 1]) { const L = (w / 2 - 2) * (1 - y / h * .5); const l = rnd(.85, 1.1); g.strokeStyle = `rgb(${120 * l | 0},${150 * l | 0},${80 * l | 0})`; g.lineWidth = 2.2; g.beginPath(); g.moveTo(w / 2, y); g.lineTo(w / 2 + sd * L, y + 14); g.stroke(); }  // 잎조각
+  }));
+  const treeProtos = {};
+  function treeProto(kind, v) {
+    const key = kind + v; if (treeProtos[key]) return treeProtos[key];
+    const T = TREE[kind], trunk = [], leaves = [];
+    if (T.palm) {
+      // 종려나무: 살짝 휜 줄기 끝에 늘어진 잎 열네 장
+      let p = V3(0, -.2, 0); const lean = V3(rnd(-1, 1), 0, rnd(-1, 1)).normalize().multiplyScalar(rnd(.06, .14)); let r = .26;
+      for (let i = 0; i < 6; i++) { const q = p.clone().add(V3(0, T.h / 6, 0)).addScaledVector(lean, i * .5); trunk.push(tubeGeo(p, q, r, r * .95, 9)); p = q; r *= .95; }
+      for (let k = 0; k < 14; k++) {
+        const a = k / 14 * 6.283 + rnd(-.2, .2), out = V3(Math.cos(a), 0, Math.sin(a)), L = rnd(2.6, 3.4), up0 = rnd(.35, .9), segN = 6;
+        const pos = [], nor = [], uv = [], idx = [];
+        for (let i = 0; i <= segN; i++) {
+          const t = i / segN, c = p.clone().addScaledVector(out, L * t).add(V3(0, up0 * t * L * .5 - t * t * L * .7, 0)), side = V3(-out.z, 0, out.x), wd = .55 * (1 - t * .65);
+          for (const sd of [-1, 1]) { const q = c.clone().addScaledVector(side, sd * wd); pos.push(q.x, q.y, q.z); nor.push(0, 1, 0); uv.push(sd < 0 ? 0 : 1, 1 - t); }
+          if (i) { const o = (i - 1) * 2; idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); }
+        }
+        const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); fg.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); fg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); fg.setIndex(idx);
+        leaves.push(fg);
+      }
+      return (treeProtos[key] = { trunk: mergeGeo(trunk), leaves: mergeGeo(leaves), top: p.y });
+    }
+    // 줄기: 네 마디, 조금씩 휘며 가늘어진다 (감람나무는 비틀리고 굵다)
+    let p = V3(0, -.3, 0), dir = V3(rnd(-.15, .15), 1, rnd(-.15, .15)).normalize(), r = T.r;
+    const segs = 4, pts = [p.clone()];
+    for (let i = 0; i < segs; i++) { const q = p.clone().addScaledVector(dir, T.h / segs * (i ? 1 : 1.15)); trunk.push(tubeGeo(p, q, r, r * .85)); p = q; r *= .85; pts.push(p.clone()); dir.add(V3(rnd(-1, 1), 0, rnd(-1, 1)).multiplyScalar(T.twist)).normalize(); }
+    const tips = [];
+    for (let k = 0; k < T.branches; k++) {  // 큰 가지와 잔가지
+      const a = k / T.branches * 6.283 + rnd(-.45, .45), b0 = pts[segs - (k % 2)].clone().add(V3(rnd(-.05, .05), rnd(-.2, .05), rnd(-.05, .05)));
+      const bd = V3(Math.cos(a) * T.spread, T.rise * rnd(.75, 1.25), Math.sin(a) * T.spread).normalize(), L = Math.hypot(T.spread, T.rise) * rnd(.8, 1.15), br = r * .8;
+      const b1 = b0.clone().addScaledVector(bd, L * .55); trunk.push(tubeGeo(b0, b1, br, br * .62));
+      const bd2 = bd.clone().add(V3(rnd(-.4, .4), T.droop ? -.35 : rnd(0, .3), rnd(-.4, .4))).normalize(), b2 = b1.clone().addScaledVector(bd2, L * .5); trunk.push(tubeGeo(b1, b2, br * .62, br * .3));
+      tips.push(b2, b1.clone().lerp(b2, .5));
+      for (let j = 0; j < 2; j++) { const tw = b1.clone().addScaledVector(bd.clone().add(V3(rnd(-.8, .8), rnd(-.2, .6), rnd(-.8, .8))).normalize(), L * rnd(.3, .45)); trunk.push(tubeGeo(b1, tw, br * .4, br * .15, 5)); tips.push(tw); }
+    }
+    let top = p.y;
+    if (!T.bare) {
+      const ctr = tips.reduce((a, b) => a.add(b), V3(0, 0, 0)).multiplyScalar(1 / tips.length);
+      const cards = [...tips.map(t => [t, 2]), ...Array.from({ length: T.fill }, () => [ctr.clone().add(V3(rnd(-1, 1) * T.crown * .55, rnd(-.4, .5) * T.crown * .4, rnd(-1, 1) * T.crown * .55)), 1])];
+      for (const [c, m] of cards) for (let q = 0; q < m + 1; q++) {
+        const s = T.leafS * rnd(.8, 1.25), pg = new THREE.PlaneGeometry(s, s), at = c.clone().add(V3(rnd(-.35, .35), rnd(-.25, .3), rnd(-.35, .35)));
+        pg.rotateX(rnd(-1.2, 1.2)); pg.rotateY(rnd(0, 6.283)); pg.rotateZ(rnd(-.6, .6)); pg.translate(at.x, at.y, at.z);
+        const pa = pg.attributes.position, na = pg.attributes.normal;
+        for (let i = 0; i < pa.count; i++) { const n = V3(pa.getX(i), pa.getY(i), pa.getZ(i)).sub(ctr).add(V3(0, .6, 0)).normalize(); na.setXYZ(i, n.x, n.y, n.z); top = Math.max(top, pa.getY(i)); }  // 나무 바깥쪽이 밝게
+        leaves.push(pg);
+      }
+    }
+    return (treeProtos[key] = { trunk: mergeGeo(trunk), leaves: leaves.length ? mergeGeo(leaves) : null, top });
+  }
   function trees(kind, { n = 20, place, height, s = [.8, 1.25] } = {}) {
     const T = TREE[kind], g = new THREE.Group(), d = new THREE.Object3D(), pts = [];
     for (let i = 0; i < n; i++) { const [x, z] = place(i); pts.push([x, height ? height(x, z) : 0, z, rnd(s[0], s[1]), rnd(0, 6.3)]); }
-    const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(T.palm ? .16 : .2, T.palm ? .24 : .32, T.h, 7), mat(T.trunk), n);
-    pts.forEach(([x, y, z, sc, r], i) => { d.position.set(x, y + T.h * sc / 2, z); d.rotation.set(T.palm ? .08 : .1, r, 0); d.scale.setScalar(sc); d.updateMatrix(); trunk.setMatrixAt(i, d.matrix); });
-    g.add(trunk);
-    if (T.palm) {
-      const fr = new THREE.InstancedMesh(new THREE.ConeGeometry(.35, 3.6, 4), mat(T.leaf, { side: THREE.DoubleSide }), n * 9);
-      pts.forEach(([x, y, z, sc, r], i) => { for (let j = 0; j < 9; j++) { const a = r + j / 9 * Math.PI * 2; d.position.set(x + Math.sin(a) * 1.4 * sc, y + T.h * sc + .2, z + Math.cos(a) * 1.4 * sc); d.rotation.set(Math.cos(a) * 1.25, 0, -Math.sin(a) * 1.25); d.scale.set(sc, sc, .25 * sc); d.updateMatrix(); fr.setMatrixAt(i * 9 + j, d.matrix); } });
-      g.add(fr);
-    } else {
-      const cr = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), mat(T.leaf, { flatShading: true }), n * T.crown.length);
-      pts.forEach(([x, y, z, sc, r], i) => T.crown.forEach(([cx, cy, cz, cs], j) => { d.position.set(x + (cx * Math.cos(r) + cz * Math.sin(r)) * sc, y + cy * sc, z + (cz * Math.cos(r) - cx * Math.sin(r)) * sc); d.rotation.set(r, r * 2, 0); d.scale.set(cs * sc, cs * sc * .72, cs * sc); d.updateMatrix(); cr.setMatrixAt(i * T.crown.length + j, d.matrix); }));
-      g.add(cr); g.userData.crown = cr;
+    const barkM = new THREE.MeshStandardMaterial({ color: T.trunk, map: T.palm ? TEX.palmBark() : TEX.bark(), roughness: 1 });
+    const leafM = T.bare ? null : sway(new THREE.MeshStandardMaterial({ map: T.palm ? TEX.frond() : leafTex(T.leafTex, T.leaf), color: T.palm ? T.leaf : '#ffffff', alphaTest: .5, side: THREE.DoubleSide, roughness: .9 }), T.palm ? .05 : .035, T.palm ? 'max(position.y - 7., 0.)' : 'max(position.y - 1.6, 0.)');
+    for (let v = 0; v < 3; v++) {  // 세 가지 모양을 돌려 쓴다
+      const mine = pts.filter((_, i) => i % 3 === v); if (!mine.length) continue;
+      const P = treeProto(kind, v);
+      const tr = new THREE.InstancedMesh(P.trunk, barkM, mine.length), lf = P.leaves && leafM ? new THREE.InstancedMesh(P.leaves, leafM, mine.length) : null;
+      mine.forEach(([x, y, z, sc, r], i) => { d.position.set(x, y, z); d.rotation.set(0, r, 0); d.scale.setScalar(sc); d.updateMatrix(); tr.setMatrixAt(i, d.matrix); if (lf) lf.setMatrixAt(i, d.matrix); });
+      g.add(tr); if (lf) { g.add(lf); g.userData.crown = lf; }
     }
     R().add(g); return g;
   }
-  // 풀밭과 갈대: 작은 잎을 흩뿌린다 (요 6:10 "잔디가 많은지라")
-  function grass({ center = [0, 0], rx = 20, rz = 20, n = 1500, height, color = '#5f7a3a', h = .35, reeds = false, avoid, thin = 1 } = {}) {  // avoid(x, z): 풀을 두지 않을 자리, thin: 잎 굵기 배율
-    const m = new THREE.InstancedMesh(new THREE.ConeGeometry((reeds ? .03 : .06) * thin, reeds ? 1.6 : h, 3), mat(color), n), d = new THREE.Object3D();
-    for (let i = 0; i < n; i++) {
-      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()), x = center[0] + Math.cos(a) * r * rx, z = center[1] + Math.sin(a) * r * rz;
-      d.position.set(x, (height ? height(x, z) : 0) + (reeds ? .8 : h / 2), z); d.rotation.set(rnd(-.25, .25), rnd(0, 6), rnd(-.25, .25)); d.scale.setScalar(avoid && avoid(x, z) ? 0 : rnd(.6, 1.3)); d.updateMatrix(); m.setMatrixAt(i, d.matrix);
+  // 풀: 풀잎 여러 가닥을 그린 판 세 장을 엇갈려 세운 다발. 바람에 흔들리고, 다발마다 색이 조금씩 다르다. 길 위에는 두지 않는다
+  TEX.grass = () => TEX._grass || (TEX._grass = cutoutTex(256, 256, (g, w, h) => {
+    for (let i = 0; i < 90; i++) {
+      const x0 = rnd(.1, .9) * w, top = rnd(.05, .55) * h, bend = rnd(-40, 40), wd = rnd(2.5, 5.5), l = rnd(.78, 1);
+      g.fillStyle = `rgb(${(232 * l) | 0},${(245 * l) | 0},${(214 * l) | 0})`;
+      g.beginPath(); g.moveTo(x0 - wd, h); g.quadraticCurveTo(x0 + bend * .3, (h + top) / 2, x0 + bend, top); g.quadraticCurveTo(x0 + bend * .3 + wd * .6, (h + top) / 2, x0 + wd, h); g.fill();
     }
-    m.frustumCulled = false; R().add(m); return m;
+    for (let i = 0; i < 10; i++) { const x = rnd(.2, .8) * w, y = rnd(.05, .3) * h; g.fillStyle = 'rgb(240,232,200)'; g.beginPath(); g.ellipse(x, y, 2.4, 6, rnd(-.4, .4), 0, 7); g.fill(); }  // 이삭
+  }));
+  TEX.reeds = () => TEX._reeds || (TEX._reeds = cutoutTex(128, 512, (g, w, h) => {
+    for (let i = 0; i < 26; i++) { const x0 = rnd(.15, .85) * w, top = rnd(.02, .25) * h, bend = rnd(-18, 18), wd = rnd(1.6, 3), l = rnd(.8, 1); g.fillStyle = `rgb(${(225 * l) | 0},${(238 * l) | 0},${(205 * l) | 0})`; g.beginPath(); g.moveTo(x0 - wd, h); g.quadraticCurveTo(x0, (h + top) / 2, x0 + bend, top); g.quadraticCurveTo(x0 + wd * .5, (h + top) / 2, x0 + wd, h); g.fill(); }
+  }));
+  const grassGeo = {};
+  function clumpGeo(wd) {
+    if (grassGeo[wd]) return grassGeo[wd];
+    const parts = [0, 1, 2].map(k => { const p = new THREE.PlaneGeometry(wd, 1); p.translate(0, .5, 0); p.rotateY(k * Math.PI / 3); const n = p.attributes.normal; for (let i = 0; i < n.count; i++) n.setXYZ(i, 0, 1, 0); return p; });  // 법선은 위로: 앞뒤 어디서 봐도 고르게 밝다
+    return (grassGeo[wd] = mergeGeo(parts));
+  }
+  const grassSets = [];
+  function grass({ center = [0, 0], rx = 20, rz = 20, n = 1500, height, color = '#5f7a3a', h = .35, reeds = false, avoid, thin = 1 } = {}) {  // avoid(x, z): 풀을 두지 않을 자리, thin: 잎 굵기 배율
+    const cnt = Math.max(1, Math.round(n * (reeds ? .5 : .3)));
+    const mtl = sway(new THREE.MeshStandardMaterial({ map: reeds ? TEX.reeds() : TEX.grass(), color: '#ffffff', alphaTest: .45, side: THREE.DoubleSide, roughness: .95 }), reeds ? .07 : .05, 'position.y');
+    const m = new THREE.InstancedMesh(clumpGeo(reeds ? .45 : .8 * thin), mtl, cnt), d = new THREE.Object3D(), base = new THREE.Color(color), c = new THREE.Color(), at = [];
+    for (let i = 0; i < cnt; i++) {
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()), x = center[0] + Math.cos(a) * r * rx, z = center[1] + Math.sin(a) * r * rz;
+      const sc = avoid && avoid(x, z) || onPath(x, z) ? 0 : rnd(.7, 1.3);
+      d.position.set(x, (height ? height(x, z) : 0) - .02, z); d.rotation.set(rnd(-.12, .12), rnd(0, 6.3), rnd(-.12, .12)); d.scale.set(sc, sc * (reeds ? 1.7 : h * 1.9) * rnd(.75, 1.2), sc); d.updateMatrix(); m.setMatrixAt(i, d.matrix);
+      c.copy(base).offsetHSL(rnd(-.02, .03), rnd(-.08, .05), rnd(-.06, .07)); m.setColorAt(i, c); at.push([x, z]);
+    }
+    m.userData.noCast = true; m.frustumCulled = false; R().add(m);
+    grassSets.push({ m, at });
+    return m;
+  }
+  // 흙길: kit.path([[x, z], ...], { width, height }) — 점들을 잇는 부드러운 길. 가장자리는 풀과 섞이며 흐려지고, 길 위의 풀은 치운다
+  const paths = [];
+  function onPath(x, z) {
+    for (const P of paths) for (let i = 1; i < P.pts.length; i++) {
+      const [ax, az] = P.pts[i - 1], [bx, bz] = P.pts[i], vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1);
+      if (Math.hypot(x - ax - vx * t, z - az - vz * t) < P.w / 2 + .2) return true;
+    }
+    return false;
+  }
+  function path(points, { width = 2.4, height, y = .07 } = {}) {
+    const curve = new THREE.CatmullRomCurve3(points.map(([x, z]) => V3(x, 0, z))), L = curve.getLength(), N = Math.max(2, Math.ceil(L / .6)), C = 6, W = width * 1.3;
+    const pos = [], uv = [], idx = [], samp = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N, c = curve.getPointAt(t), tg = curve.getTangentAt(t), sx = -tg.z, sz = tg.x;
+      samp.push([c.x, c.z]);
+      for (let j = 0; j <= C; j++) { const u = j / C, o = (u - .5) * W, x = c.x + sx * o, z = c.z + sz * o; pos.push(x, (height ? height(x, z) : 0) + y, z); uv.push(u, t * L / (width * 2)); }
+      if (i) for (let j = 0; j < C; j++) { const a = (i - 1) * (C + 1) + j, b = a + C + 1; idx.push(a, a + 1, b, a + 1, b + 1, b); }  // 위를 향하는 면
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: TEX.path(), transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
+    m.userData.noCast = true; m.renderOrder = 1; R().add(m);
+    paths.push({ pts: samp, w: width });
+    // 이미 깔린 풀 가운데 길 위에 있는 것은 치운다
+    const d = new THREE.Object3D(), mx = new THREE.Matrix4();
+    for (const G of grassSets) { let ch = false; G.at.forEach(([x, z], i) => { if (onPath(x, z)) { G.m.getMatrixAt(i, mx); mx.decompose(d.position, d.quaternion, d.scale); d.scale.setScalar(0); d.updateMatrix(); G.m.setMatrixAt(i, d.matrix); ch = true; } }); if (ch) G.m.instanceMatrix.needsUpdate = true; }
+    return m;
   }
   // 십자가: 세로 기둥, 가로 들보, 죄패 (요 19:19). userData.hang = 매달린 사람이 설 자리
   function cross({ at = [0, 0, 0], h = 4.2, ry = 0, titulus = false } = {}) {
@@ -1228,7 +1493,12 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     skyU.uSunDir.value.copy(sunDir); skyU.uTop.value.copy(env.top); skyU.uHorizon.value.copy(env.horizon); skyU.uSunColor.value.copy(env.sun);
     skyU.uStars.value = env.stars; skyU.uStorm.value = env.storm; skyU.uSing.value = env.sing; skyU.uTime.value = clock;
     fog.color.copy(env.fog); fog.density = env.fogD; skyU.uFog.value.copy(env.fog);
-    sun.color.copy(env.sun); sun.intensity = env.sunI * clamp(env.sunEl / 6 + .35, 0, 1); sun.position.copy(sunDir).multiplyScalar(100);
+    sun.color.copy(env.sun); sun.intensity = env.sunI * clamp(env.sunEl / 6 + .35, 0, 1);
+    { const tx = Math.round(camera.position.x / 2) * 2, tz = Math.round(camera.position.z / 2) * 2;  // 그림자 지도를 카메라 둘레에 (2m 단위로 옮겨 그림자가 떨리지 않게)
+      sun.target.position.set(tx, groundAt(tx, tz), tz); sun.position.copy(sun.target.position).addScaledVector(sunDir, 120); sun.target.updateMatrixWorld();
+      sun.castShadow = env.sunEl > -1 && sun.intensity > .08; }
+    if (clock > shadowSweepAt) { shadowSweepAt = clock + 1.5; shadowSweep(); }
+    windU.value = clock;
     hemi.color.copy(env.top).lerp(env.horizon, .55); hemi.groundColor.copy(env.fog).multiplyScalar(.6); hemi.intensity = env.hemiI + fx.flash * 1.6;
     // 어두운 장면일수록(해가 지고 하늘빛이 약할수록) 고른 빛과 노출을 더한다
     const dark = clamp(1 - (sun.intensity * .4 + hemi.intensity) / .8, 0, 1);
@@ -1296,7 +1566,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     walkTo(x, z, dur, { eye = 1.65 } = {}) { camGround.on = true; camGround.eye = eye; return setEnv({ camX: x, camZ: z }, dur); },
     groundAt, addGround, addFloor, boatAt, outsideBoats,
     waveH: (x, z) => waveH(x, z, env.waves),
-    terrain, disc, rocks, box, glow, glowMat, person, figure, gesture, hold, talk, selfBody, mat, house, village, room, cityWall, temple, trees, grass, cross, tomb, rooster, get self() { return me; }, into, site, shown, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
+    terrain, disc, rocks, path, box, glow, glowMat, person, figure, gesture, hold, talk, selfBody, mat, house, village, room, cityWall, temple, trees, grass, cross, tomb, rooster, get self() { return me; }, into, site, shown, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
     reset() {
       for (const k in tw) delete tw[k];
       tweens.length = 0; cyc = null; camWater.on = false; camGround.on = false; camBoat.on = false; camBoat.w = 0; tLookX = tLookY = 0;
