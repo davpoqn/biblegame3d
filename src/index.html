@@ -232,7 +232,7 @@ body:not(.playing) #text-toggle{visibility:hidden}
 .map-ref{margin:0;font:400 .84rem/1.5 var(--f-ui);color:var(--dust)}
 .map-note{margin:0;font:400 .8rem/1.55 var(--f-ui);color:#c9b48e}
 @media (max-width: 720px){.map-inner{grid-template-columns:1fr;padding:.6rem}#map-cv{aspect-ratio:1/1}}
-body:not(.playing) #map-toggle{display:none}
+body:not(.playing) #map-toggle,body:not(.playing) #speed-toggle{display:none}
 
 /* 인트로 (사이트 첫 화면): 흰 바탕에 성경책 하나. 스치면 펼쳐지고 책 이름이 솟아오른다 */
 #intro{position:fixed;inset:0;z-index:30;overflow:hidden;color-scheme:light;color:#3b2a1c;background:radial-gradient(70% 60% at 50% 30%,#fffdf6 0%,#fbf6ea 55%,#f1e8d8 100%);touch-action:none;transition:opacity .9s ease}
@@ -274,6 +274,7 @@ body:not(.playing) #map-toggle{display:none}
 <header class="hud">
   <div class="hud-title"><b id="hud-name"></b><span id="hud-chapter">데모 챕터</span></div>
   <div class="hud-right">
+    <button class="pill" id="speed-toggle" type="button" title="배속 (F) · 테스트용">1×</button>
     <button class="pill" id="map-toggle" type="button" aria-expanded="false" title="지도 (M)">지도</button>
     <button class="pill" id="text-toggle" type="button" aria-pressed="false">원문 보기</button>
     <button class="pill" id="sound-toggle" type="button" aria-pressed="false">소리 켜기</button>
@@ -385,7 +386,8 @@ body:not(.playing) #map-toggle{display:none}
 const $ = s => document.querySelector(s);
 // ESC로 처음 화면에 돌아가면 epoch가 늘어난다. 예전 이야기의 기다림(sleep, 계속, 고르기)은 다시 풀리지 않아 그 자리에서 멈춘다
 let epoch = 0;
-const sleep = ms => { const e = epoch; return new Promise(r => setTimeout(() => { if (e === epoch) r(); }, ms)); };
+let speed = 1;  // 테스트용 배속 (아래 '테스트용 배속')
+const sleep = ms => { const e = epoch; return new Promise(r => setTimeout(() => { if (e === epoch) r(); }, ms / speed)); };
 const live = res => { const e = epoch; return v => { if (e === epoch) res(v); }; };
 const reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -647,7 +649,7 @@ async function adapt(lines, { auto = false, ms = 0 } = {}) {
     const row = el('div', 'adapt'), p = el('p', 'adapt-line');
     revealWords(p, line, delay); row.style.animationDelay = delay + 'ms';
     row.append(el('span', 'layer-tag tag-adapt', `각색 · ${who}`), p); stage.append(row);
-    const ep = epoch; setTimeout(() => { if (ep === epoch) talkIn3D(who, line); }, delay);
+    const ep = epoch; setTimeout(() => { if (ep === epoch) talkIn3D(who, line); }, delay / speed);
     delay += Math.min(2400, line.split(' ').length * 55) + 900;
   }
   if (auto) { if (ms) await sleep(ms); return; }
@@ -848,7 +850,7 @@ async function makeWorld() {
   if (!kitMod || glFailed) throw new Error('3D 없음');
   const canvas = $('#gl');
   const kit = await kitMod.createKit(canvas, { presets: C.presets, initial: C.initialEnv, audio });
-  curKit = kit;
+  curKit = kit; kit.setSpeed(speed);
   return await C.world(kit, { audio, sleep });
 }
 
@@ -990,6 +992,7 @@ $('#pick-other').addEventListener('click', () => { if (!running) toTitle(); });
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !$('#map').hidden) { e.preventDefault(); showMap(false); return; }
   if (e.key === 'Escape' && document.body.classList.contains('playing')) { e.preventDefault(); toTitle(); }
+  if (TEST && (e.key === 'f' || e.key === 'F' || e.key === 'ㄹ') && document.body.classList.contains('playing') && !(e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) { e.preventDefault(); $('#speed-toggle').click(); }
   if ((e.key === 'm' || e.key === 'M' || e.key === 'ㅡ') && document.body.classList.contains('playing') && !(e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) { e.preventDefault(); showMap($('#map').hidden); }
 });
 
@@ -1108,6 +1111,18 @@ function drawMap() {
   $('#map-note').textContent = cur ? cur.note || '' : '';
 }
 $('#map-toggle').addEventListener('click', () => showMap($('#map').hidden));
+
+/* ---------- 테스트용 배속 (사용자 요청 2026-10-14): 주소에 ?test를 붙이면 '1×' 버튼이 생기고, 누르거나 F 키로 1→2→4→8배 ----------
+   3D 시계, 이야기의 기다림, 글자가 나타나는 효과를 함께 빠르게 한다. 계속(Space)과 고르기는 그대로 직접 누른다 */
+const TEST = /[?&]test\b/.test(location.search), SPEEDS = [1, 2, 4, 8];
+function setSpeed(s) {
+  speed = s; if (curKit) curKit.setSpeed(s); $('#speed-toggle').textContent = s + '×';
+  for (const a of document.getAnimations()) a.playbackRate = s;
+}
+if (TEST) {
+  $('#speed-toggle').addEventListener('click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]));
+  setInterval(() => { if (speed !== 1) for (const a of document.getAnimations()) if (a.playbackRate !== speed) a.playbackRate = speed; }, 120);
+} else $('#speed-toggle').remove();
 $('#map-close').addEventListener('click', () => showMap(false));
 $('#map').addEventListener('click', e => { if (e.target === $('#map')) showMap(false); });
 

@@ -24,6 +24,8 @@ tools/check.sh                                          # 문법 검사
 python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
 ```
 
+직접 해 보며 확인할 때는 주소 끝에 `?test`를 붙인다(예: `https://davpoqn.github.io/biblegame3d/?test#job`). 위쪽 '1×' 버튼이나 `F` 키로 2·4·8배속.
+
 ## 작업 방식 (사용자 선호)
 
 - 작업 전에 규모를 먼저 알린다: 🟢 소형(약 1천 토큰 이하), 🟡 중형(약 1천~5천), 🟠 대형(약 5천~1.5만), 🔴 매우 대형(1.5만 이상). 🟠 이상이면 사용자의 "ㅇㅋ"를 받고 시작한다.

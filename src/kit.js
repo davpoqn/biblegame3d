@@ -8,7 +8,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
-export const sleep = ms => new Promise(r => setTimeout(r, ms));
+let SPEED = 1;  // 테스트용 배속 (index.html ?test의 배속 버튼). 시계와 기다림을 함께 빠르게 한다
+export const sleep = ms => new Promise(r => setTimeout(r, ms / SPEED));
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -578,8 +579,11 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     const ax = (side - C.vel.x) / dt, az = (fwd - C.vel.y) / dt; C.vel.set(side, fwd);
     // 용수철: 목표는 가는 반대쪽으로 조금 끌린 자리, 빨라지거나 멈출 때 반대로 밀리고, 돌면 옆으로 쏠린다
     const tx = clamp(-side * .05 - dy / dt * .02, -.12, .12), tz = clamp(-fwd * .06, -.14, .1), K = 34, D = 7;
-    C.v.x += ((tx - C.x.x) * K - C.v.x * D - ax * .012) * dt; C.v.y += ((tz - C.x.y) * K - C.v.y * D - az * .012) * dt;
-    C.x.x = clamp(C.x.x + C.v.x * dt, -.18, .18); C.x.y = clamp(C.x.y + C.v.y * dt, -.2, .15);
+    const n = Math.ceil(dt / .04), h = dt / n;  // 배속이면 나눠서 (한 번에 크게 밀면 용수철이 튄다)
+    for (let i = 0; i < n; i++) {
+      C.v.x += ((tx - C.x.x) * K - C.v.x * D - ax * .012) * h; C.v.y += ((tz - C.x.y) * K - C.v.y * D - az * .012) * h;
+      C.x.x = clamp(C.x.x + C.v.x * h, -.18, .18); C.x.y = clamp(C.x.y + C.v.y * h, -.2, .15);
+    }
     C.lag.set(C.x.x, 0, C.x.y);
   }
   const JHEAD = { y: .122, z: .136 };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준, 예전 얼굴의 눈 자리)
@@ -1665,7 +1669,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   let last = performance.now(), raf = 0, dead = false;
   function frame(now) {
     if (dead) return;
-    const dt = Math.min(.05, (now - last) / 1000); last = now; clock += dt;
+    const dt = Math.min(.05, (now - last) / 1000) * SPEED; last = now; clock += dt;
     stepTweens(); if (cyc) stepCycle(); stepNumTweens();
 
     const el = THREE.MathUtils.degToRad(env.sunEl), az = THREE.MathUtils.degToRad(env.sunAz);
@@ -1730,6 +1734,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   raf = requestAnimationFrame(frame);
 
   return {
+    setSpeed(s) { SPEED = s; },
     THREE, scene, camera, renderer, PR, env, fx, sparks, dust,
     u: { clamp, lerp, ease, rnd, smooth, vnoise, hash2, sleep, reduceMotion },
     get clock() { return clock; },
