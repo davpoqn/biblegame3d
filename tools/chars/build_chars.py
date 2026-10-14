@@ -3,7 +3,7 @@
 #   python3 tools/chars/build_chars.py --preview  → 위 파일 + assets/chars/preview/*.png
 # 옷은 몸의 단면을 감싸는 고리를 쌓아 만든다 (마네킹이 조각으로 되어 있어 표면을 부풀리면 틈이 생긴다).
 # 뼈대는 UAL1 원본을 그대로 쓰므로 anims.glb의 클립이 남녀 모두에 맞는다.
-import bpy, math, json, sys, os
+import bpy, bmesh, math, json, sys, os
 import numpy as np
 from mathutils import Vector, kdtree
 
@@ -573,6 +573,120 @@ def sheet(paths, cols, out):
     for p in paths: os.remove(p)
 
 
+HAND_F = ('hand', 'thumb', 'index', 'middle', 'ring', 'pinky')
+FOOT_F = ('foot', 'ball')
+
+
+def mh_limbs(body, arm, obj, sex):
+    """마네킹의 손·발을 MakeHuman(CC0) 손·발로 바꾼다 (assets/raw/mh/mh_m.npz·mh_f.npz, tools/chars/mh_build.py).
+    MakeHuman game_engine 뼈대는 뼈 이름이 UAL과 같다. 정점마다 뼈 기준 자리(뼈 방향 + 손바닥/옆 방향)를 UAL 뼈로 옮겨 붙이고,
+    가중치도 같은 이름의 뼈에 그대로 준다. 손가락 동작이 그대로 먹는다. 재질은 마네킹 피부(옷 색 규칙의 M_Main)"""
+    p = f'{RAW}/mh/mh_{sex}.npz'
+    if not os.path.exists(p): print('MakeHuman 손·발 없음:', p); return
+    D = np.load(p)
+    names = [str(n) for n in D['bone_names']]; V = D['body_V'].astype(float); W = D['body_W'].astype(float); TR = D['body_T']
+    MH = dict(zip(names, D['bone_head'].astype(float)))
+    amw = arm.matrix_world
+    UA = {b.name: np.array(amw @ b.head_local) for b in arm.data.bones}
+    nz = lambda v: v / (np.linalg.norm(v) or 1)
+
+    def frames(H, sd):
+        """뼈마다 (원점, 회전). y = 다음 뼈 쪽, 손은 손바닥 방향, 다리는 몸 옆 방향을 기준으로 삼는다"""
+        nxt = {f'lowerarm_{sd}': f'hand_{sd}', f'hand_{sd}': f'middle_01_{sd}', f'calf_{sd}': f'foot_{sd}', f'foot_{sd}': f'ball_{sd}'}
+        for f in ('thumb', 'index', 'middle', 'ring', 'pinky'): nxt[f'{f}_01_{sd}'] = f'{f}_02_{sd}'; nxt[f'{f}_02_{sd}'] = f'{f}_03_{sd}'
+        palm = nz(np.cross(H[f'index_01_{sd}'] - H[f'pinky_01_{sd}'], H[f'middle_01_{sd}'] - H[f'hand_{sd}']))
+        out = {}
+        for b in list(nxt) + [f'{f}_03_{sd}' for f in ('thumb', 'index', 'middle', 'ring', 'pinky')] + [f'ball_{sd}']:
+            if b in nxt: y = nz(H[nxt[b]] - H[b])
+            elif b.startswith('ball'): y = nz(H[b] - H[f'foot_{sd}'])
+            else: y = nz(H[b] - H[b.replace('_03_', '_02_')])
+            ref = palm if not b.startswith(('calf', 'foot', 'ball')) else np.array([1., 0, 0])
+            x = nz(np.cross(y, ref)); z = np.cross(x, y)
+            out[b] = (H[b], np.stack([x, y, z], 1))
+        return out
+
+    new_V, new_T, groups = [], [], {}
+    dels = set()
+    for sd in ('l', 'r'):
+        FM, FU = frames(MH, sd), frames(UA, sd)
+        for fam, link, tip in ((HAND_F, f'lowerarm_{sd}', (f'hand_{sd}', f'middle_03_{sd}')), (FOOT_F, f'calf_{sd}', (f'foot_{sd}', f'ball_{sd}'))):
+            bones = [n for n in names if n.startswith(fam) and n.endswith('_' + sd)]
+            k = np.linalg.norm(UA[tip[1]] - UA[tip[0]]) / np.linalg.norm(MH[tip[1]] - MH[tip[0]])  # 손(손목~가운뎃손가락 끝 마디)·발(발목~발볼) 길이를 맞춘다
+            use = bones + [link]
+            col = [names.index(b) for b in use]
+            w = W[:, col]; part = w[:, :-1].sum(1)
+            # 손목·발목 위 몇 cm(팔뚝·종아리 끝)까지 MakeHuman 쪽을 쓰고, 마네킹은 그 위에서 끊는다 (마네킹 손목 끝의 테가 보이지 않게)
+            reach = .045 if fam is HAND_F else .03
+            jm = MH[fam[0] + '_' + sd]; axm = nz(jm - MH[link])
+            sel = np.nonzero((w.sum(1) >= .5) & (((V - jm) @ axm) * k > -reach) | (part >= .05))[0]
+            if not len(sel): continue
+            m = {int(i): len(new_V) + j for j, i in enumerate(sel)}
+            pts = []
+            for i in sel:
+                ww = w[i] / w[i].sum()
+                acc = np.zeros(3)
+                for b, wb in zip(use, ww):
+                    if wb <= 0: continue
+                    (om, rm), (ou, ru) = FM[b], FU[b]
+                    acc += wb * (ou + ru @ (rm.T @ (V[i] - om)) * k)
+                pts.append(acc)
+                for b, wb in zip(use, ww):
+                    if wb > 0: groups.setdefault(b, []).append((m[int(i)], float(wb)))
+            # 손목·발목: MakeHuman 손목을 마네킹 팔뚝(종아리) 끝 안쪽으로 겹쳐 넣는다. 겹치는 동안은 마네킹 굵기의 94%로 숨기고,
+            # 마네킹이 끝나는 곳부터 3cm에 걸쳐 원래 굵기로 돌아온다 (턱이나 틈이 보이지 않게)
+            pts = np.array(pts); j0 = UA[fam[0] + '_' + sd]; ax = nz(j0 - UA[link])
+            radial = lambda Q: (Q - j0) - np.outer((Q - j0) @ ax, ax)
+            mq = body.P[np.array([d == link for d in body.dom])]
+            tm = (mq - j0) @ ax; mq, tm = mq[tm > -reach - .03], tm[tm > -reach - .03]
+            if len(mq) > 8:
+                rm = np.linalg.norm(radial(mq), axis=1); t_end = np.percentile(tm, 98)
+                t = (pts - j0) @ ax; rp = np.linalg.norm(radial(pts), axis=1)
+                cs = np.linspace(-reach, t_end, 8); fac = []
+                for c in cs:
+                    a_ = rm[np.abs(tm - c) < .01]; b_ = rp[np.abs(t - c) < .01]
+                    fac.append(.94 * np.median(a_) / np.median(b_) if len(a_) > 2 and len(b_) > 2 else np.nan)
+                fac = np.array(fac); ok = ~np.isnan(fac)
+                if ok.any():
+                    f = np.interp(t, cs[ok], fac[ok])
+                    u = np.clip((t - t_end) / .03, 0, 1); f = f + (1 - f) * u * u * (3 - 2 * u)
+                    pts = j0 + np.outer(t, ax) + radial(pts) * f[:, None]
+            new_V += list(pts)
+            new_T += [[m[int(a)], m[int(b)], m[int(c)]] for a, b, c in TR if a in m and b in m and c in m]
+            # 마네킹 쪽: 이 손·발에 주로 붙은 정점을 지운다
+            dels |= {i for i, d in enumerate(body.dom) if d.startswith(fam) and d.endswith('_' + sd)}
+    # 마네킹 피부 재질(손 정점이 쓰던 것)을 그대로 쓴다
+    me = obj.data
+    mat_count = {}
+    for poly in me.polygons:
+        if any(v in dels for v in poly.vertices): mat_count[poly.material_index] = mat_count.get(poly.material_index, 0) + 1
+    skin_mat = obj.material_slots[max(mat_count, key=mat_count.get)].material if mat_count else obj.material_slots[0].material
+    bm = bmesh.new(); bm.from_mesh(me); bm.verts.ensure_lookup_table()
+    bmesh.ops.delete(bm, geom=[bm.verts[i] for i in sorted(dels)], context='VERTS'); bm.to_mesh(me); bm.free()
+    nm = bpy.data.meshes.new('Mannequin_limbs'); nm.from_pydata([tuple(v) for v in new_V], [], new_T); nm.update()
+    for poly in nm.polygons: poly.use_smooth = True
+    nm.materials.append(skin_mat)
+    ob = bpy.data.objects.new('Mannequin_limbs', nm); bpy.context.scene.collection.objects.link(ob)
+    for b, lst in groups.items():
+        g = ob.vertex_groups.new(name=b)
+        for i, wv in lst: g.add([i], wv, 'REPLACE')
+    ob.parent = arm; ob.modifiers.new('Armature', 'ARMATURE').object = arm
+    print('MakeHuman 손·발', sex, len(new_V), '정점', len(new_T), '삼각형, 마네킹에서 지운 정점', len(dels))
+
+
+def split_head(obj):
+    """마네킹 머리를 따로 떼어 둔다(Mannequin_head). 엔진은 MakeHuman 머리를 붙일 때 이것만 숨기고, 머리 뼈에 붙은 머릿수건·투구·면사포는 그대로 둔다"""
+    names = {g.index: g.name for g in obj.vertex_groups}
+    me = obj.data
+    head = [v.index for v in me.vertices if v.groups and names[max(v.groups, key=lambda g: g.weight).group] == 'Head']
+    bpy.ops.object.select_all(action='DESELECT'); obj.select_set(True); bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='DESELECT'); bpy.ops.object.mode_set(mode='OBJECT')
+    for i in head: me.vertices[i].select = True
+    bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.separate(type='SELECTED'); bpy.ops.object.mode_set(mode='OBJECT')
+    new = [o for o in bpy.context.selected_objects if o is not obj][0]
+    new.name = new.data.name = 'Mannequin_head'
+    print('마네킹 머리 떼어 냄', len(head), '정점')
+
+
 def export(path, objs):
     bpy.ops.object.select_all(action='DESELECT')
     for o in objs: o.select_set(True)
@@ -589,6 +703,8 @@ def main():
     # 남자
     reset(); arm, body = import_ual1()
     bd = Body(body, arm); paint_under(body, bd); dress(bd, arm, 'm')
+    mh_limbs(bd, arm, body, 'm')
+    split_head(body)
     export(f'{OUT}/char_m.glb', [arm] + list(arm.children))
     if pv:
         tiles += preview(arm, ['man', 'shepherd', 'fisherman', 'king', 'roman'], 'm', [('Idle_Loop', 20)])
@@ -621,6 +737,8 @@ def main():
     bpy.data.objects.remove(rig)
     for o in [o for o in bpy.data.objects if o.name.startswith('WGT') or o.name == 'metarig']: bpy.data.objects.remove(o)
     bd = Body(fem, arm); paint_under(fem, bd); dress(bd, arm, 'f')
+    mh_limbs(bd, arm, fem, 'f')
+    split_head(fem)
     export(f'{OUT}/char_f.glb', [arm] + list(arm.children))
     if pv:
         tiles += preview(arm, ['woman', 'woman_veil'], 'f', [('Idle_Loop', 20)])

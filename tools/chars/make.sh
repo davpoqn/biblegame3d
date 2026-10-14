@@ -4,11 +4,13 @@
 #   tools/chars/make.sh [--preview]
 set -e
 cd "$(dirname "$0")/../.."
-python3 tools/chars/build_chars.py "$@"
+python3 tools/chars/build_chars.py "$@"   # MakeHuman 손·발도 붙인다(assets/raw/mh, 다시 뽑기: blender -b -P tools/chars/mh_build.py)
+python3 tools/chars/mh_heads.py            # MakeHuman 머리(얼굴·머리카락·수염)
 python3 tools/chars/build_animals.py
 for k in sheep ram goat ox donkey colt camel pig; do node tools/chars/slim.mjs assets/chars/build/an_$k.glb assets/chars/build/an_${k}_s.glb >/dev/null; npx gltf-transform quantize assets/chars/build/an_${k}_s.glb assets/chars/an_$k.glb >/dev/null; done
 node tools/chars/anims.mjs
 # quantize: WebAssembly 없이 읽히는 압축 (meshopt·Draco는 아티팩트에서 막힐 수 있음)
+for f in mh_head_m mh_head_f; do npx gltf-transform quantize assets/chars/$f.glb assets/chars/$f.glb >/dev/null; done
 for f in char_m char_f props; do npx gltf-transform quantize assets/chars/build/$f.glb assets/chars/$f.glb >/dev/null; done
 ls -l assets/chars/*.glb | awk '{s+=$5; print $5, $9} END {print s, "합계"}'
 python3 tools/chars/charcheck.py

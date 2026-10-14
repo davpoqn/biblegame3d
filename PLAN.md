@@ -83,6 +83,12 @@
     - 책 아래 **'성경 속으로'** 버튼: 글자가 책 속으로 들어가고 → 책이 닫히고 → 모두 사라져 `loading...`만 남고 → 바탕이 어두워진 뒤 → 인물 고르기 화면(`#title-screen`). 인트로가 끝나면 3D를 정리(WebGL 해제)하고 지운다.
     - 3D를 띄울 수 없으면 책 이름만 가운데에 늘어놓는다. 움직임 줄이기 설정이면 바로 펼쳐지고 바로 넘어간다. `tools/inlinecheck.py`는 인트로 버튼을 누른 뒤 인물을 고른다.
     - 사용자 생각: 시작 화면이 마음에 들면 인물 고르기 화면도 그 분위기에 맞게 고칠 것 같다(아직 요청 아님).
+  - 사람 실사화 1차 (2026-10-14, 끝남. 사용자: "얼굴은 다 같아도 피부색이나 인상착의만 다르게", 1~3단계 한 번에):
+    - 도구: 이 클라우드 환경에 Blender 4.2(`/opt/mh/blender-4.2.3-linux-x64`), MPFB2 확장, MakeHuman 기본 자산(`/opt/mh/assets`)을 깔았다(컨테이너가 바뀌면 다시 받는다, `assets/raw/mh/README.md`). `tools/chars/mh_build.py`가 남녀 사람을 하나씩 만들어 `assets/raw/mh/`에 뽑는다.
+    - 손·발: `build_chars.py`의 `mh_limbs`가 마네킹 손·발을 MakeHuman 손·발(손가락 마디·손톱·발가락)로 바꾼다. MPFB game_engine 뼈대는 뼈 이름이 UAL과 같아서, 정점마다 뼈 기준 자리를 UAL 뼈로 옮기고 가중치를 그대로 준다(손가락 동작이 먹는다). 손목·발목은 마네킹 팔뚝·종아리 안으로 겹쳐 넣고 굵기를 맞춰 턱이 없게. 모든 인물과 1인칭 내 몸에 들어간다.
+    - 머리: `tools/chars/mh_heads.py` → `assets/chars/mh_head_m.glb`(얼굴, 머릿수건 쓴 사람용 앞얼굴, 눈·눈썹·속눈썹, 머리카락 넷, 수염 둘: 예수님 모델의 beard_sigmund를 옮김), `mh_head_f.glb`(머리카락 넷). 엔진 `dressHead`(kit.js)가 예수님을 뺀 모든 `figure()`에 붙이고, `pickLook`이 사람마다 피부색 다섯 가지·머리카락·머리카락 색 여섯 가지·수염(긴/짧은/없음)을 돌려 가며 고른다(노인은 희끗·흰 머리, 소년·로마 병사는 수염 없음, 여자·소년은 수염 없음). 손발과 맨살 색을 얼굴 피부색에 맞춘다. 머릿수건·면사포·투구를 쓰면 머리카락을 숨기고 앞얼굴만 쓴다. 마네킹 머리는 따로 떼어 둔 `Mannequin_head`만 숨긴다(전처럼 머리 뼈를 접으면 머릿수건도 접힌다). 여자의 머리띠(circlet)는 새 머리 위에 떠서 후광처럼 보여 숨긴다. `figure(role, { look: {...} })`로 한 사람의 생김새를 정할 수 있다.
+    - 앱(아티팩트)에서 3D 모델 안의 텍스처가 안 뜨던 문제를 고쳤다: GLTFLoader가 fetch(blob:)로 그림을 읽는데 보안 정책(connect-src)이 막았다. 불러오는 동안만 `createImageBitmap`을 감춰 `<img>`로 읽게 했다(예수님 얼굴 텍스처도 이제 앱에서 뜬다). inlinecheck에서 그 오류가 사라짐.
+    - 용량: 게시용 HTML 10.8MB(전 7.5MB, 한도 16MB). 아직 남은 것: 성경 이름이 있는 제자마다 생김새 고정(지금은 장면마다 돌려 가며 고른다), 소년 얼굴이 어른 얼굴이다.
   - **나중 작업: 사이트 아이콘(favicon)을 인트로의 닫힌 성경책으로** (2026-10-14 사용자 요청, "지금은 말고 이따"): 사용자가 인트로의 닫힌 책(갈색 가죽, 금박 십자가, 금빛 책 가장자리, 비스듬히 뜬 모습)을 캡처해 보냈다. `tools/icon/icon.html`(three.js)에 인트로 `intro()`의 책 코드를 옮겨 그리고 `python3 tools/icon/render.py`로 `assets/icon/`(favicon-16·32, apple-touch-icon, icon-192·512, og.jpg)을 다시 만든다. 16px에서도 알아보이게 십자가를 크게. 규모 🟢~🟡.
   - **다음 작업: 사용자가 보낸 참고 사진 의견** (2026-10-14, 인트로 작업 중에 미리 보냄. 아직 시작 안 함. 참고는 다른 성경 게임 리뷰 영상의 캡처 — 그림을 따라 하지 않고 느낌만 본다. 큰 작업이 많으니 하나씩 규모와 시간을 알리고 시작한다):
     1. 지도: 지금 내가 어디에 있는지, 성경 어느 부분인지 보여 주는 양피지 지도(갈릴리 바다, 데가볼리, 사마리아 같은 지명).
@@ -93,6 +99,8 @@
     6. 내 손이 보이고 진짜 손처럼. 다른 인물들의 손도.
     7. 물의 질감(해 질 녘 물결과 반사).
     8. 동물을 실사처럼 리얼하게.
+    9. **예수님만 거룩하게** (2026-10-14 사용자가 그림을 보냄: 흰 속옷 위에 어깨에서 늘어진 흰 겉옷(크림색), 어깨까지 오는 물결 머리와 수염, 가죽 샌들, 뒤에서 퍼지는 빛줄기). "이 정도까진 아니어도 비슷하게, 예수님만은 그래픽이 혼자 달라도 된다." 지금의 붉은 겉옷을 흰 두른 겉옷으로 바꿀지 확인.
+    - 진행: 5(발)·6(손)은 '사람 실사화 1차'로 끝남. 4는 인상착의가 사람마다 다르게 된 데까지. 사용자가 다시 강조함(2026-10-14): **사람만이 아니라 나무·흙·물·들 같은 주변 환경도 사진대로 고친다**(2번 길, 7번 물).
     - 메모 (2026-10-14 확인): 참고 사진은 PC용 언리얼 게임이라 한 장짜리 HTML(아티팩트 16MB 한도, 휴대폰)로는 똑같이 만들 수 없고 가까이 가는 것까지다. `assets/raw/jesus/`의 MakeHuman 모델에는 머리뿐 아니라 몸 전체(손가락 있는 손, 발)가 들어 있어서 진짜 같은 손·발은 여기서 떼어 쓸 수 있다(손가락을 굽히려면 마네킹 뼈에 가중치를 옮기는 작업이 필요). 제자마다 다른 얼굴은 인물마다 MakeHuman 모델이 하나씩 필요하다. 사용자가 클라우드 환경의 Allowed domains에 `download.blender.org`, `files.makehumancommunity.org`를 넣었다(2026-10-14, 열리는 것 확인). 그래서 여기서 Blender 4.2 + MPFB2(MakeHuman의 Blender판, `git clone https://github.com/makehumancommunity/mpfb2`는 됨, github 릴리스 페이지는 막힘) + CC0 기본 자산(`https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip`, 280MB)으로 직접 만들 수 있다. 실사 동물은 CC0 자료가 드물고 크다. 물·길·등잔불은 자료 없이 코드로 할 수 있다.
   - 사이트는 누구나 볼 수 있다(아티팩트는 비공개). 앱·스팀과 엔진 이전(Godot)은 나중에 정한다. 지금은 이야기와 그래픽 완성도를 높인다.
 - **다음 작업: 사용자가 새 버전을 해 보고 주는 의견을 반영한다.**
@@ -139,6 +147,8 @@ tools/kv.py           구절 출력: python3 tools/kv.py LUK 5 1-11
 data/                 개역한글 데이터 (출처: github.com/crizin/bible-db, holybible.or.kr 정본)
 assets/raw/           Quaternius 캐릭터·애니메이션 원본 (CC0). UAL1, UAL2, 여성 마네킹
 assets/chars/         게시용 캐릭터: char_m.glb, char_f.glb, anims.glb, props.glb(지팡이·칼·횃불·생선·떡), an_<동물>.glb, outfits.json, preview/
+tools/chars/mh_build.py  MakeHuman 남녀를 만들어 assets/raw/mh/에 뽑음 (Blender + MPFB2, assets/raw/mh/README.md)
+tools/chars/mh_heads.py  MakeHuman 머리 → assets/chars/mh_head_m.glb, mh_head_f.glb
 tools/chars/make.sh   캐릭터 전체 빌드: build_chars.py(옷, Blender) → build_animals.py·slim.mjs(동물) → anims.mjs(동작) → quantize 압축 → charcheck.py(three.js 확인) → viewer.py(보기 페이지)
 ```
 

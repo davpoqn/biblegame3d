@@ -33,10 +33,14 @@ async function loadFigs(GLTFLoader) {
   const buf = u => Uint8Array.from(atob(u.slice(u.indexOf(',') + 1)), c => c.charCodeAt(0)).buffer;
   const ld = new GLTFLoader();
   const keys = Object.keys(D), G = {};
-  (await Promise.all(keys.map(k => ld.parseAsync(buf(D[k]), '')))).forEach((g, i) => { G[keys[i]] = g; });
+  // 얼굴·머리카락 텍스처: GLTFLoader는 보통 fetch(blob:)로 그림을 읽는데 아티팩트 보안 정책이 막는다(connect-src). 그 동안만 createImageBitmap을 감춰 <img>(img-src blob: 허용)로 읽게 한다
+  const cib = window.createImageBitmap; try { window.createImageBitmap = undefined; } catch (e) {}
+  try { (await Promise.all(keys.map(k => ld.parseAsync(buf(D[k]), '')))).forEach((g, i) => { G[keys[i]] = g; }); }
+  finally { try { window.createImageBitmap = cib; } catch (e) {} }
   const animals = {};
   for (const k of keys) if (k.startsWith('an_')) animals[k.slice(3)] = prepAnimal(G[k]);
-  return { m: G.char_m, f: G.char_f, clips: Object.fromEntries(G.anims.animations.map(c => [c.name, c])), outfits: window.OUTFITS, props: G.props, animals, jesusHead: G.jesus_head ? G.jesus_head.scene : null };
+  return { m: G.char_m, f: G.char_f, clips: Object.fromEntries(G.anims.animations.map(c => [c.name, c])), outfits: window.OUTFITS, props: G.props, animals, jesusHead: G.jesus_head ? G.jesus_head.scene : null,
+    mhHead: { m: G.mh_head_m ? G.mh_head_m.scene : null, f: G.mh_head_f ? G.mh_head_f.scene : null } };
 }
 // 양자화된 위치·법선을 실수로 풀어 둔다 (변환 행렬을 굽기 위해)
 function floatGeo(geo) {
@@ -427,7 +431,48 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     put(chest, new THREE.Mesh(new THREE.PlaneGeometry(.3, .62), red), cp, [.05, -.26, -.155], [.08, 0, .1]);
     return JH ? head : null;  // 머리를 접어 둔 뼈(동작이 크기를 되돌려도 매 장면 다시 접는다)
   }
-  function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3 } = {}) {
+  // MakeHuman 머리(assets/chars/mh_head_m·f.glb, CC0, tools/chars/mh_heads.py). 얼굴은 모두 같고(사용자 뜻) 사람마다 피부색·머리카락·수염·그 색이 다르다 (연출: 성경에는 생김새가 없다)
+  const SKIN_TONES = [[.92, .86, .8], [.86, .78, .7], [.8, .71, .62], [.72, .62, .53], [.62, .52, .44]];  // 얼굴 텍스처에 곱하는 색 (밝은 올리브 ~ 짙은 갈색)
+  const HAIR_COLORS = ['#1b130e', '#2a1c13', '#3b2819', '#553b28', '#7a7470', '#bdb8b0'];  // 검정, 짙은 갈색, 갈색, 밝은 갈색, 희끗, 흰
+  let lookN = 0;
+  function pickLook(role, sex, look = {}) {
+    const n = lookN++, old = role === 'elder';
+    const hairs = (figSrc.mhHead[sex].getObjectByName('mh_head_' + sex) || {}).userData?.hairs || [];
+    const pool = role === 'boy' ? hairs.filter(h => h.startsWith('hair_short')) : hairs;
+    return { skin: (n * 3) % SKIN_TONES.length, hair: pool[(n * 7 + 1) % pool.length], hairColor: old ? HAIR_COLORS[4 + n % 2] : HAIR_COLORS[(n * 5) % 4],
+      beard: sex === 'f' || role === 'boy' || role === 'roman' ? null : old || role === 'goliath' || n % 3 ? 'beard_full' : 'beard_short', ...look };
+  }
+  const MHEAD = { m: { y: .1, z: .136, eye: .078 }, f: { y: .055, z: .128, eye: .067 } };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준)와 눈 사이 거리
+  function dressHead(body, sex, spec, L) {
+    const src = figSrc.mhHead[sex]; if (!src) return null;
+    body.updateMatrixWorld(true);
+    const head = body.getObjectByName('Head'), hp = head.getWorldPosition(new THREE.Vector3());
+    const h = src.clone(true), root = h.getObjectByName('mh_head_' + sex) || h, ex = root.userData || {}, A = MHEAD[sex];
+    const k = A.eye / (ex.eyeDist || .064), mid = new THREE.Vector3(...(ex.eyeMid || [0, 1.64, .1]));
+    h.scale.setScalar(k); h.position.set(hp.x - mid.x * k, hp.y + A.y - mid.y * k, hp.z + A.z - mid.z * k);
+    const covered = spec.wear.some(w => ['headcloth', 'veil', 'helmet'].includes(w));  // 머리를 덮는 것을 쓰면 머리카락은 숨긴다
+    const tone = SKIN_TONES[L.skin] || SKIN_TONES[0];
+    h.traverse(o => {
+      if (!o.isMesh) return;
+      o.frustumCulled = false; o.material = o.material.clone();
+      const n = o.name;
+      if (n.startsWith('hair_')) o.visible = !covered && n === L.hair;
+      if (n.startsWith('beard_')) o.visible = n === L.beard;
+      if (n === 'face' || n === 'face_cov') { o.visible = (n === 'face_cov') === covered; o.material.color.setRGB(...tone, THREE.SRGBColorSpace); }
+      if (n.startsWith('hair_') || n === 'brows') o.material.color.set(L.hairColor);
+      if (n.startsWith('beard_')) o.material.color.set(L.beardColor || L.hairColor);
+      if (n === 'lashes') o.material.color.set('#2a1c13');
+      if (n === 'eyes') o.material.color.set('#b9ada3');  // 흰자가 너무 밝게 빛나지 않게
+    });
+    body.traverse(o => { if (o.name.startsWith('Mannequin_head')) o.visible = false; });  // 마네킹 머리만 숨긴다 (머리 뼈를 접으면 머릿수건·투구·면사포도 접힌다)
+    body.add(h); h.updateMatrixWorld(true); head.attach(h);
+    // 몸의 맨살(손·발·팔)을 얼굴 피부색에 맞춘다
+    const avg = ex.skinAvg || [.8, .62, .51];
+    const bare = new Set(['M_Main', ...(spec.bare || [])]);
+    body.traverse(o => { if (o.isMesh && o.material && bare.has(o.material.name)) o.material.color.setRGB(avg[0] * tone[0], avg[1] * tone[1], avg[2] * tone[2], THREE.SRGBColorSpace); });
+    return null;
+  }
+  function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3, look, noHead = false } = {}) {
     const spec = role === 'jesus' ? (figSrc && JESUS) : figSrc && figSrc.outfits.roles[role];
     if (!spec) return person(tint || '#4a3c30', { pose, scale, visible });
     const d = figSrc.outfits.default_colors, col = { ...d };  // 색 규칙은 tools/chars/build_chars.py role_colors와 같다
@@ -456,6 +501,11 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
         F.cur = a;
       } };
     if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressJesus(body); }
+    else if (!noHead && figSrc.mhHead[spec.body === 'f' ? 'f' : 'm']) {
+      const sex = spec.body === 'f' ? 'f' : 'm';
+      body.traverse(o => { if (o.isMesh && ['beard', 'hair', 'circlet'].includes(o.name)) o.visible = false; });  // 마네킹용 수염·머리카락 대신 MakeHuman 것 (머리띠는 새 머리 위에 떠서 후광처럼 보인다)
+      F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressHead(body, sex, spec, pickLook(role, sex, look)); F.cur = null; mixer.stopAllAction();
+    }
     F.play(F.base, 0); mixer.update(Math.random() * 3);  // 여러 사람이 같은 박자로 움직이지 않게
     const bones = {}; F.bone = n => bones[n] || (bones[n] = body.getObjectByName(n));
     g.userData.fig = F; g.userData.head = body.getObjectByName('Head');
@@ -470,7 +520,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     if (me.g) { scene.remove(me.g); const i = figs.indexOf(me.g); if (i >= 0) figs.splice(i, 1); me.g = null; }
     me.key = key;
     if (!role) return null;
-    const g = figure(role, { ...opts, visible: true });
+    const g = figure(role, { ...opts, visible: true, noHead: true });  // 내 머리는 보이지 않으니 붙이지 않는다
     if (!g.userData.fig) { g.parent && g.parent.remove(g); return null; }  // 캐릭터가 없으면 몸을 그리지 않는다
     scene.add(g);
     me.g = g; me.head = g.userData.fig.bone('Head'); me.neck = g.userData.fig.bone('neck_01'); me.pose = ''; me.lx = env.camX; me.lz = env.camZ; me.yaw = env.camY + Math.PI;
