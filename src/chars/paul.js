@@ -670,7 +670,8 @@ async function world(kit, { audio, sleep }) {
     },
     garmentsDown() { garments.visible = true; kit.setEnv({ camP: -.6 }, 1.2); setTimeout(() => kit.setEnv({ camP: -.05 }, 1.6), 2600); stoners.forEach(g => kit.faceCamera(g, 1)); },
     async stoning() {
-      faceTo(stephen, -2.6, 2.4); setBase(stephen, 'Fixing_Kneeling'); stoners.forEach(g => faceTo(g, 2.4, -6.5)); lookAt(2.4, -6.5, 1.2);
+      faceTo(stephen, -2.6, 2.4); once(stephen, 'Hit_Chest', 'Fixing_Kneeling'); if (stephen.userData.fig) stephen.userData.fig.base = 'Fixing_Kneeling';  // 돌에 맞아 휘청인 뒤 무릎을 꿇는다 (7:58–60)
+      stoners.forEach(g => faceTo(g, 2.4, -6.5)); lookAt(2.4, -6.5, 1.2);
       await throwStones(stoners, v3(2.4, hJ(2.4, -6.5) + .9, -6.5), 12, .4);
     },
     stephenSleeps() { once(stephen, 'Death01'); audio.drone(.18, 3); audio.wind(.08, 3); },

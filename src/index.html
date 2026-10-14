@@ -605,8 +605,10 @@ async function verse(ref, { voice = false } = {}) {
 }
 // 사람의 말은 요즘 말투로. 출처 구절(ref)은 엔딩에서 원문과 함께 보여 준다
 const sayTag = who => el('span', 'layer-tag tag-say', who);
+// 대사가 나오면 3D 장면의 사람이 말하는 몸짓을 한다 (kit.talk). 말 길이에 맞춰 몇 초
+const talkIn3D = (who, line) => { try { curKit && curKit.talk && curKit.talk(who, { dur: Math.min(7, 1.6 + line.length * .07) }); } catch (e) {} };
 async function say(who, line, ref, { auto = false, ms = 0 } = {}) {
-  clearStage();
+  clearStage(); talkIn3D(who, line);
   const p = el('p', 'say-line'); revealWords(p, line);
   stage.append(sayTag(who), p);
   if (auto) { if (ms) await sleep(ms); return; }
@@ -621,6 +623,7 @@ async function adapt(lines, { auto = false, ms = 0 } = {}) {
     const row = el('div', 'adapt'), p = el('p', 'adapt-line');
     revealWords(p, line, delay); row.style.animationDelay = delay + 'ms';
     row.append(el('span', 'layer-tag tag-adapt', `각색 · ${who}`), p); stage.append(row);
+    const ep = epoch; setTimeout(() => { if (ep === epoch) talkIn3D(who, line); }, delay);
     delay += Math.min(2400, line.split(' ').length * 55) + 900;
   }
   if (auto) { if (ms) await sleep(ms); return; }
@@ -814,12 +817,13 @@ function stubWorld() {
   return new Proxy(base, { get(t, k) { if (k in t) return t[k]; if (typeof k === 'symbol' || k === 'then') return undefined; return () => sleep(900); } });
 }
 const kitReady = import('./kit.js').catch(e => { console.warn('3D 도구를 불러오지 못했습니다:', e); return null; });
-let glFailed = false;
+let glFailed = false, curKit = null;
 async function makeWorld() {
   const kitMod = await kitReady;
   if (!kitMod || glFailed) throw new Error('3D 없음');
   const canvas = $('#gl');
   const kit = await kitMod.createKit(canvas, { presets: C.presets, initial: C.initialEnv, audio });
+  curKit = kit;
   return await C.world(kit, { audio, sleep });
 }
 
@@ -946,7 +950,7 @@ function toTitle() {
   epoch++; running = false; pendingContinue = null;
   $('#summary').hidden = true;
   if (world && world.dispose) world.dispose();
-  world = null;
+  world = null; curKit = null;
   const old = $('#gl'), fresh = old.cloneNode(false); old.replaceWith(fresh);
   audio.wind(0, 1); audio.drone(0, 1); audio.chord(0, 1); audio.crackle(0); audio.water && audio.water(0, 1);
   document.body.classList.remove('playing');

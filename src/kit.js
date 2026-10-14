@@ -431,6 +431,99 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     put(chest, new THREE.Mesh(new THREE.PlaneGeometry(.3, .62), red), cp, [.05, -.26, -.155], [.08, 0, .1]);
     return JH ? head : null;  // 머리를 접어 둔 뼈(동작이 크기를 되돌려도 매 장면 다시 접는다)
   }
+  /* --- 자연스러운 움직임 (사용자 요청 2026-10-14) ---
+     서 있는 모습을 사람마다 다르게, 가끔 자세를 바꾸고(팔짱 끼기·풀기, 끄덕임, 옆 사람과 이야기), 고개를 돌려 가까이 있는 나나 말하는 사람을 본다.
+     이야기가 정한 동작을 하고 있으면(지금 동작이 기본 동작이 아니면) 건드리지 않는다. 동작 사이는 천천히 섞어 넘어간다 */
+  const STAND_IDLES = ['Idle_Loop', 'Idle_Loop', 'Idle_FoldArms_Loop', 'Idle_Loop', 'Idle_FoldArms_Loop'];
+  const IDLE_SET = new Set(['Idle_Loop', 'Idle_FoldArms_Loop', 'Sitting_Idle_Loop']);
+  const NOLOOK = new Set(['Death01', 'LayToIdle', 'Swim_Fwd_Loop', 'Swim_Idle_Loop', 'Sword_Attack', 'OverhandThrow', 'Hit_Chest', 'Hit_Head', 'Hit_Knockback', 'TreeChopping_Loop', 'PickUp_Table', 'Push_Loop', 'Dance_Loop']);
+  const talkState = { speaker: null, until: 0 };
+  function autoStep(g, F) {
+    const A = F.auto;
+    if (F.role === 'jesus' || g === me.g || F.gest) return;
+    if (A.clip) {  // 잠깐 다른 자세 중
+      if (F.curName !== A.clip) { A.clip = null; return; }  // 그 사이 이야기가 다른 동작을 시켰다
+      if (clock > A.until) { A.clip = null; F.play(F.base, .9, IDLE_SET.has(F.base) ? F.speed : 1); A.next = clock + rnd(7, 16); }
+      return;
+    }
+    if (F.curName !== F.base) return;
+    const seat = F.base.startsWith('Sitting'), stand = F.base === 'Idle_Loop' || F.base === 'Idle_FoldArms_Loop';
+    if (A.nodAt && clock > A.nodAt) {  // 들은 말에 끄덕인다
+      A.nodAt = 0; if (stand) { A.clip = 'Yes'; A.until = clock + 1.7; F.play('Yes', .5); }
+      return;
+    }
+    if (clock < A.next) return;
+    A.next = clock + rnd(7, 16);
+    if (!seat && !stand) return;
+    const r = Math.random();
+    let c = null;
+    if (seat) c = r < .35 ? 'Sitting_Talking_Loop' : null;
+    else if (r < .4) c = F.base === 'Idle_FoldArms_Loop' ? 'Idle_Loop' : 'Idle_FoldArms_Loop';  // 팔짱을 끼거나 푼다
+    else if (r < .52) c = 'Yes';
+    else if (r < .66 && figs.some(o => o !== g && shown(o) && o.position.distanceTo(g.position) < 2.6)) c = 'Idle_Talking_Loop';  // 옆 사람과 이야기
+    if (!c) { lookAround(g, F); return; }
+    A.clip = c; A.until = clock + (c === 'Yes' ? 1.7 : rnd(3, 6)); F.play(c, .8, c === 'Yes' ? 1 : F.speed);
+  }
+  // 잠깐 다른 곳을 둘러본다: 옆 사람이나 먼 곳
+  function lookAround(g, F) {
+    const L = F.look, near = figs.filter(o => o !== g && shown(o) && o.position.distanceTo(g.position) < 6);
+    if (near.length && Math.random() < .6) { const o = near[Math.floor(Math.random() * near.length)]; o.getWorldPosition(L.pt); L.pt.y += 1.5 * o.scale.y; }
+    else { g.getWorldPosition(L.pt); const a = g.rotation.y + rnd(-1.2, 1.2); L.pt.x += Math.sin(a) * 6; L.pt.z += Math.cos(a) * 6; L.pt.y += rnd(.8, 2.2); }
+    L.glance = clock + rnd(1.8, 3.2);
+  }
+  const _up = new THREE.Vector3(), _rt = new THREE.Vector3(), _hp = new THREE.Vector3(), _tp = new THREE.Vector3(), _ql = new THREE.Quaternion(), _qt = new THREE.Quaternion();
+  function turnBone(bone, axis, ang) {
+    if (!ang) return;
+    bone.getWorldQuaternion(_qt); _ql.setFromAxisAngle(axis, ang).multiply(_qt);
+    bone.parent.getWorldQuaternion(_qt).invert(); bone.quaternion.copy(_qt.multiply(_ql)); bone.updateMatrixWorld(true);
+  }
+  // 고개 돌리기: 말하는 사람 > 잠깐 둘러보기 > 가까이 있는 나. 목이 4할, 머리가 6할을 돌린다. 몸 뒤쪽은 보지 않는다
+  function lookStep(g, F, dt) {
+    const L = F.look, neck = F.bone('neck_01'), head = F.bone('Head');
+    if (!neck || !head || g === me.g) return;
+    let want = null;
+    if (!F.gest && !NOLOOK.has(F.curName)) {
+      head.getWorldPosition(_hp);
+      const sp = talkState.speaker;
+      if (sp && sp !== g && clock < talkState.until && shown(sp) && sp.position.distanceTo(g.position) < 12) { sp.getWorldPosition(_tp); _tp.y = _hp.y + (sp.scale.y - g.scale.y) * 1.5; want = _tp; }
+      else if (clock < L.glance) want = _tp.copy(L.pt);
+      else if (camera.position.distanceTo(_hp) < 9) want = _tp.copy(camera.position);
+    }
+    let ty = 0, tp = 0;
+    if (want) {
+      g.getWorldQuaternion(_ql).invert(); _tp.sub(_hp).applyQuaternion(_ql);
+      const yaw = Math.atan2(_tp.x, _tp.z), pitch = Math.atan2(_tp.y, Math.hypot(_tp.x, _tp.z));
+      if (Math.abs(yaw) < 1.8) { ty = clamp(yaw, -1.05, 1.05); tp = clamp(pitch, -.5, .4); }
+    }
+    const k = 1 - Math.exp(-dt * 3.2);
+    L.yaw += (ty - L.yaw) * k; L.pitch += (tp - L.pitch) * k;
+    if (Math.abs(L.yaw) < 1e-3 && Math.abs(L.pitch) < 1e-3) return;
+    g.updateMatrixWorld(true);
+    _up.set(0, 1, 0).transformDirection(g.matrixWorld); _rt.set(1, 0, 0).transformDirection(g.matrixWorld).applyAxisAngle(_up, L.yaw);
+    for (const [b, w] of [[neck, .4], [head, .6]]) { turnBone(b, _up, L.yaw * w); turnBone(b, _rt, -L.pitch * w); }
+  }
+  // 대사가 나오면 말하는 사람이 말하는 동작을 하고, 둘레 사람들은 그를 보고 몇은 끄덕인다.
+  // 말하는 사람: figure(…, { name })의 이름이 대사의 이름에 들어 있으면 그 사람, 없으면 화면 가운데 가까이 있는 사람(무리면 몇 명)
+  function talk(who, { dur = 4 } = {}) {
+    const cands = figs.filter(g => g !== me.g && shown(g) && g.userData.fig.role !== 'jesus');
+    if (!cands.length) return;
+    const many = /들$|무리|여럿|사람들|지파/.test(who || '');
+    let sp = cands.filter(g => g.userData.fig.name && who && who.includes(g.userData.fig.name));
+    if (!sp.length) {
+      const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
+      sp = cands.map(g => { g.getWorldPosition(_tp); _tp.y += 1.4 * g.scale.y; /* 얼굴 높이로 잰다 */ const d = _tp.sub(camera.position); const dist = d.length(); return { g, dist, ang: d.normalize().angleTo(fwd) }; })
+        .filter(o => o.dist < 14 && o.ang < .55).sort((a, b) => (a.ang + a.dist * .03) - (b.ang + b.dist * .03)).slice(0, many ? 3 : 1).map(o => o.g);
+    }
+    if (!sp.length) return;
+    for (const g of sp) {
+      const F = g.userData.fig; if (F.gest || (F.curName !== F.base && !F.auto.clip)) continue;  // 이야기가 정한 동작 중이면 그대로
+      const c = F.base.startsWith('Sitting') ? 'Sitting_Talking_Loop' : 'Idle_Talking_Loop';
+      F.auto.clip = c; F.auto.until = clock + dur; F.play(c, .5, F.speed);
+    }
+    talkState.speaker = sp[0]; talkState.until = clock + dur + .8;
+    cands.filter(g => !sp.includes(g) && g.position.distanceTo(sp[0].position) < 7 && Math.random() < .45).slice(0, 2)
+      .forEach((g, i) => { g.userData.fig.auto.nodAt = clock + dur * .75 + i * .5; });
+  }
   // MakeHuman 머리(assets/chars/mh_head_m·f.glb, CC0, tools/chars/mh_heads.py). 얼굴은 모두 같고(사용자 뜻) 사람마다 피부색·머리카락·수염·그 색이 다르다 (연출: 성경에는 생김새가 없다)
   const SKIN_TONES = [[.92, .86, .8], [.86, .78, .7], [.8, .71, .62], [.72, .62, .53], [.62, .52, .44]];  // 얼굴 텍스처에 곱하는 색 (밝은 올리브 ~ 짙은 갈색)
   const HAIR_COLORS = ['#1b130e', '#2a1c13', '#3b2819', '#553b28', '#7a7470', '#bdb8b0'];  // 검정, 짙은 갈색, 갈색, 밝은 갈색, 희끗, 흰
@@ -472,7 +565,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     body.traverse(o => { if (o.isMesh && o.material && bare.has(o.material.name)) o.material.color.setRGB(avg[0] * tone[0], avg[1] * tone[1], avg[2] * tone[2], THREE.SRGBColorSpace); });
     return null;
   }
-  function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3, look, noHead = false } = {}) {
+  function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3, look, noHead = false, name } = {}) {
     const spec = role === 'jesus' ? (figSrc && JESUS) : figSrc && figSrc.outfits.roles[role];
     if (!spec) return person(tint || '#4a3c30', { pose, scale, visible });
     const d = figSrc.outfits.default_colors, col = { ...d };  // 색 규칙은 tools/chars/build_chars.py role_colors와 같다
@@ -493,12 +586,15 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     if (pose === 'seat' && !clip) body.position.y = -seatDrop;  // 의자 높이로 앉는 동작을 땅·배 위에 맞춘다
     g.add(body);
     const mixer = new THREE.AnimationMixer(body);
-    const F = { mixer, base: clip || POSE_CLIP[pose] || 'Idle_Loop', cur: null,
-      play(name, fade = .3, speed = 1) {
+    // 서 있는 사람마다 서 있는 모습을 다르게 (팔짱 낀 사람도 있다). 박자도 조금씩 다르게
+    const standBase = !clip && pose === 'stand' && role !== 'jesus' ? STAND_IDLES[figs.length % STAND_IDLES.length] : null;
+    const F = { mixer, role, base: standBase || clip || POSE_CLIP[pose] || 'Idle_Loop', cur: null, curName: '', speed: rnd(.88, 1.08),
+      auto: { next: clock + rnd(5, 14), clip: null, until: 0, nodAt: 0 }, look: { yaw: 0, pitch: 0, glance: -9, pt: new THREE.Vector3() },
+      play(name, fade = .4, speed = 1) {
         const c = figSrc.clips[name]; if (!c) return;
         const a = mixer.clipAction(c); a.timeScale = speed; if (F.cur === a) return;
         a.reset().play(); if (F.cur && fade) F.cur.crossFadeTo(a, fade, false); else if (F.cur) F.cur.stop();
-        F.cur = a;
+        F.cur = a; F.curName = name;
       } };
     if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressJesus(body); }
     else if (!noHead && figSrc.mhHead[spec.body === 'f' ? 'f' : 'm']) {
@@ -506,8 +602,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       body.traverse(o => { if (o.isMesh && ['beard', 'hair', 'circlet'].includes(o.name)) o.visible = false; });  // 마네킹용 수염·머리카락 대신 MakeHuman 것 (머리띠는 새 머리 위에 떠서 후광처럼 보인다)
       F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressHead(body, sex, spec, pickLook(role, sex, look)); F.cur = null; mixer.stopAllAction();
     }
-    F.play(F.base, 0); mixer.update(Math.random() * 3);  // 여러 사람이 같은 박자로 움직이지 않게
-    const bones = {}; F.bone = n => bones[n] || (bones[n] = body.getObjectByName(n));
+    F.play(F.base, 0, IDLE_SET.has(F.base) ? F.speed : 1); mixer.update(Math.random() * 3);  // 여러 사람이 같은 박자로 움직이지 않게
+    const bones = {}; F.bone = n => bones[n] || (bones[n] = body.getObjectByName(n)); F.name = name;
     g.userData.fig = F; g.userData.head = body.getObjectByName('Head');
     g.scale.setScalar(scale * .92); g.visible = visible; R().add(g); figs.push(g);
     return g;
@@ -550,7 +646,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     me.head.scale.setScalar(.001); me.neck.scale.setScalar(.35); g.updateMatrixWorld(true);
   }
   const stepFigs = dt => {
-    for (const g of figs) if (shown(g)) { const F = g.userData.fig; F.mixer.update(dt); if (F.hideHead) F.hideHead.scale.setScalar(.001); if (F.gest) applyGesture(g, F, dt); }
+    for (const g of figs) if (shown(g)) { const F = g.userData.fig; autoStep(g, F); F.mixer.update(dt); if (F.hideHead) F.hideHead.scale.setScalar(.001); lookStep(g, F, dt); if (F.gest) applyGesture(g, F, dt); }
     for (const o of herdMixers) if (o.on && shown(o.obj)) o.mixer.update(dt);
   };
   // 애니메이션이 없는 몸짓을 코드로 만든다: 뼈를 인물 기준 방향(+Z 앞, +Y 위, +X 왼쪽)으로 돌린다. 오른쪽은 x를 뒤집는다
@@ -654,22 +750,39 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     const o = { g, height: height || (() => 0), pace, amp, lean, standLean, state: 'idle', t0: 0, dur: 1, from: new THREE.Vector3(), to: new THREE.Vector3(), res: null, seed: Math.random() * 6 };
     o.go = (from, to, dur) => {
       if (from) o.from.copy(from); if (to) o.to.copy(to); o.dur = dur || o.dur; g.visible = true; o.state = 'run'; o.t0 = clock; g.position.copy(o.from);
-      if (F) { const sp = Math.hypot(o.to.x - o.from.x, o.to.z - o.from.z) / o.dur / g.scale.x, run = !noRun && (sp > 2.4 || pace >= 10); F.play(run ? 'Jog_Fwd_Loop' : 'Walk_Loop', .25, clamp(sp / (run ? 3 : 1.25), .6, 1.7)); }
+      if (F) { const sp = Math.hypot(o.to.x - o.from.x, o.to.z - o.from.z) / o.dur / g.scale.x, run = !noRun && (sp > 2.4 || pace >= 10); o.ts = clamp(sp / (run ? 3 : 1.25), .6, 1.7); F.play(run ? 'Jog_Fwd_Loop' : 'Walk_Loop', .4, o.ts); }
+      o.face = null;
       return new Promise(r => { o.res = r; });
     };
     o.idle = () => { o.state = 'idle'; };
     walkers.push(o); return o;
   }
+  // 지금 방향에서 원하는 방향으로 조금씩 돈다 (한 번에 휙 돌지 않게)
+  const turnToward = (cur, want, f) => { let d = want - cur; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return cur + d * f; };
   function stepWalkers() {
     walkers.forEach(o => {
+      const F = o.g.userData.fig;
       if (o.state === 'run') {
-        const k = clamp((clock - o.t0) / o.dur, 0, 1), e = 1 - (1 - k) * (1 - k);
+        // 천천히 걸음을 떼고 천천히 멈춘다. 걷기 동작의 빠르기도 그에 맞춘다
+        const k = clamp((clock - o.t0) / o.dur, 0, 1), e = F ? k * k * (3 - 2 * k) : 1 - (1 - k) * (1 - k);
         const x = lerp(o.from.x, o.to.x, e), z = lerp(o.from.z, o.to.z, e);
         o.g.position.set(x, o.height(x, z) + Math.abs(Math.sin(clock * o.pace)) * o.amp * (1 - k * .5), z);
         o.g.rotation.x = o.lean;
-        o.g.rotation.y = Math.atan2(o.to.x - o.from.x, o.to.z - o.from.z);
-        if (k >= 1) { o.state = 'stand'; o.g.userData.fig && o.g.userData.fig.play(o.g.userData.fig.base); o.g.rotation.y = Math.atan2(camera.position.x - o.g.position.x, camera.position.z - o.g.position.z); const r = o.res; o.res = null; r && r(); }
+        const dir = Math.atan2(o.to.x - o.from.x, o.to.z - o.from.z);
+        o.g.rotation.y = F ? turnToward(o.g.rotation.y, dir, .16) : dir;
+        if (F && F.cur && o.ts && (F.curName === 'Walk_Loop' || F.curName === 'Jog_Fwd_Loop')) F.cur.timeScale = o.ts * clamp(6 * k * (1 - k), .35, 1.5);
+        if (k >= 1) {
+          o.state = 'stand'; F && F.play(F.base, .6, IDLE_SET.has(F.base) ? F.speed : 1);
+          const face = Math.atan2(camera.position.x - o.g.position.x, camera.position.z - o.g.position.z);
+          if (F) { o.face = face; o.faceSet = o.g.rotation.y; } else o.g.rotation.y = face;
+          const r = o.res; o.res = null; r && r();
+        }
       } else if (o.state === 'stand') {
+        // 멈춘 뒤 당신 쪽으로 천천히 돌아선다. 그 사이 이야기가 방향을 정하면 그것을 따른다
+        if (o.face != null) {
+          if (Math.abs(o.g.rotation.y - o.faceSet) > 1e-4) o.face = null;
+          else { o.g.rotation.y = o.faceSet = turnToward(o.g.rotation.y, o.face, .07); if (Math.abs(turnToward(0, o.face - o.g.rotation.y, 1)) < .01) o.face = null; }
+        }
         const b = Math.sin(clock * 2.2 + o.seed);
         o.g.position.y = o.height(o.g.position.x, o.g.position.z) + b * .012;
         o.g.rotation.x = o.g.userData.fig ? 0 : o.standLean + b * .03;
@@ -1183,7 +1296,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     walkTo(x, z, dur, { eye = 1.65 } = {}) { camGround.on = true; camGround.eye = eye; return setEnv({ camX: x, camZ: z }, dur); },
     groundAt, addGround, addFloor, boatAt, outsideBoats,
     waveH: (x, z) => waveH(x, z, env.waves),
-    terrain, disc, rocks, box, glow, glowMat, person, figure, gesture, hold, selfBody, mat, house, village, room, cityWall, temple, trees, grass, cross, tomb, rooster, get self() { return me; }, into, site, shown, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
+    terrain, disc, rocks, box, glow, glowMat, person, figure, gesture, hold, talk, selfBody, mat, house, village, room, cityWall, temple, trees, grass, cross, tomb, rooster, get self() { return me; }, into, site, shown, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
     reset() {
       for (const k in tw) delete tw[k];
       tweens.length = 0; cyc = null; camWater.on = false; camGround.on = false; camBoat.on = false; camBoat.w = 0; tLookX = tLookY = 0;

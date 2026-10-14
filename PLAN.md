@@ -89,6 +89,14 @@
     - 머리: `tools/chars/mh_heads.py` → `assets/chars/mh_head_m.glb`(얼굴, 머릿수건 쓴 사람용 앞얼굴, 눈·눈썹·속눈썹, 머리카락 넷, 수염 둘: 예수님 모델의 beard_sigmund를 옮김), `mh_head_f.glb`(머리카락 넷). 엔진 `dressHead`(kit.js)가 예수님을 뺀 모든 `figure()`에 붙이고, `pickLook`이 사람마다 피부색 다섯 가지·머리카락·머리카락 색 여섯 가지·수염(긴/짧은/없음)을 돌려 가며 고른다(노인은 희끗·흰 머리, 소년·로마 병사는 수염 없음, 여자·소년은 수염 없음). 손발과 맨살 색을 얼굴 피부색에 맞춘다. 머릿수건·면사포·투구를 쓰면 머리카락을 숨기고 앞얼굴만 쓴다. 마네킹 머리는 따로 떼어 둔 `Mannequin_head`만 숨긴다(전처럼 머리 뼈를 접으면 머릿수건도 접힌다). 여자의 머리띠(circlet)는 새 머리 위에 떠서 후광처럼 보여 숨긴다. `figure(role, { look: {...} })`로 한 사람의 생김새를 정할 수 있다.
     - 앱(아티팩트)에서 3D 모델 안의 텍스처가 안 뜨던 문제를 고쳤다: GLTFLoader가 fetch(blob:)로 그림을 읽는데 보안 정책(connect-src)이 막았다. 불러오는 동안만 `createImageBitmap`을 감춰 `<img>`로 읽게 했다(예수님 얼굴 텍스처도 이제 앱에서 뜬다). inlinecheck에서 그 오류가 사라짐.
     - 용량: 게시용 HTML 10.8MB(전 7.5MB, 한도 16MB). 아직 남은 것: 성경 이름이 있는 제자마다 생김새 고정(지금은 장면마다 돌려 가며 고른다), 소년 얼굴이 어른 얼굴이다.
+  - 동작 자연스럽게 (2026-10-14, 끝남. 사용자 요청: "1~4 한번에, 모든 동작이 자연스럽게 이어지게"):
+    - 동작 28개 → 46개(`tools/chars/anims.mjs`, UAL1·UAL2, CC0): 팔짱(Idle_FoldArms_Loop), 맞음(Hit_Chest·Hit_Head·Hit_Knockback), 손을 앞으로 들기(Spell_Simple_*), 몸 낮춰 걷기, 춤, 밭일(거두기·씨 뿌리기·물 주기), 배 난간 기대기·부르기, 막기, 상자 열기. anims.glb 1.06MB.
+    - 서 있는 사람마다 서 있는 모습(그냥 서기/팔짱)과 박자가 다르다. 7~16초마다 가끔 자세를 바꾼다(팔짱 끼기·풀기, 끄덕임, 옆에 사람이 있으면 이야기, 아니면 둘러보기). 앉은 사람은 가끔 이야기. 예수님과 이야기가 정한 동작 중인 사람은 건드리지 않는다(`autoStep`).
+    - 고개 돌리기(`lookStep`): 말하는 사람 > 잠깐 둘러보기 > 9m 안의 나. 목 4할·머리 6할, 몸 뒤쪽은 보지 않고 천천히 돈다. 몸짓(GEST)·쓰러짐·춤 같은 동작 중에는 하지 않는다.
+    - 대사(`say`, `adapt`)가 나오면 `kit.talk(who)`: 말하는 사람이 말하는 동작(앉아 있으면 앉아서), 둘레 사람은 그를 보고 몇은 끄덕인다. 말하는 사람은 `figure(…, { name: '안드레' })`의 이름이 대사 이름에 들어 있으면 그 사람, 없으면 화면 가운데 가까이 있는 사람(이름이 '…들'·'무리'면 몇 명). 아직 이름표를 붙인 인물은 없다.
+    - 이어짐: 동작 사이를 0.4~0.9초 섞어 넘어간다. 걷는 사람은 천천히 걸음을 떼고 천천히 멈추며 걷기 동작 빠르기도 맞춘다. 방향은 휙 돌지 않고 조금씩 돈다. 멈춘 뒤 나를 향해 천천히 돌아선다(그 사이 이야기가 방향을 정하면 그것을 따름).
+    - 장면에 넣음: 다윗 — 춤추는 여인들이 실제로 춤춘다(삼상 18:6), 골리앗이 물맷돌에 맞아 휘청인 뒤 쓰러진다(17:49). 바울 — 스데반이 돌에 맞아 휘청인 뒤 무릎을 꿇는다(행 7:58–60).
+    - 게시용 HTML 11.3MB.
   - **나중 작업: 사이트 아이콘(favicon)을 인트로의 닫힌 성경책으로** (2026-10-14 사용자 요청, "지금은 말고 이따"): 사용자가 인트로의 닫힌 책(갈색 가죽, 금박 십자가, 금빛 책 가장자리, 비스듬히 뜬 모습)을 캡처해 보냈다. `tools/icon/icon.html`(three.js)에 인트로 `intro()`의 책 코드를 옮겨 그리고 `python3 tools/icon/render.py`로 `assets/icon/`(favicon-16·32, apple-touch-icon, icon-192·512, og.jpg)을 다시 만든다. 16px에서도 알아보이게 십자가를 크게. 규모 🟢~🟡.
   - **다음 작업: 사용자가 보낸 참고 사진 의견** (2026-10-14, 인트로 작업 중에 미리 보냄. 아직 시작 안 함. 참고는 다른 성경 게임 리뷰 영상의 캡처 — 그림을 따라 하지 않고 느낌만 본다. 큰 작업이 많으니 하나씩 규모와 시간을 알리고 시작한다):
     1. 지도: 지금 내가 어디에 있는지, 성경 어느 부분인지 보여 주는 양피지 지도(갈릴리 바다, 데가볼리, 사마리아 같은 지명).
@@ -171,7 +179,7 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
 - **`verse(ref)`**: 원문 구절 카드.
 - **`direction(text)`**: '연출' 문장.
 - **장면 열기**: `sceneCut(…, async () => { world.setEnv('<프리셋>', 0); world.place('<장소>'); … })` 순서로 쓴다. 프리셋은 하늘·빛·날씨를 바꾸고, 자리(`camX`, `camZ`)와 눈높이(`camH`)는 프리셋에 직접 적힌 경우만 바꾼다. 땅 높이가 있는 장소에서는 `place()`가 `camH: 1.65 + h(x, z)`처럼 정한다.
-- **`kit.figure(role, { tint, colors, pose, clip, scale, visible })`**: 이름 있는 인물. `role`은 `assets/chars/outfits.json`의 신분(`man`, `elder`, `shepherd`, `fisherman`, `king`, `roman`, `goliath`, `boy`, `woman`, `woman_veil`), `tint`는 겉옷 색, `pose`는 `stand`·`seat`·`kneel`. `g.userData.fig.play('Walk_Loop')`처럼 동작을 바꾼다. `kit.walker`에 넘기면 걸을 때 걷기·달리기 동작을 자동으로 튼다. 캐릭터를 못 읽으면 `person()`으로 대신한다.
+- **`kit.figure(role, { tint, colors, pose, clip, scale, visible, name, look })`**: 이름 있는 인물. `name`을 주면 그 이름이 든 대사에서 그 사람이 말하는 몸짓을 한다(`kit.talk`). `look`은 `{ skin, hair, hairColor, beard, beardColor }`로 생김새를 정한다. `role`은 `assets/chars/outfits.json`의 신분(`man`, `elder`, `shepherd`, `fisherman`, `king`, `roman`, `goliath`, `boy`, `woman`, `woman_veil`), `tint`는 겉옷 색, `pose`는 `stand`·`seat`·`kneel`. `g.userData.fig.play('Walk_Loop')`처럼 동작을 바꾼다. `kit.walker`에 넘기면 걸을 때 걷기·달리기 동작을 자동으로 튼다. 캐릭터를 못 읽으면 `person()`으로 대신한다.
 - **`kit.person(color, …)`**: 군중, 무리, 이름 없는 일꾼.
 - **`kit.herd(kind, …)`**: 가축 떼. `kind`는 `sheep`, `ram`, `goat`, `ox`, `donkey`, `colt`, `camel`, `pig`. 3마리 이하는 움직이는 모델.
 - **`kit.prop(name)`**, **`kit.instancedProp(name, n)`**: `prop_fish`, `prop_bread` 등 소품.

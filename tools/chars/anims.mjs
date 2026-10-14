@@ -15,6 +15,9 @@ const UAL1 = [
   'Swim_Fwd_Loop', 'Swim_Idle_Loop',
   'Sword_Attack', 'Death01', 'Idle_Torch_Loop',
   'PickUp_Table', 'Interact', 'Push_Loop',
+  'Hit_Chest', 'Hit_Head',                          // 돌에 맞음 (행 7:58), 물맷돌에 맞음 (삼상 17:49)
+  'Spell_Simple_Enter', 'Spell_Simple_Idle_Loop', 'Spell_Simple_Exit',  // 손을 앞으로 내밀어 들기
+  'Crouch_Fwd_Loop', 'Dance_Loop',                  // 몸을 낮춰 걷기, 춤 (삼상 18:6)
 ];
 const UAL2 = [
   'OverhandThrow',      // 물매 (삼상 17:49)
@@ -24,6 +27,11 @@ const UAL2 = [
   'LayToIdle',          // 누웠다 일어나기 (창 28:11–18)
   'Yes', 'Idle_No_Loop',// 끄덕임, 고개 젓기
   'Idle_Lantern_Loop',  // 등 들고 서 있기 (요 18:3)
+  'Idle_FoldArms_Loop', // 팔짱 끼고 서 있기 (서 있는 사람마다 자세를 다르게)
+  'Farm_Harvest', 'Farm_PlantSeed', 'Farm_Watering',  // 거두기, 씨 뿌리기, 물 주기
+  'Hit_Knockback',      // 맞고 뒤로 밀려남
+  'Idle_Rail_Loop', 'Idle_Rail_Call',  // 배 난간에 기대기, 기대어 부르기
+  'Sword_Block', 'Chest_Open',         // 막기, 상자·궤 열기
 ];
 // 이 뼈만 위치를 움직인다. 나머지 뼈의 위치값을 지워야 여성 마네킹의 팔 길이가 유지된다.
 const MOVE = new Set(['root', 'pelvis']);

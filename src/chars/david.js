@@ -620,8 +620,8 @@ async function world(kit, { audio, sleep }) {
         if (where === 'jonathan') { jonathan.position.set(SR.x + .3, 0, SR.z - 1.4); faceTo(jonathan, SR.x, SR.z + .6); jonathan.traverse(o => { if (o.isMesh && o.name === 'mantle') o.visible = true; }); }
         lookersD = [saulD, ...courtiers];
       }
-      if (where === 'women') { showOnly('gibeah'); standD(GB + 2.4, -4); lookNow(GB, -16); danceOn = true; lookersD = dancers; }
-      else danceOn = false;
+      if (where === 'women') { showOnly('gibeah'); standD(GB + 2.4, -4); lookNow(GB, -16); danceOn = true; lookersD = dancers; dancers.forEach((g, i) => { const F = g.userData.fig; if (F) { F.base = 'Dance_Loop'; F.play('Dance_Loop', .5, .9 + (i % 4) * .06); } }); }  // 춤추며 (삼상 18:6)
+      else { if (danceOn) dancers.forEach(g => { const F = g.userData.fig; if (F) { F.base = 'Idle_Loop'; F.play('Idle_Loop', 0); } }); danceOn = false; }
       if (where === 'ezel') { showOnly('ezel'); sitD(EZC[0], EZC[1], .95); lookNow(EZ + 1, -26); jonW.idle(); ladW.idle(); jonE.visible = lad.visible = true; jonE.position.set(EZ + 1, hEz(EZ + 1, -26), -26); lad.position.set(EZ + 2, hEz(EZ + 2, -25), -25); arrows.forEach(a => { a.visible = false; }); lookersD = [jonE]; }
       if (where === 'hebron') { showOnly('hebron'); standD(HB, -4); lookNow(HB, -12); lookersD = hebElders; }
       if (where === 'sick') { showOnly('chamber'); kit.setEnv({ camX: CB.x - .8, camZ: CB.z - .2, camH: .42, camP: .12 }, 0); lookNow(CB.x + 2, CB.z); bathsheba.visible = nathanC.visible = solomon.visible = baby.visible = false; elderServ.forEach(g => { g.visible = true; }); lookersD = elderServ; }
@@ -669,6 +669,7 @@ async function world(kit, { audio, sleep }) {
     async charge() { bw.go(bearer.position.clone(), v3(GOL.x + 4, 0, -36), 2.5); gw.go(goliath.position.clone(), v3(GOL.x - 1.4, 0, -33), 4); await kit.setEnv({ camZ: -27.5, camH: 1.65 + h1(X1, -27.5), camP: .12, shake: .2 }, 3.5); kit.setEnv({ shake: 0 }, .5); },
     async sling() {
       audio.whoosh(1.2); await sleep(1100); audio.thud(); gw.idle();
+      const GF = goliath.userData.fig; if (GF) { GF.play('Hit_Head', .15); await sleep(650); }  // 이마에 맞아 휘청이고 (삼상 17:49)
       await kit.tween(goliath.rotation, { x: 1.45 }, 1.4); audio.rumble();
       kit.setEnv({ camP: -.05 }, 2); setTimeout(() => bw.go(bearer.position.clone(), v3(GOL.x + 8, 0, -86), 7), 1800);  // 17:51 블레셋 사람들이 도망한다
       kit.dust.emit(goliath.position.x, goliath.position.y + .3, goliath.position.z + 2, { vx: 0, vy: 1, vz: 0, c: [.5, .42, .32], life: 3, size: 6, grow: 1.5, g: 0, drag: .3, alpha: .5 });
