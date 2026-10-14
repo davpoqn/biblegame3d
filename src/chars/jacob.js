@@ -171,7 +171,7 @@ async function world(kit, { audio, sleep }) {
   kit.terrain({ height: h0, size: 600, seg: 120, lo: '#6a5640', hi: '#b89d74' });
   const big = kit.tent({ at: [0, 0, -1], w: 7, d: 8, h: 3, color: '#3b2f27' });
   const lamp = new THREE.PointLight('#ffae66', 3.2, 9, 2); lamp.position.set(-1.2, .6, -2.4); scene.add(lamp);
-  const lampG = kit.glow(.08, .12, 4, 2, .7, -1.2, .45, -2.3);
+  const lampG = kit.lampAt(lamp);  // 장막 안의 진흙 등잔 ("등잔 하나가 탄다")
   kit.box(2.6, .08, 1.8, '#5a3f2e', .3, .04, -3.4);
   const isaac = kit.figure('elder', { tint: '#8b806c', pose: 'seat', visible: true }); isaac.position.set(.3, .08, -3.6);
   // 내 몸 (1인칭). 27:15–16 에서의 좋은 옷을 입고 손과 목에 염소 새끼 가죽을 두르면 팔이 털 덮인 팔로 바뀐다

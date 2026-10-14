@@ -223,6 +223,17 @@ body:not(.playing) #text-toggle{visibility:hidden}
 .readlist li{font:400 .98rem/1.6 var(--f-verse)}
 .readlist li small{font:500 .7rem var(--f-ui);color:var(--dust);letter-spacing:.06em;margin-right:.6rem}
 
+/* 지도: 양피지 위에 지금 있는 곳, 지나온 곳, 이 사람이 가는 곳들 (M 키, 지도 버튼) */
+#map{position:fixed;inset:0;z-index:12;display:grid;place-items:center;padding:calc(env(safe-area-inset-top,0px) + 56px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:rgba(12,10,9,.62);backdrop-filter:blur(2px)}
+.map-inner{width:min(100%,980px);max-height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,15rem);gap:1rem;align-items:start;padding:.9rem;border-radius:6px;background:#2a221b;border:1px solid var(--line);box-shadow:0 20px 50px -20px rgba(0,0,0,.8)}
+#map-cv{width:100%;aspect-ratio:4/3;max-height:calc(100vh - 140px);display:block;border-radius:3px}
+.map-info{display:grid;gap:.6rem;align-content:start;min-width:0}
+.map-now{margin:0;font:500 1.05rem/1.4 var(--f-display);color:var(--bone)}
+.map-ref{margin:0;font:400 .84rem/1.5 var(--f-ui);color:var(--dust)}
+.map-note{margin:0;font:400 .8rem/1.55 var(--f-ui);color:#c9b48e}
+@media (max-width: 720px){.map-inner{grid-template-columns:1fr;padding:.6rem}#map-cv{aspect-ratio:1/1}}
+body:not(.playing) #map-toggle{display:none}
+
 /* 인트로 (사이트 첫 화면): 흰 바탕에 성경책 하나. 스치면 펼쳐지고 책 이름이 솟아오른다 */
 #intro{position:fixed;inset:0;z-index:30;overflow:hidden;color-scheme:light;color:#3b2a1c;background:radial-gradient(70% 60% at 50% 30%,#fffdf6 0%,#fbf6ea 55%,#f1e8d8 100%);touch-action:none;transition:opacity .9s ease}
 #intro::after{content:"";position:absolute;inset:0;z-index:4;background:var(--night);opacity:0;pointer-events:none;transition:opacity 1.1s ease}
@@ -263,10 +274,23 @@ body:not(.playing) #text-toggle{visibility:hidden}
 <header class="hud">
   <div class="hud-title"><b id="hud-name"></b><span id="hud-chapter">데모 챕터</span></div>
   <div class="hud-right">
+    <button class="pill" id="map-toggle" type="button" aria-expanded="false" title="지도 (M)">지도</button>
     <button class="pill" id="text-toggle" type="button" aria-pressed="false">원문 보기</button>
     <button class="pill" id="sound-toggle" type="button" aria-pressed="false">소리 켜기</button>
   </div>
 </header>
+
+<section id="map" hidden aria-label="지도">
+  <div class="map-inner">
+    <canvas id="map-cv" aria-hidden="true"></canvas>
+    <div class="map-info">
+      <p class="map-now" id="map-now"></p>
+      <p class="map-ref" id="map-ref"></p>
+      <p class="map-note" id="map-note"></p>
+      <button class="btn-ghost" id="map-close" type="button">닫기</button>
+    </div>
+  </div>
+</section>
 
 <section id="intro" aria-label="시작">
   <div class="intro-rays" aria-hidden="true"></div>
@@ -694,6 +718,7 @@ async function sceneCut(num, name, sub, setup) {
   fadeEl.classList.add('on'); await sleep(1400);
   fadeEl.classList.add('card');
   $('#hud-chapter').textContent = `${num} · ${name}`;
+  mapTrail.push({ num, name, sub }); if (!$('#map').hidden) drawMap();
   if (setup) await setup();
   await sleep(2600);
   fadeEl.classList.remove('card'); await sleep(500);
@@ -886,7 +911,7 @@ let running = false;
 let hintTimer = 0;
 function showHint(text = LOOK_HINT, ms = 7000) { const h = $('#hint'); h.textContent = text; h.classList.add('on'); clearTimeout(hintTimer); hintTimer = setTimeout(() => h.classList.remove('on'), ms); }
 async function runStory() {
-  record = { choices: [], words: [] }; reads = [];
+  record = { choices: [], words: [] }; reads = []; mapTrail = [];
   textMode = 'easy'; applyMode();
   world.reset(partIdx);
   audio.chord(0, 2); audio.crackle(0); audio.water && audio.water(0, 1);
@@ -962,7 +987,129 @@ function toTitle() {
 }
 $('#pick-other').addEventListener('click', () => { if (!running) toTitle(); });
 // ESC: 이야기 중 어디서든 처음 화면으로 (다른 인물을 바로 시험해 보기)
-window.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('playing')) { e.preventDefault(); toTitle(); } });
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('#map').hidden) { e.preventDefault(); showMap(false); return; }
+  if (e.key === 'Escape' && document.body.classList.contains('playing')) { e.preventDefault(); toTitle(); }
+  if ((e.key === 'm' || e.key === 'M' || e.key === 'ㅡ') && document.body.classList.contains('playing') && !(e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) { e.preventDefault(); showMap($('#map').hidden); }
+});
+
+/* ---------- 지도 (사용자 요청 2026-10-14: 지금 어디에 있는지, 성경 어느 부분인지) ----------
+   땅·호수·강: Natural Earth(퍼블릭 도메인)를 tools/map/make_map.py로 줄인 것(빌드할 때 아래 자리에 들어간다).
+   장면의 자리는 성경 본문에 나오는 지명으로만 둔다. 본문이 자리를 말하지 않으면 그렇다고 적는다 */
+const MAPDATA = /*MAPDATA*/null;
+let mapTrail = [];
+const PLACES = {  // [경도, 위도, 이름]
+  haran: [39.03, 36.87, '하란'], shechem: [35.28, 32.21, '세겜'], egypt: [31.3, 30.4, '애굽'], bethel: [35.22, 31.93, '벧엘'],
+  mamre: [35.1, 31.55, '헤브론 마므레'], beersheba: [34.79, 31.25, '브엘세바'], moriahRoad: [35.0, 31.5, '모리아 땅으로 가는 길'], moriah: [35.235, 31.778, '모리아 땅의 산'], machpelah: [35.11, 31.525, '막벨라 굴'],
+  bethlehem: [35.2, 31.705, '베들레헴'], gibeah: [35.23, 31.82, '기브아'], elah: [34.96, 31.69, '엘라 골짜기'], engedi: [35.39, 31.46, '엔게디'], hebron: [35.1, 31.53, '헤브론'],
+  jerusalem: [35.234, 31.777, '예루살렘'], olives: [35.247, 31.778, '감람산'], gethsemane: [35.24, 31.779, '겟세마네'], mahanaim: [35.68, 32.18, '마하나임'], penuel: [35.66, 32.19, '얍복 나루'],
+  bethanyJordan: [35.55, 31.84, '요단 강 건너편 베다니'], gennesaret: [35.52, 32.86, '게네사렛'], capernaum: [35.575, 32.881, '가버나움'], bethsaida: [35.63, 32.91, '벳새다'],
+  galileeSea: [35.59, 32.82, '갈릴리 바다'], galileeShore: [35.57, 32.87, '갈릴리 바닷가'], caesareaPh: [35.69, 33.25, '가이사랴 빌립보'], judeaJordan: [35.56, 31.95, '요단 강 건너 유대 지경'],
+  bethany: [35.262, 31.771, '베다니'], tiberias: [35.55, 32.8, '디베랴 바닷가'],
+  damascusRoad: [36.05, 33.38, '다메섹 가까이'], damascus: [36.29, 33.51, '다메섹'], antioch: [36.16, 36.2, '안디옥'], lystra: [32.35, 37.6, '루스드라'], philippi: [24.28, 41.01, '빌립보'],
+  athens: [23.72, 37.97, '아덴'], caesarea: [34.89, 32.5, '가이사랴'], euroclydon: [24.2, 34.4, '그레데 남쪽 바다'], malta: [14.4, 35.9, '멜리데'], rome: [12.5, 41.9, '로마']
+};
+const STAY = '(본문은 이 장면의 자리를 따로 말하지 않는다. 앞서 머문 곳으로 둔다)';
+const SCENE_PLACE = {  // 인물 → 부마다 { 장면 이름: 자리 또는 [자리, 덧붙이는 말] }. 자리가 null이면 본문이 자리를 말하지 않음
+  abraham: [{ '하란': 'haran', '세겜': 'shechem', '애굽': 'egypt', '벧엘과 아이 사이': 'bethel', '동서남북': 'bethel' },
+    { '별': ['mamre', STAY + ' 13:18'], '쪼갠 고기 사이': ['mamre', STAY], '하갈': ['mamre', STAY], '이름': ['mamre', STAY], '세 사람': 'mamre', '소돔': 'mamre', '이삭': 'beersheba' },
+    { '밤': ['beersheba', '22:19에 아브라함이 브엘세바에 거하였다'], '사흘 길': 'moriahRoad', '산 위': 'moriah', '막벨라': 'machpelah', '마지막 날': ['machpelah', '25:9 막벨라 굴에 장사하였다'] }],
+  jacob: [{ '장막': ['beersheba', '28:10 야곱이 브엘세바에서 떠나'], '벧엘': 'bethel', '라반의 집': 'haran', '얍복 나루': 'penuel', '에서': ['penuel', '얍복 나루 가까이'] }],
+  david: [{ '들': 'bethlehem', '이새의 집': 'bethlehem', '사울 앞에서': ['gibeah', '사울의 성읍 (삼상 15:34)'], '엘라 골짜기': 'elah' },
+    { '요나단': ['gibeah', '사울의 집'], '성읍 어귀': ['gibeah', '이스라엘 모든 성읍에서 (18:6)'], '사울의 창': ['gibeah', '사울의 집'], '에셀 바위': ['gibeah', STAY], '엔게디': 'engedi', '헤브론': 'hebron' },
+    { '지붕 위': 'jerusalem', '나단': 'jerusalem', '첫아이': 'jerusalem', '감람산 길': 'olives', '두 문 사이': 'mahanaim', '마지막 날': 'jerusalem' }],
+  job: [{ '우스 땅': [null, '우스 땅이 어디인지 성경은 말하지 않는다 (욥 1:1)'] }],
+  paul: [{ '예루살렘': 'jerusalem', '스데반': 'jerusalem', '다메섹 길': 'damascusRoad', '직가': 'damascus', '광주리': 'damascus' },
+    { '안디옥': 'antioch', '루스드라': 'lystra', '빌립보 강가': 'philippi', '빌립보 옥': 'philippi', '아레오바고': 'athens' },
+    { '빌립의 집': 'caesarea', '성전 층대': 'jerusalem', '가이사랴': 'caesarea', '유라굴로': ['euroclydon', '그레데 앞을 지나다가 (27:13–14)'], '멜리데': 'malta', '로마': 'rome' }],
+  peter: [{ '요단 강 건너편': 'bethanyJordan', '게네사렛': 'gennesaret', '시몬의 집': 'capernaum', '산 위에서': [null, '산의 이름은 성경에 없다 (막 3:13)'], '야이로의 딸': 'galileeShore', '벳새다 들': 'bethsaida', '물 위': 'galileeSea', '가버나움 회당': 'capernaum' },
+    { '가이사랴 빌립보': 'caesareaPh', '높은 산': [null, '산의 이름은 성경에 없다 (마 17:1)'], '가버나움': 'capernaum', '유대 지경 길': 'judeaJordan', '예루살렘 입성': 'jerusalem', '감람산': 'olives', '유월절 준비': 'jerusalem', '다락방': 'jerusalem', '겟세마네': 'gethsemane', '뜰': 'jerusalem' },
+    { '같은 날 아침': 'jerusalem', '골고다': 'jerusalem', '빈 무덤': 'jerusalem', '닫힌 방': 'jerusalem', '숯불': 'tiberias', '베다니 앞': 'bethany' }]
+};
+const REGIONS = [  // [경도, 위도, 이름, 보이는 넓이(도) 아래·위]
+  [35.32, 32.98, '갈릴리', 0, 7], [35.18, 32.3, '사마리아', 0, 7], [35.0, 31.6, '유대', 0, 7], [34.1, 32.6, '대해', 0, 60], [35.9, 32.1, '요단 건너편', 0, 7], [35.47, 31.36, '염해', 0, 7],
+  [31.0, 29.4, '애굽', 3, 60], [41.6, 35.6, '메소보다미아', 4, 60], [34.9, 37.25, '길리기아', 4, 60], [22.4, 40.6, '마게도냐', 4, 60], [22.2, 37.5, '아가야', 4, 60], [14.6, 41.4, '이달리야', 4, 60],
+  [37.4, 34.6, '수리아', 3, 60], [24.8, 35.25, '그레데', 4, 60], [33.2, 35.1, '구브로', 3, 60], [32.6, 38.5, '루가오니아', 4, 60]
+];
+const keyOf = v => Array.isArray(v) ? v[0] : v;
+function placeOf(id, name, part) {
+  const parts = SCENE_PLACE[id] || [], v = (parts[part] || {})[name] ?? parts.map(o => o[name]).find(x => x !== undefined);
+  if (v === undefined) return { key: null, note: '' };
+  return Array.isArray(v) ? { key: v[0], note: v[1] } : { key: v, note: '' };
+}
+// 이 부에서 가는 곳들 (부가 하나뿐이면 그것)
+const partKeys = (id, part) => { const parts = SCENE_PLACE[id] || []; return Object.values(parts[part] || parts[0] || {}).map(keyOf).filter(k => k && PLACES[k]); };
+let mapRaf = 0;
+function showMap(on) {
+  const m = $('#map'); m.hidden = !on; $('#map-toggle').setAttribute('aria-expanded', String(on));
+  cancelAnimationFrame(mapRaf);
+  if (on) { const loop = () => { drawMap(); mapRaf = requestAnimationFrame(loop); }; loop(); $('#map-close').focus({ preventScroll: true }); }
+}
+function drawMap() {
+  const cv = $('#map-cv'), r = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+  if (!r.width) return;
+  if (cv.width !== Math.round(r.width * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, id = C && C.id, meta = CHARS.find(x => x.id === id);
+  const trail = mapTrail.map(t => ({ ...t, ...placeOf(id, t.name, partIdx) })), here = partKeys(id, partIdx);
+  const cur = trail[trail.length - 1];
+  // 보일 영역: 이 부에서 가는 곳들과 지나온 곳을 다 담고, 너무 좁으면 넓힌다
+  let pts = [...here, ...trail.map(t => t.key).filter(k => k && PLACES[k])].map(k => PLACES[k]);
+  if (!pts.length) pts = [[35.3, 31.8]];
+  let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0])), y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, k = Math.cos(cy * Math.PI / 180);
+  let sx = Math.max(1.6, (x1 - x0) * 1.5 + .6) * k, sy = Math.max(1.3, (y1 - y0) * 1.5 + .5);
+  if (sx / sy > W / H) sy = sx * H / W; else sx = sy * W / H;
+  const span = sy, P = (lon, lat) => [((lon - cx) * k / sx + .5) * W, (.5 - (lat - cy) / sy) * H];
+  // 바다와 땅
+  g.fillStyle = '#a9b0a0'; g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(70,90,90,.12)'; g.lineWidth = 1 * dpr; for (let y = 6 * dpr; y < H; y += 9 * dpr) { g.beginPath(); for (let x = 0; x <= W; x += 12 * dpr) g.lineTo(x, y + Math.sin(x * .05 + y) * 1.5 * dpr); g.stroke(); }  // 물결 무늬
+  const B = MAPDATA ? MAPDATA.box : [0, 0, 0, 0], onEdge = (lon, lat) => Math.abs(lon - B[0]) < 1e-3 || Math.abs(lon - B[2]) < 1e-3 || Math.abs(lat - B[1]) < 1e-3 || Math.abs(lat - B[3]) < 1e-3;
+  const poly = (arr, fill, stroke, lw) => {
+    g.beginPath(); for (let i = 0; i < arr.length; i += 2) { const [x, y] = P(arr[i], arr[i + 1]); i ? g.lineTo(x, y) : g.moveTo(x, y); } g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); }
+    if (!stroke) return; g.strokeStyle = stroke; g.lineWidth = lw * dpr; g.beginPath();  // 자료를 자른 가장자리에는 해안선을 긋지 않는다
+    for (let i = 2; i <= arr.length; i += 2) { const a0 = i - 2, a1 = i % arr.length; if (onEdge(arr[a0], arr[a0 + 1]) && onEdge(arr[a1], arr[a1 + 1])) continue; const [x0, y0] = P(arr[a0], arr[a0 + 1]), [x1, y1] = P(arr[a1], arr[a1 + 1]); g.moveTo(x0, y0); g.lineTo(x1, y1); }
+    g.stroke();
+  };
+  if (MAPDATA) {
+    MAPDATA.land.forEach(a => poly(a, '#e6dcc2', 'rgba(95,78,55,.75)', 1.2));
+    MAPDATA.lakes.forEach(a => poly(a, '#9fb0aa', 'rgba(70,90,95,.7)', 1));
+    g.strokeStyle = 'rgba(70,105,120,.8)'; g.lineWidth = (span < 6 ? 1.8 : 1.1) * dpr;
+    MAPDATA.rivers.forEach(rv => { g.beginPath(); for (let i = 0; i < rv.p.length; i += 2) { const [x, y] = P(rv.p[i], rv.p[i + 1]); i ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); });
+  } else { g.fillStyle = '#e6dcc2'; g.fillRect(0, 0, W, H); }
+  // 양피지 결
+  const vg = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .3, W / 2, H / 2, Math.max(W, H) * .75); vg.addColorStop(0, 'rgba(120,90,50,0)'); vg.addColorStop(1, 'rgba(90,60,30,.35)'); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  // 땅 이름
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const [lon, lat, nm, lo, hi] of REGIONS) {
+    if (span < lo || span > hi) continue; const [x, y] = P(lon, lat); if (x < 0 || x > W || y < 0 || y > H) continue;
+    g.font = `italic 500 ${Math.round((span < 5 ? 15 : 13) * dpr)}px "Gowun Batang", serif`; g.fillStyle = nm === '대해' || nm === '염해' ? 'rgba(50,70,80,.6)' : 'rgba(95,70,45,.55)';
+    g.save(); g.translate(x, y); g.fillText(nm.split('').join(' '), 0, 0); g.restore();
+  }
+  // 이 사람이 가는 곳들(흐리게), 지나온 곳(번호), 지금 있는 곳(붉게, 맥박)
+  const dot = (lon, lat, rr, fill, stroke) => { const [x, y] = P(lon, lat); g.beginPath(); g.arc(x, y, rr * dpr, 0, 7); g.fillStyle = fill; g.fill(); if (stroke) { g.strokeStyle = stroke; g.lineWidth = 1.2 * dpr; g.stroke(); } return [x, y]; };
+  g.font = `500 ${Math.round(11 * dpr)}px "IBM Plex Sans KR", sans-serif`;
+  const boxes = [], fits = (x, y, w, h) => { if (boxes.some(b => x < b[0] + b[2] && x + w > b[0] && y < b[1] + b[3] && y + h > b[1])) return false; boxes.push([x, y, w, h]); return true; };  // 지명 글자가 겹치지 않게
+  const seenKeys = new Set(trail.map(t => t.key));
+  seenKeys.forEach(key => { const p = PLACES[key]; if (!p) return; const [x, y] = P(p[0], p[1]); boxes.push([x + 6 * dpr, y - 16 * dpr, g.measureText(p[2]).width + 4 * dpr, 14 * dpr]); });  // 지나온 곳의 이름 자리를 먼저 잡는다
+  new Set(here).forEach(key => { const p = PLACES[key], [x, y] = dot(p[0], p[1], 3, 'rgba(90,70,50,.5)'); if (!seenKeys.has(key)) { const w = g.measureText(p[2]).width; if (fits(x + 6 * dpr, y - 14 * dpr, w + 4 * dpr, 13 * dpr)) { g.fillStyle = 'rgba(70,52,35,.6)'; g.textAlign = 'left'; g.fillText(p[2], x + 7 * dpr, y - 6 * dpr); } } });  // 이 부에서 아직 가지 않은 곳
+  const seen = new Map(); trail.forEach(t => { if (t.key && PLACES[t.key]) seen.set(t.key, t); });
+  g.font = `600 ${Math.round(12 * dpr)}px "IBM Plex Sans KR", sans-serif`;
+  seen.forEach((t, key) => {
+    const p = PLACES[key], isCur = cur && cur.key === key, [x, y] = dot(p[0], p[1], isCur ? 6 : 4.5, isCur ? '#a3292a' : '#5a3f28', '#f3e9d2');
+    g.fillStyle = 'rgba(40,28,18,.92)'; g.textAlign = 'left'; g.fillText(p[2], x + 8 * dpr, y - 8 * dpr);
+  });
+  if (cur && cur.key && PLACES[cur.key]) { const [x, y] = P(PLACES[cur.key][0], PLACES[cur.key][1]), ph = (performance.now() / 1400) % 1; g.beginPath(); g.arc(x, y, (7 + ph * 16) * dpr, 0, 7); g.strokeStyle = `rgba(163,41,42,${(1 - ph) * .8})`; g.lineWidth = 2 * dpr; g.stroke(); }
+  // 북쪽 표시
+  g.fillStyle = 'rgba(70,50,30,.7)'; g.textAlign = 'center'; g.font = `600 ${Math.round(12 * dpr)}px serif`; g.fillText('북', W - 22 * dpr, 18 * dpr); g.beginPath(); g.moveTo(W - 22 * dpr, 26 * dpr); g.lineTo(W - 27 * dpr, 40 * dpr); g.lineTo(W - 17 * dpr, 40 * dpr); g.closePath(); g.fill();
+  // 글
+  const part = meta && meta.parts[partIdx];
+  $('#map-now').textContent = cur ? `${meta ? meta.name : ''}${part && meta.parts.length > 1 ? ' · ' + part.t.split(' · ')[0] : ''} · ${cur.num} ${cur.name}${cur.key && PLACES[cur.key] ? ' — ' + PLACES[cur.key][2] : ''}` : '아직 장면이 시작되지 않았습니다';
+  $('#map-ref').textContent = cur ? cur.sub || '' : '';
+  $('#map-note').textContent = cur ? cur.note || '' : '';
+}
+$('#map-toggle').addEventListener('click', () => showMap($('#map').hidden));
+$('#map-close').addEventListener('click', () => showMap(false));
+$('#map').addEventListener('click', e => { if (e.target === $('#map')) showMap(false); });
 
 /* ---------- 인트로 (사이트 첫 화면) ----------
    흰 바탕에 3D 성경책 하나. 마우스(휴대폰은 손가락)가 책을 스치면 펼쳐지고, 여섯 인물이 나오는 책의 이름이 금빛 글자로 솟아올라 떠다닌다.

@@ -409,7 +409,7 @@ async function world(kit, { audio, sleep }) {
   kit.terrain({ height: h1, size: 600, seg: 120, at: [X1, 0], lo: '#2e2a26', hi: '#6d6352' });
   const bigTent = kit.tent({ at: [X1, h1(X1, 0), 0], w: 6, d: 7, h: 2.8, color: '#2f2620', open: true, ry: Math.PI });
   const lampL = new THREE.PointLight('#ffb070', 0, 7, 2); lampL.position.set(X1 - .8, .5, -1.2); scene.add(lampL);
-  const lampG = kit.glow(.07, .1, 4, 2, .7, X1 - .8, .35, -1.2);
+  const lampG = kit.lampAt(lampL);  // 장막 안의 진흙 등잔
 
   /* --- 3 · 마므레 높은 곳 --- */
   const X2 = SITE[2];
@@ -608,7 +608,7 @@ async function world(kit, { audio, sleep }) {
   const giftFolk = kit.throng({ n: 10, height: hEg, place: i => [EGF[0] + rnd(-12, -5), EGF[1] + rnd(-3, 3)], colors: ['#e8e0cc', '#cfc2a4'] });
   const PH = v3(EG, 0, 500);
   const hallEg = kit.room({ at: [PH.x, 0, PH.z], w: 16, d: 14, h: 6.5, color: '#cdb88e', floor: '#a08a66', door: 0, lamps: [[-5, -5.5, 1.8], [5, -5.5, 1.8], [-5, 5, 1.8], [5, 5, 1.8]] });
-  { const L = new THREE.PointLight('#ffd8a0', 9, 18, 1.3); L.position.set(0, 4.5, 0); hallEg.add(L); }
+  { const L = new THREE.PointLight('#ffd8a0', 9, 18, 1.3); L.position.set(0, 4.5, 0); hallEg.add(L); kit.lampAt(L, { hang: .8 }); }
   [-4.5, 4.5].forEach(x => [-3.5, 1.5].forEach(z => { const c = new THREE.Mesh(new THREE.CylinderGeometry(.5, .6, 6.5, 12), kit.mat('#e2d2a8')); c.position.set(PH.x + x, 3.25, PH.z + z); sitesA.egypt.add(c); }));
   kit.box(2.4, .6, 1.6, '#c9a23a', PH.x, .3, PH.z - 5.6); kit.box(2.4, 2.2, .3, '#c9a23a', PH.x, 1.4, PH.z - 6.4);
   const pharaoh = figA('king', PH.x, PH.z - 5.4, null, { colors: { royal: '#f4efe2', tunic: '#f4efe2', headcloth: '#2a4a8a', beard: '#1a120c' }, pose: 'seat' }); pharaoh.position.y = .55;
@@ -652,7 +652,7 @@ async function world(kit, { audio, sleep }) {
   const layDown = g => layOn(g.userData.f, 0, .08, -.15, Math.PI, LAY_CLIP);
   const shroud = sarahBody();
   shroud.position.set(ST.x - .5, ST.y, ST.z - .4); sitesA.hebron.add(shroud);
-  { const L = new THREE.PointLight('#ffb070', 5, 8, 1.6); L.position.set(ST.x + .8, ST.y + .6, ST.z - 1.6); sitesA.hebron.add(L); kit.glow(.07, .1, 4, 2, .7, ST.x + .8, ST.y + .45, ST.z - 1.6); }
+  { const L = new THREE.PointLight('#ffb070', 5, 8, 1.6); L.position.set(ST.x + .8, ST.y + .6, ST.z - 1.6); sitesA.hebron.add(L); kit.lampAt(L); }
   const MC = v3(HG - 64, hHg(HG - 64, 40), 40);
   const cave = kit.tomb({ at: [MC.x, MC.y, MC.z], ry: Math.PI / 2 }); cave.userData.stone.visible = false;
   kit.trees('olive', { n: 16, place: i => { let a, r; do { a = rnd(0, 6.3); r = rnd(9, 24); } while (Math.cos(a) > .55); return [MC.x + Math.cos(a) * r, MC.z + Math.sin(a) * r]; }, height: hHg });  // 사방에 둘린 수목 (23:17)

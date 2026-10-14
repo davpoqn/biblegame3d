@@ -464,7 +464,7 @@ async function world(kit, { audio, sleep }) {
   const hm = new THREE.MeshStandardMaterial({ color: '#5a4c3e', roughness: 1 });
   kit.box(16, .1, 14, '#3a3028', 0, -.05, 0, hall); kit.box(16, 6, .3, null, 0, 3, -7, hall, hm); kit.box(.3, 6, 14, null, -8, 3, 0, hall, hm); kit.box(.3, 6, 14, null, 8, 3, 0, hall, hm); kit.box(16, .3, 14, null, 0, 6, 0, hall, hm); kit.box(16, 6, .3, null, 0, 3, 7, hall, hm);
   [-4, 4].forEach(x => [-3, 2].forEach(z => kit.box(.6, 6, .6, '#6a5a48', x, 3, z, hall)));
-  const hallLights = [[-3, -5], [3, -5], [0, 4]].map(([x, z]) => { kit.glow(.12, .18, 4, 2, .7, x, 1.6, z + .1, hall); const L = new THREE.PointLight('#ffb070', 4, 12, 2); L.position.set(x, 1.8, z + .4); hall.add(L); return L; });
+  const hallLights = [[-3, -5], [3, -5], [0, 4]].map(([x, z]) => { const L = new THREE.PointLight('#ffb070', 4, 12, 2); L.position.set(x, 1.8, z + .4); hall.add(L); kit.lampAt(L, { hang: .9 }); return L; });  // 매단 등잔
   const nathan = kit.figure('elder', { tint: '#6e665a', visible: true }); nathan.position.set(.3, 0, -2.6); hall.add(nathan);
 
   /* --- 6 · 마하나임 성문 --- */
@@ -511,7 +511,7 @@ async function world(kit, { audio, sleep }) {
   const SR = v3(GB, 0, 400);  // 사울의 방
   const saulRoom = kit.room({ at: [SR.x, SR.y, SR.z], w: 12, d: 10, h: 4.4, color: '#5a4636', floor: '#3e3126', door: 0, lamps: [[-4, -3.6, 1.6], [4, -3.6, 1.6], [0, 3.6, 1.6]] });
   [-3, 3].forEach(x => [-2, 2].forEach(z => kit.box(.5, 4.4, .5, '#6a5440', SR.x + x, 2.2, SR.z + z)));
-  { const L = new THREE.PointLight('#ffc890', 9, 16, 1.3); L.position.set(SR.x, 3.2, SR.z); saulRoom.add(L); L.position.set(0, 3.2, 0); }  // 방 전체를 비추는 등잔 불빛
+  { const L = new THREE.PointLight('#ffc890', 9, 16, 1.3); L.position.set(SR.x, 3.2, SR.z); saulRoom.add(L); L.position.set(0, 3.2, 0); kit.lampAt(L, { hang: .8 }); }  // 방 전체를 비추는 등잔 불빛
   kit.box(2, .5, 1.4, '#4a3828', SR.x, .25, SR.z - 4); kit.box(2, 1.6, .3, '#4a3828', SR.x, 1.05, SR.z - 4.6);  // 왕의 자리
   kit.box(.5, .42, .45, '#4a3828', SR.x, .21, SR.z + .85);  // 다윗이 앉는 걸상
   const saulD = figD('king', SR.x, .5, SR.z - 3.8, 0, { tint: '#4c2f2b', pose: 'seat' });
@@ -564,7 +564,7 @@ async function world(kit, { audio, sleep }) {
   const chamber = kit.room({ at: [CB.x, CB.y, CB.z], w: 9, d: 8, h: 3.8, color: '#5e4c3c', floor: '#3e3228', door: 0, lamps: [[-3, -3, .8], [3, -3, .8]] });
   kit.box(2.2, .5, 1.2, '#7a6650', CB.x - 2.2, .25, CB.z - 1.8); kit.box(2.2, .14, 1.2, '#d8cfba', CB.x - 2.2, .57, CB.z - 1.8);  // 침상
   kit.addFloor(CB.x - 2.2, CB.z - 1.8, 2.2, 1.2, .64, sitesD.chamber);
-  { const L = new THREE.PointLight('#ffc890', 6, 13, 1.3); L.position.set(0, 3, 0); chamber.add(L); }  // 침상 위에 앉으면 몸이 침상 위에 온다
+  { const L = new THREE.PointLight('#ffc890', 6, 13, 1.3); L.position.set(0, 3, 0); chamber.add(L); kit.lampAt(L, { hang: .8 }); }  // 침상 위에 앉으면 몸이 침상 위에 온다
   const elderServ = [[1.6, -1.2], [2.6, 0], [.8, 1.4], [2.2, 1.8]].map(([x, z], i) => figD('man', CB.x + x, 0, CB.z + z, 0, { tint: ['#4a3d30', '#5a4636', '#3e3329', '#6a5541'][i] }));
   elderServ.forEach(g => faceTo(g, CB.x - .6, CB.z - .4));
   const bathsheba = figD('woman', CB.x - .4, 0, CB.z + 2.6, Math.PI, { colors: { dress: '#ece6d8' } }); bathsheba.visible = false; const bsW = kit.walker(bathsheba, {});

@@ -7,6 +7,10 @@ for line in open(D,encoding='utf8'):
     o=json.loads(line); H[(o['code'],o['chapter'],o['verse'])]=o['text']
 os.makedirs(S+'dist/chars',exist_ok=True)
 for f in ['index.html','kit.js']: shutil.copy(S+'src/'+f, S+'dist/'+f)
+# 지도 자료(tools/map/make_map.py → src/mapdata.json)를 엔진 안에 넣는다
+if os.path.exists(S+'src/mapdata.json'):
+    page=open(S+'dist/index.html',encoding='utf8').read(); assert '/*MAPDATA*/null' in page
+    open(S+'dist/index.html','w',encoding='utf8').write(page.replace('/*MAPDATA*/null', open(S+'src/mapdata.json',encoding='utf8').read().strip(), 1))
 ok=True
 for name in sorted(os.listdir(S+'src/chars')):
     s=open(S+'src/chars/'+name,encoding='utf8').read()

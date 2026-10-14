@@ -59,9 +59,18 @@ function bakeParts(obj) {
   obj.traverse(m => { if (m.isMesh) parts.push({ geo: floatGeo(m.geometry.clone()).applyMatrix4(m.matrixWorld), mat: m.material }); });
   return parts;
 }
+// 각진 동물 모델을 부드럽게: 같은 자리의 꼭짓점을 하나로 이어 붙이고 법선을 다시 계산한다(뼈 가중치는 같은 자리끼리 같다)
+function weldSmooth(geo) {
+  const p = geo.getAttribute('position'), n = p.count, map = new Int32Array(n), keys = new Map();
+  for (let i = 0; i < n; i++) { const k = Math.round(p.getX(i) * 1e4) + ',' + Math.round(p.getY(i) * 1e4) + ',' + Math.round(p.getZ(i) * 1e4); let j = keys.get(k); if (j === undefined) { j = i; keys.set(k, i); } map[i] = j; }
+  const src = geo.index ? geo.index.array : Array.from({ length: n }, (_, i) => i), tri = new Uint32Array(src.length);
+  for (let i = 0; i < src.length; i++) tri[i] = map[src[i]];
+  const g2 = geo.clone(); g2.setIndex(Array.from(tri)); g2.deleteAttribute('normal'); g2.computeVertexNormals(); return g2;
+}
 function prepAnimal(g) {  // 뼈대(가까이 한두 마리), 굳힌 자세(무리)
   const rig = g.scene.getObjectByName('Armature');
-  const poses = ['pose_a', 'pose_b', 'pose_c'].map(n => g.scene.getObjectByName(n)).filter(Boolean).map(o => { g.scene.updateWorldMatrix(true, true); const parts = []; o.traverse(m => { if (m.isMesh) parts.push({ geo: floatGeo(m.geometry.clone()).applyMatrix4(m.matrixWorld), mat: m.material }); }); return parts; });
+  if (rig) rig.traverse(m => { if (m.isMesh) m.geometry = weldSmooth(m.geometry); });
+  const poses = ['pose_a', 'pose_b', 'pose_c'].map(n => g.scene.getObjectByName(n)).filter(Boolean).map(o => { g.scene.updateWorldMatrix(true, true); const parts = []; o.traverse(m => { if (m.isMesh) parts.push({ geo: weldSmooth(floatGeo(m.geometry.clone()).applyMatrix4(m.matrixWorld)), mat: m.material }); }); return parts; });
   return { rig, poses, clips: Object.fromEntries(g.animations.map(c => [c.name, c])) };
 }
 
@@ -453,6 +462,58 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   const glowMat = (r, g, b) => new THREE.MeshBasicMaterial({ color: new THREE.Color(r, g, b), fog: false });
   function glow(w, h, r, g, b, x, y, z, parent = R()) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glowMat(r, g, b)); m.position.set(x, y, z); parent.add(m); return m; }
 
+  /* --- 등잔과 횃불 (사용자: 전등은 절대 없고 모든 불빛은 등잔·횃불, 2026-10-14) ---
+     진흙 등잔: 둥근 몸통에 심지 주둥이와 손잡이. 매단 등잔: 청동 등잔을 쇠사슬 셋으로 천장에 매단다(로마 시대에 쓰던 모양).
+     불꽃은 깜빡이고, 빛(PointLight)도 불꽃을 따라 흔들린다 */
+  const flames = [];
+  const LAMP = {};
+  function lampBody(bronze) {
+    const k = bronze ? 'b' : 'c'; if (LAMP[k]) return LAMP[k];
+    const pts = [[0, 0], [.03, .002], [.045, .012], [.047, .02], [.038, .028], [.012, .03], [.01, .036], [0, .036]].map(([x, y]) => new THREE.Vector2(x, y));
+    const body = new THREE.LatheGeometry(pts, 14), nose = new THREE.CylinderGeometry(.009, .013, .05, 8); nose.rotateZ(Math.PI / 2); nose.translate(.055, .02, 0);
+    const handle = new THREE.TorusGeometry(.016, .005, 5, 10, Math.PI); handle.rotateY(Math.PI / 2); handle.translate(-.05, .02, 0);
+    return (LAMP[k] = { geos: [body, nose, handle], mat: bronze ? new THREE.MeshStandardMaterial({ color: '#8a6a3a', metalness: .55, roughness: .45 }) : new THREE.MeshStandardMaterial({ color: '#9a6a46', roughness: .9 }) });
+  }
+  function lamp({ at = [0, 0, 0], parent = R(), hang = 0, light = null, power = 2.6, ry = 0 } = {}) {
+    const g = new THREE.Group(); g.position.set(at[0], at[1], at[2]); g.rotation.y = ry; parent.add(g);
+    const B = lampBody(hang > 0); B.geos.forEach(geo => g.add(new THREE.Mesh(geo, B.mat)));
+    if (hang > 0) for (let i = 0; i < 3; i++) {  // 쇠사슬
+      const a = i / 3 * Math.PI * 2, c = new THREE.Mesh(new THREE.CylinderGeometry(.003, .003, hang, 4), B.mat), tx = Math.cos(a) * .035, tz = Math.sin(a) * .035;
+      c.position.set(tx / 2, .03 + hang / 2, tz / 2); c.rotation.set(Math.atan2(tz, hang) * -1, 0, Math.atan2(tx, hang)); g.add(c);
+    }
+    const fl = new THREE.Mesh(new THREE.ConeGeometry(.009, .04, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(3.2, 1.7, .55), fog: false }));
+    fl.position.set(.08, .045, 0); g.add(fl);
+    const halo = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.4, .7, .25), transparent: true, opacity: .35, depthWrite: false, fog: false }));
+    halo.position.copy(fl.position); g.add(halo);
+    let L = light;
+    if (!L) { L = new THREE.PointLight('#ffb070', power, 9, 2); parent.add(L); }
+    L.position.set(at[0], at[1] + .15, at[2]);
+    flames.push({ fl, halo, L, base: L.intensity, seed: Math.random() * 9 });
+    return g;
+  }
+  // 이미 있는 빛에 보이는 등잔을 단다: kit.lampAt(L, { hang: 높이 }) — 빛의 자리에 등잔을 두고(매달면 그만큼 위가 천장), 빛은 불꽃을 따라 흔들린다
+  function lampAt(L, { hang = 0, drop = .1 } = {}) { return lamp({ at: [L.position.x, L.position.y - drop, L.position.z], parent: L.parent && L.parent !== scene ? L.parent : R(), hang, light: L }); }
+  // 손에 든 횃불: kit.torch(뼈, { light }) — 막대 끝의 불꽃, 깜빡이는 빛
+  function torch(bone, { light = null, power = 2.4 } = {}) {
+    const t = new THREE.Group(); t.add(new THREE.Mesh(new THREE.CylinderGeometry(.025, .03, .7, 6), mat('#4a3626')));
+    const fl = new THREE.Mesh(new THREE.ConeGeometry(.07, .22, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 1.5, .45), fog: false })); fl.position.y = .45; t.add(fl);
+    const halo = new THREE.Mesh(new THREE.SphereGeometry(.12, 8, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.3, .6, .2), transparent: true, opacity: .3, depthWrite: false, fog: false })); halo.position.y = .42; t.add(halo);
+    const L = light || new THREE.PointLight('#ff9a50', power, 9, 2); if (L.parent) L.parent.remove(L); L.position.set(0, .55, 0); t.add(L);
+    t.rotation.set(0, 0, -.2); bone.add(t); t.scale.setScalar(1 / Math.max(1e-3, bone.getWorldScale(new THREE.Vector3()).x));
+    flames.push({ fl, halo, L, base: L.intensity || power, seed: Math.random() * 9 });
+    return t;
+  }
+  function stepFlames() {
+    for (const f of flames) {
+      const n = Math.sin(clock * 11 + f.seed) * .5 + Math.sin(clock * 17.3 + f.seed * 2) * .3 + Math.sin(clock * 5.1 + f.seed * 3) * .2, k = 1 + n * .12;
+      f.fl.scale.set(1 - n * .08, k, 1 - n * .08); f.halo.scale.setScalar(1 + n * .1);
+      if (f.L.userData.base == null) f.L.userData.base = f.L.intensity;
+      if (f.L.userData.lastSet !== f.L.intensity) f.L.userData.base = f.L.intensity;  // 이야기가 밝기를 바꾸면 그것을 기준으로
+      f.L.intensity = f.L.userData.base * (1 + n * .1); f.L.userData.lastSet = f.L.intensity;
+      f.fl.visible = f.halo.visible = f.L.userData.base > .01;
+    }
+  }
+
   /* --- 사람 --- */
   const standProf = [[0, 0], [.34, 0], [.31, .3], [.25, .85], [.21, 1.25], [.16, 1.4], [.06, 1.46], [0, 1.46]];
   const seatProf = [[0, 0], [.55, 0], [.5, .18], [.32, .5], [.22, .78], [.12, .86], [0, .88]];
@@ -486,11 +547,16 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   const JESUS_HAIR = '#3f2a1c';
   // 예수님 겉옷(mantle_j, build_chars.py가 뼈에 붙여 만든 옷)에 줄무늬와 주름을 그린다: 아랫단 두 줄, 앞자락 두 줄, 아래로 갈수록 깊은 세로 주름.
   // 옷의 원래 자리(뼈로 움직이기 전)를 기준으로 하므로 걷거나 팔을 들어도 무늬가 옷을 따라간다
+  // 천처럼: 걸으면 아랫단이 뒤로 끌리고, 멈추거나 돌면 흔들리다 가라앉고(용수철), 바람에 살짝 나부낀다. 위(어깨)는 움직이지 않고 아래로 갈수록 크게
   function mantleStripes(o) {
     o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox, U = new THREE.Vector4(bb.min.y, bb.max.y, (bb.min.x + bb.max.x) / 2, (bb.min.z + bb.max.z) / 2);
+    const lag = new THREE.Vector3(), perM = (bb.max.y - bb.min.y) / 1.25;  // 옷 길이 약 1.25m: 1m가 모델 단위로 얼마인지
     o.material.onBeforeCompile = sh => {
-      sh.uniforms.uBB = { value: U };
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRest;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvRest = position;');
+      sh.uniforms.uBB = { value: U }; sh.uniforms.uLag = { value: lag }; sh.uniforms.uWind = windU;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRest; uniform vec4 uBB; uniform vec3 uLag; uniform float uWind;').replace('#include <begin_vertex>', `#include <begin_vertex>
+        vRest = position;
+        { float t = clamp((position.y - uBB.x) / (uBB.y - uBB.x), 0., 1.), w = pow(1. - t, 1.7), a = atan(position.x - uBB.z, position.z - uBB.w);
+          transformed += (uLag + vec3(sin(uWind * 2.3 + a * 3. + t * 7.) * .014, 0., cos(uWind * 1.9 + a * 2. + t * 5.) * .012)) * ${perM.toFixed(4)} * w; }`);
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vRest; uniform vec4 uBB;').replace('#include <color_fragment>', `#include <color_fragment>
         float t = (vRest.y - uBB.x) / (uBB.y - uBB.x), a = atan(vRest.x - uBB.z, vRest.z - uBB.w), ea = abs(a);
         diffuseColor.rgb *= 1. + sin(a * 9. + sin(t * 9.) * .9) * .13 * (1.1 - t);  // 주름
@@ -498,6 +564,22 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
         diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(.42, .46, .3), clamp(band, 0., 1.));`);
     };
     o.material.customProgramCacheKey = () => 'mantle_j';
+    return { lag, x: new THREE.Vector2(), v: new THREE.Vector2(), prev: null, vel: new THREE.Vector2(), yaw: null };
+  }
+  const _cp = new THREE.Vector3(), _cq = new THREE.Quaternion(), _ce = new THREE.Euler();
+  function stepCloth(g, C, dt) {
+    if (dt <= 0) return;
+    g.getWorldPosition(_cp); g.getWorldQuaternion(_cq); _ce.setFromQuaternion(_cq, 'YXZ');
+    if (!C.prev) { C.prev = _cp.clone(); C.yaw = _ce.y; return; }
+    const vx = (_cp.x - C.prev.x) / dt, vz = (_cp.z - C.prev.z) / dt; C.prev.copy(_cp);
+    let dy = _ce.y - C.yaw; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2; C.yaw = _ce.y;
+    const s = Math.sin(_ce.y), c = Math.cos(_ce.y), fwd = vx * s + vz * c, side = vx * c - vz * s;  // 사람 기준 앞(+z)·옆(+x) 빠르기
+    const ax = (side - C.vel.x) / dt, az = (fwd - C.vel.y) / dt; C.vel.set(side, fwd);
+    // 용수철: 목표는 가는 반대쪽으로 조금 끌린 자리, 빨라지거나 멈출 때 반대로 밀리고, 돌면 옆으로 쏠린다
+    const tx = clamp(-side * .05 - dy / dt * .02, -.12, .12), tz = clamp(-fwd * .06, -.14, .1), K = 34, D = 7;
+    C.v.x += ((tx - C.x.x) * K - C.v.x * D - ax * .012) * dt; C.v.y += ((tz - C.x.y) * K - C.v.y * D - az * .012) * dt;
+    C.x.x = clamp(C.x.x + C.v.x * dt, -.18, .18); C.x.y = clamp(C.x.y + C.v.y * dt, -.2, .15);
+    C.lag.set(C.x.x, 0, C.x.y);
   }
   const JHEAD = { y: .122, z: .136 };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준, 예전 얼굴의 눈 자리)
   function dressJesus(body) {
@@ -696,7 +778,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
         a.reset().play(); if (F.cur && fade) F.cur.crossFadeTo(a, fade, false); else if (F.cur) F.cur.stop();
         F.cur = a; F.curName = name;
       } };
-    if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressJesus(body); body.traverse(o => { if (o.isMesh && o.name === 'mantle_j') mantleStripes(o); }); }
+    if (role === 'jesus') { F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressJesus(body); body.traverse(o => { if (o.isMesh && o.name === 'mantle_j') F.cloth = mantleStripes(o); }); }
     else if (!noHead && figSrc.mhHead[spec.body === 'f' ? 'f' : 'm']) {
       const sex = spec.body === 'f' ? 'f' : 'm';
       body.traverse(o => { if (o.isMesh && ['beard', 'hair', 'circlet'].includes(o.name)) o.visible = false; });  // 마네킹용 수염·머리카락 대신 MakeHuman 것 (머리띠는 새 머리 위에 떠서 후광처럼 보인다)
@@ -746,7 +828,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     me.head.scale.setScalar(.001); me.neck.scale.setScalar(.35); g.updateMatrixWorld(true);
   }
   const stepFigs = dt => {
-    for (const g of figs) if (shown(g)) { const F = g.userData.fig; autoStep(g, F); F.mixer.update(dt); if (F.hideHead) F.hideHead.scale.setScalar(.001); lookStep(g, F, dt); if (F.gest) applyGesture(g, F, dt); }
+    for (const g of figs) if (shown(g)) { const F = g.userData.fig; autoStep(g, F); if (F.cloth) stepCloth(g, F.cloth, dt); F.mixer.update(dt); if (F.hideHead) F.hideHead.scale.setScalar(.001); lookStep(g, F, dt); if (F.gest) applyGesture(g, F, dt); }
     for (const o of herdMixers) if (o.on && shown(o.obj)) o.mixer.update(dt);
   };
   // 애니메이션이 없는 몸짓을 코드로 만든다: 뼈를 인물 기준 방향(+Z 앞, +Y 위, +X 왼쪽)으로 돌린다. 오른쪽은 x를 뒤집는다
@@ -908,15 +990,39 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   };
   function legs(x, h, z, r, dark) { return [[x, z], [-x, z], [x, -z], [-x, -z]].map(([lx, lz]) => ['c', [lx, h / 2, lz], [r, h, r], dark]); }
   const animalGeo = { s: new THREE.SphereGeometry(1, 10, 8), c: new THREE.CylinderGeometry(1, 1, 1, 6), b: new THREE.BoxGeometry(1, 1, 1) };
+  // 동물 털 (사용자: 동물을 실사처럼, 2026-10-14). 양·숫양은 곱슬한 양털, 나머지는 짧은 털결. 모델 크기에 맞춰 세 방향에서 입혀(삼면 투영) 걸어도 무늬가 몸에 붙어 있다
+  TEX.wool = () => TEX._wool || (TEX._wool = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = 'rgb(205,200,190)'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 650; i++) { const x = Math.random() * w, y = Math.random() * h, r = rnd(4, 9), l = rnd(215, 255) | 0; wrapDraw(g, w, h, x, y, r + 2, (px, py) => { g.fillStyle = `rgb(${l},${l - 4},${l - 12})`; g.beginPath(); g.arc(px, py, r, 0, 7); g.fill(); g.strokeStyle = 'rgba(110,100,85,.7)'; g.lineWidth = 1.5; g.beginPath(); g.arc(px + .6, py + .8, r * .8, .3, 3.6); g.stroke(); }); }  // 곱슬한 털 뭉치
+  }));
+  TEX.hair = () => TEX._hair || (TEX._hair = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = 'rgb(222,220,215)'; g.fillRect(0, 0, w, h);
+    blots(g, w, h, 40, 10, 30, () => `rgba(${Math.random() < .5 ? '180,176,170' : '255,255,252'},${rnd(.2, .4).toFixed(2)})`);
+    for (let i = 0; i < 7000; i++) { const x = Math.random() * w, y = Math.random() * h, L = rnd(4, 10), a = 1.57 + rnd(-.35, .35), l = rnd(150, 255) | 0; g.strokeStyle = `rgba(${l},${l - 3},${l - 8},.55)`; g.lineWidth = rnd(.6, 1.3); g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); g.stroke(); }  // 아래로 누운 짧은 털
+  }));
+  function furify(m, geo, kind) {
+    if (!['body', 'light', 'patch'].includes(m.name) && kind) return m;
+    const wool = kind === 'sheep' || kind === 'ram';
+    geo.computeBoundingBox(); const sz = geo.boundingBox.getSize(new THREE.Vector3()), D = Math.max(sz.x, sz.y, sz.z) || 1, sc = ((wool ? 4.5 : 9) / D).toFixed(4);
+    m.map = wool ? TEX.wool() : TEX.hair(); m.roughness = 1; m.flatShading = false;
+    m.onBeforeCompile = sh => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vFP; varying vec3 vFN;').replace('#include <begin_vertex>', `#include <begin_vertex>\nvFP = position * ${sc}; vFN = normal;`);
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vFP; varying vec3 vFN;').replace('#include <map_fragment>', `{ vec3 bw = pow(abs(normalize(vFN)), vec3(4.)); bw /= (bw.x + bw.y + bw.z);
+        diffuseColor *= texture2D(map, vFP.zy) * bw.x + texture2D(map, vFP.xz) * bw.y + texture2D(map, vFP.xy) * bw.z; }`);
+    };
+    m.customProgramCacheKey = () => 'fur' + (wool ? 'w' : 'h') + sc;
+    m.needsUpdate = true;
+    return m;
+  }
   // 가축 떼: 동물 모델이 있으면 그것으로, 없으면 단순한 모양으로
   const herdMixers = [];
   function herd(kind, opts = {}) {
     const A = figSrc && figSrc.animals && figSrc.animals[kind];
-    if (A && A.poses.length) return herdModel(A, opts);
+    if (A && A.poses.length) return herdModel(A, { ...opts, kind });
     const alt = { ram: ['goat', '#cfc4b0'], colt: ['donkey'], pig: ['ox', '#2b2523'] }[kind];  // 단순한 모양에 없는 종류
     return alt && !ANIMALS[kind] ? herdSimple(alt[0], { color: alt[1], ...opts }) : herdSimple(kind, opts);
   }
-  function herdModel(A, { n, center, rx = 15, rz = 12, height, scale = [.85, 1.15], placer, color } = {}) {
+  function herdModel(A, { n, center, rx = 15, rz = 12, height, scale = [.85, 1.15], placer, color, kind } = {}) {
     const g = new THREE.Group(); g.position.set(center[0], 0, center[1]);
     const items = [];
     for (let i = 0; i < n; i++) {
@@ -924,12 +1030,12 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       items.push({ x, z, ry: rnd(0, 6.3), s: rnd(scale[0], scale[1]), tint: rnd(.82, 1.05), on: true, pose: Math.floor(Math.random() * A.poses.length) });
     }
     const body = color ? new THREE.Color(color) : null;
-    const mat = m => { const c = m.clone(); if (body && m.name === 'body') c.color.copy(body); return c; };
+    const mat = (m, geo) => { const c = m.clone(); if (body && m.name === 'body') c.color.copy(body); return geo ? furify(c, geo, kind) : c; };
     const ground = o => height ? height(center[0] + o.x, center[1] + o.z) : 0;
     let draw;
     if (n <= 3) {  // 한두 마리는 실제로 숨 쉬고 고개를 움직인다
       items.forEach(o => {
-        o.obj = SkeletonUtils.clone(A.rig); o.base = o.obj.scale.x; o.obj.traverse(m => { if (m.isMesh) { m.material = mat(m.material); m.frustumCulled = false; } });
+        o.obj = SkeletonUtils.clone(A.rig); o.base = o.obj.scale.x; o.obj.traverse(m => { if (m.isMesh) { m.material = mat(m.material, m.geometry); m.frustumCulled = false; } });
         o.mixer = new THREE.AnimationMixer(o.obj); if (A.clips.Idle) { o.act = o.mixer.clipAction(A.clips.Idle); o.act.play(); } o.mixer.update(rnd(0, 5));
         g.add(o.obj); herdMixers.push(o);
       });
@@ -938,7 +1044,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       const tmp = new THREE.Color(), base = new THREE.Object3D();
       const buckets = A.poses.map((parts, p) => {
         const idx = items.map((o, i) => o.pose === p ? i : -1).filter(i => i >= 0);
-        return { idx, meshes: parts.map(pt => { const m = new THREE.InstancedMesh(pt.geo, mat(pt.mat), Math.max(1, idx.length)); m.frustumCulled = false; if (!idx.length) m.count = 0; g.add(m); return m; }) };
+        return { idx, meshes: parts.map(pt => { const m = new THREE.InstancedMesh(pt.geo, mat(pt.mat, pt.geo), Math.max(1, idx.length)); m.frustumCulled = false; if (!idx.length) m.count = 0; g.add(m); return m; }) };
       });
       draw = () => buckets.forEach(b => {
         b.idx.forEach((i, k) => {
@@ -1251,7 +1357,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     if (door != null && door !== false) { const dw = 1.2; box((w - dw) / 2, h, .3, null, -(w + dw) / 4 + door, h / 2, d / 2, g, m); box((w - dw) / 2, h, .3, null, (w + dw) / 4 + door, h / 2, d / 2, g, m); box(dw, h - 2.1, .3, null, door, 2.1 + (h - 2.1) / 2, d / 2, g, m); }
     else box(w, h, .3, null, 0, h / 2, d / 2, g, m);
     if (ceiling) box(w, .3, d, null, 0, h, 0, g, m);
-    g.userData.lights = lamps.map(([x, z, y = .6]) => { glow(.07, .1, 4, 2, .7, x, y - .1, z, g); const L = new THREE.PointLight('#ffb070', 3, 9, 2); L.position.set(x, y, z); g.add(L); return L; });
+    g.userData.lights = lamps.map(([x, z, y = .6]) => { const L = new THREE.PointLight('#ffb070', 3, 9, 2); L.position.set(x, y, z); g.add(L); lamp({ at: [x, y - .15, z], parent: g, light: L }); return L; });  // 진흙 등잔
     R().add(g); addFloor(at[0], at[2], w, d, at[1], g); return g;
   }
   // 성벽: from → to, 망대와 성가퀴
@@ -1590,7 +1696,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       f.obj.rotation.x = (waveH(p.x, p.z + 2, env.waves) - waveH(p.x, p.z - 2, env.waves)) * .25 * f.roll;
     });
 
-    stepWalkers(); stepFires(dt); stepFigs(dt);
+    stepWalkers(); stepFires(dt); stepFigs(dt); stepFlames();
     for (const fn of frameFns) fn(dt, clock);
     fx.flash *= Math.exp(-dt * 6);
     skyU.uFlash.value = fx.flash;
@@ -1637,7 +1743,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     walkTo(x, z, dur, { eye = 1.65 } = {}) { camGround.on = true; camGround.eye = eye; return setEnv({ camX: x, camZ: z }, dur); },
     groundAt, addGround, addFloor, boatAt, outsideBoats,
     waveH: (x, z) => waveH(x, z, env.waves),
-    terrain, disc, rocks, path, box, glow, glowMat, person, figure, gesture, hold, talk, selfBody, mat, house, village, room, cityWall, temple, trees, grass, cross, tomb, rooster, get self() { return me; }, into, site, shown, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
+    terrain, disc, rocks, path, box, glow, glowMat, lamp, lampAt, torch, person, figure, gesture, hold, talk, selfBody, mat, house, village, room, cityWall, temple, trees, grass, cross, tomb, rooster, get self() { return me; }, into, site, shown, prop, instancedProp, throng, walker, faceCamera, herd, fire, water, float, boat, net, tent, altar,
     reset() {
       for (const k in tw) delete tw[k];
       tweens.length = 0; cyc = null; camWater.on = false; camGround.on = false; camBoat.on = false; camBoat.w = 0; tLookX = tLookY = 0;

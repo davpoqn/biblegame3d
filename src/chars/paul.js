@@ -417,13 +417,13 @@ async function world(kit, { audio, sleep }) {
   // 가말리엘의 집 (22:3), 병영 (22:24–29)
   const GM = v3(0, 0, 640);
   const school = kit.room({ at: [GM.x, 0, GM.z], w: 11, d: 9, h: 4, color: '#6a5642', floor: '#4a3a2c', door: 0, lamps: [[-3, -3.6, 1.4], [3, -3.6, 1.4], [0, 3.6, 1.4]] });
-  { const L = new THREE.PointLight('#ffc890', 7, 14, 1.3); L.position.set(0, 3, 0); school.add(L); }
+  { const L = new THREE.PointLight('#ffc890', 7, 14, 1.3); L.position.set(0, 3, 0); school.add(L); kit.lampAt(L, { hang: .8 }); }
   const gamaliel = fig('elder', GM.x, GM.z - 3.2, null, { tint: '#3a4a6a', colors: { tunic: '#ece6d8' }, pose: 'seat' }); gamaliel.position.y = .45; kit.box(.8, .45, .6, '#5a4130', GM.x, .22, GM.z - 3.4);
   const pupils = [[-2.4, -1.2], [-1.2, -.6], [1.2, -.6], [2.4, -1.2], [-2, .8], [2.2, .9]].map(([x, z], i) => { const g = fig('man', GM.x + x, GM.z + z, null, { tint: ['#33456a', '#4a3d30', '#5a4636', '#3e3329', '#6a5541', '#2f3f5a'][i], colors: { tunic: '#ece6d8' }, pose: 'seat' }); faceTo(g, GM.x, GM.z - 3.2); return g; });
   const scrolls = new THREE.Group(); [[-1.8, -.2], [1.8, -.2], [0, -2.3]].forEach(([x, z]) => { kit.box(1.2, .3, .5, '#5a4130', GM.x + x, .15, GM.z + z, scrolls); [-1, 1].forEach(s => { const r = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .32, 8), kit.mat('#e8dcbc')); r.rotation.x = Math.PI / 2; r.position.set(GM.x + x + s * .18, .35, GM.z + z); scrolls.add(r); }); }); sites.jer.add(scrolls);
   const BK = v3(0, 0, 720);
   const barracks = kit.room({ at: [BK.x, 0, BK.z], w: 10, d: 9, h: 4.2, color: '#7a6a52', floor: '#5a4c3a', door: 0, lamps: [[-3.6, -3.8, 1.8], [3.6, -3.8, 1.8]] });
-  { const L = new THREE.PointLight('#ffc890', 6, 14, 1.3); L.position.set(0, 3, 0); barracks.add(L); }
+  { const L = new THREE.PointLight('#ffc890', 6, 14, 1.3); L.position.set(0, 3, 0); barracks.add(L); kit.lampAt(L, { hang: .8 }); }
   kit.box(.4, 2.6, .4, '#5a4130', BK.x, 1.3, BK.z - 1.2);  // 매는 기둥
   const centurion = fig('roman', BK.x + 1.6, BK.z - .2, null, { colors: { cloak: '#9b2a22', helmet_crest: '#e8dcc0' } });
   const scourger = fig('roman', BK.x - 1.4, BK.z + 1.4, null, { colors: RMC }); kit.box(.04, .04, .9, '#3a2a1c', .25, 1, .3, scourger);
@@ -446,13 +446,13 @@ async function world(kit, { audio, sleep }) {
   const heavenLight = new THREE.PointLight('#fff6e0', 0, 60, 1.2); scene.add(heavenLight);
   const HS = v3(D, 0, 600);  // 직가 유다의 집
   const houseJ = kit.room({ at: [HS.x, 0, HS.z], w: 7, d: 6, h: 3.4, color: '#7a6a52', floor: '#5a4a38', door: 0, lamps: [[2.4, -2.6, .8]] });
-  { const L = new THREE.PointLight('#ffc890', 4, 10, 1.4); L.position.set(0, 2.6, 0); houseJ.add(L); }
+  { const L = new THREE.PointLight('#ffc890', 4, 10, 1.4); L.position.set(0, 2.6, 0); houseJ.add(L); kit.lampAt(L, { hang: .8 }); }
   kit.box(1, .2, 2, '#8a7a60', HS.x - 2, .1, HS.z - 1.4);  // 자리
   const ananias = fig('man', HS.x + .4, HS.z + 2.2, null, { tint: '#5a6a4a', colors: { tunic: '#d9ceb2' } }); ananias.visible = false;
   const basin = new THREE.Mesh(new THREE.CylinderGeometry(.28, .2, .2, 14), kit.mat('#9a8a70')); basin.position.set(HS.x + .8, .1, HS.z - .2); basin.visible = false; sites.dam.add(basin);
   const SY = v3(D + 40, 0, 600);  // 회당
   const syn = kit.room({ at: [SY.x, 0, SY.z], w: 14, d: 12, h: 5, color: '#8a785e', floor: '#5e4e3c', door: 0, lamps: [[-5, -5, 1.8], [5, -5, 1.8], [-5, 5, 1.8], [5, 5, 1.8]] });
-  { const L = new THREE.PointLight('#ffd8a0', 8, 18, 1.3); L.position.set(0, 4, 0); syn.add(L); }
+  { const L = new THREE.PointLight('#ffd8a0', 8, 18, 1.3); L.position.set(0, 4, 0); syn.add(L); kit.lampAt(L, { hang: .8 }); }
   const synMen = [];
   [-.8, .9, 2.6, 4.3].forEach((z, r) => { kit.box(8, .45, .6, '#6a5440', SY.x, .22, SY.z + z); [-2.6, -.9, .9, 2.6].forEach((x, i) => { if ((r + i) % 3 === 2) return; const g = fig('man', SY.x + x + (r % 2) * .3, SY.z + z + .25, null, { tint: STC[(i + r * 2) % 8], colors: { tunic: '#e6dfcf' }, pose: 'seat' }); g.position.y = .45; g.rotation.y = Math.PI; synMen.push(g); }); });
   kit.box(1.2, 1.1, .8, '#6a5440', SY.x, .55, SY.z - 4.6);  // 두루마리 읽는 단
@@ -468,7 +468,7 @@ async function world(kit, { audio, sleep }) {
   const AN = v3(D + 80, 0, 600);
   kit.into(sites.dam);
   const church = kit.room({ at: [AN.x, 0, AN.z], w: 9, d: 8, h: 3.6, color: '#7a6650', floor: '#4e4032', door: 0, lamps: [[-3, -3.2, .9], [3, -3.2, .9], [0, 3.2, .9]] });
-  { const L = new THREE.PointLight('#ffc890', 6, 12, 1.3); L.position.set(0, 2.8, 0); church.add(L); }
+  { const L = new THREE.PointLight('#ffc890', 6, 12, 1.3); L.position.set(0, 2.8, 0); church.add(L); kit.lampAt(L, { hang: .8 }); }
   const elders = [[-1.6, -1.2, '#5a4a3a'], [0, -1.8, '#2a2420'], [1.6, -1.2, '#6a5a2a'], [1.8, .6, '#7a3a2a']].map(([x, z, c]) => { const g = fig('man', AN.x + x, AN.z + z, null, { tint: c }); faceTo(g, AN.x, AN.z + .6); return g; });
   const barnabas = fig('man', AN.x - 1.4, AN.z + .8, null, { tint: '#5a6a3a', colors: { tunic: '#d9ceb2', beard: '#5a4030' } }); faceTo(barnabas, AN.x, AN.z + .6);
   kit.into(null);
@@ -511,12 +511,13 @@ async function world(kit, { audio, sleep }) {
   const stocks = kit.box(2.6, .26, .22, '#5a4130', PR.x - .3, .14, PR.z - 1.75);
   const silasP = fig('man', PR.x + .8, PR.z - 2.75, null, { tint: '#4a5a3a', colors: { tunic: '#b8a888' }, pose: 'seat' }); silasP.position.y = .45;
   const prisoners = [[-3.2, -.4, Math.PI / 2], [-3.2, 1.4, Math.PI / 2], [3.2, .4, -Math.PI / 2], [3.2, 2, -Math.PI / 2]].map(([x, z, r]) => { const g = fig('man', PR.x + x, PR.z + z, null, { tint: '#2e2925', colors: { tunic: '#6a5a48' }, pose: 'seat', seatDrop: .45 }); g.rotation.y = r; return g; });
-  const cellLamp = new THREE.PointLight('#ffb070', 6, 11, 1.4); cellLamp.position.set(PR.x - 2.4, 1.6, PR.z - 2.2); sites.phi.add(cellLamp); kit.glow(.05, .08, 4, 2, .7, PR.x - 2.4, 1.5, PR.z - 2.85);
+  const cellLamp = new THREE.PointLight('#ffb070', 6, 11, 1.4); cellLamp.position.set(PR.x - 2.4, 1.6, PR.z - 2.2); sites.phi.add(cellLamp); kit.lampAt(cellLamp);
   const door = new THREE.Group(); { const d = kit.box(1.2, 2.1, .12, '#3a2a1c', .6, 1.05, 0, door); } door.position.set(PR.x + 1.4 - .6, 0, PR.z + 3); sites.phi.add(door);
   const doorLight = new THREE.PointLight('#ffb070', 0, 8, 1.6); doorLight.position.set(PR.x + 1.4, 1.6, PR.z + 3.6); sites.phi.add(doorLight);
   const jailer = fig('man', PR.x + 1.4, PR.z + 4.2, null, { tint: '#6a4a2a', colors: { tunic: '#8a7a60' } }); jailer.visible = false;
   const sword = kit.box(.05, .05, .8, '#b8b8b0', 0, 0, 0, jailer); sword.visible = false;
   const torchL = new THREE.PointLight('#ffa050', 0, 9, 1.6); torchL.position.set(.3, 1.6, .3); jailer.add(torchL);
+  { const hb = jailer.userData.fig && jailer.userData.fig.bone('hand_r'); if (hb) kit.torch(hb, { light: torchL }); }  // 손에 든 횃불 (행 16:29)
   kit.into(null);
 
   /* ===== 아덴: 아레오바고, 우상들. 가이사랴의 신문소와 빌립의 집도 이 묶음에 둔다 ===== */
@@ -535,14 +536,14 @@ async function world(kit, { audio, sleep }) {
   // 가이사랴 빌립의 집 (21:10–14)
   const PH = v3(A0 + 40, 0, 600);
   const philipH = kit.room({ at: [PH.x, 0, PH.z], w: 8, d: 7, h: 3.4, color: '#7a6650', floor: '#4e4032', door: 0, lamps: [[-2.8, -3, .9], [2.8, -3, .9]] });
-  { const L = new THREE.PointLight('#ffc890', 6, 12, 1.3); L.position.set(0, 2.6, 0); philipH.add(L); }
+  { const L = new THREE.PointLight('#ffc890', 6, 12, 1.3); L.position.set(0, 2.6, 0); philipH.add(L); kit.lampAt(L, { hang: .8 }); }
   const agabus = fig('elder', PH.x, PH.z - 1.4, null, { tint: '#5a4a3a' });
   const belt = kit.box(.5, .06, .06, '#5a3d25', 0, .95, .28, agabus); belt.visible = false;
   const friends = [[-1.8, -.4], [1.8, -.4], [-1.2, 1.2], [1.4, 1.4]].map(([x, z], i) => { const g = fig(i === 3 ? 'woman' : 'man', PH.x + x, PH.z + z, null, { tint: ['#4a3d30', '#3e4a5a', '#6a5541', '#e4dccb'][i] }); faceTo(g, PH.x, PH.z + .6); return g; });
   // 가이사랴 신문소 (25:23–26:29)
   const HL = v3(A0, 0, 640);
   const hallC = kit.room({ at: [HL.x, 0, HL.z], w: 18, d: 14, h: 6, color: '#cdb88e', floor: '#9a8462', door: 0, lamps: [[-6, -5.5, 1.8], [6, -5.5, 1.8], [-6, 5, 1.8], [6, 5, 1.8]] });
-  { const L = new THREE.PointLight('#ffd8a0', 9, 20, 1.3); L.position.set(0, 4.5, 0); hallC.add(L); }
+  { const L = new THREE.PointLight('#ffd8a0', 9, 20, 1.3); L.position.set(0, 4.5, 0); hallC.add(L); kit.lampAt(L, { hang: .8 }); }
   [-5, 5].forEach(x => [-3, 2].forEach(z => { const c = new THREE.Mesh(new THREE.CylinderGeometry(.45, .55, 6, 12), kit.mat('#e2d2a8')); c.position.set(HL.x + x, 3, HL.z + z); sites.ath.add(c); }));
   kit.box(9, .6, 2, '#8a6a48', HL.x, .3, HL.z - 5.4);  // 높은 자리
   const festus = fig('roman', HL.x - 2.6, HL.z - 5.4, null, { colors: { cloak: '#e8dcc0', helmet_crest: '#9b2a22' }, pose: 'seat' }); festus.position.y = .6 + .45 - .0; festus.traverse(o => { if (o.isMesh && (o.name === 'helmet' || o.name === 'helmet_crest')) o.visible = false; });
@@ -596,7 +597,7 @@ async function world(kit, { audio, sleep }) {
   const R0 = 9000;
   site('rome');
   const romeRoom = kit.room({ at: [R0, 0, 0], w: 9, d: 8, h: 3.6, color: '#8a6a52', floor: '#5a4a3a', door: 0, lamps: [[-3.2, -3.4, .9], [3.2, -3.4, .9], [0, 3.4, .9]] });
-  { const L = new THREE.PointLight('#ffc890', 6, 13, 1.3); L.position.set(0, 2.8, 0); romeRoom.add(L); }
+  { const L = new THREE.PointLight('#ffc890', 6, 13, 1.3); L.position.set(0, 2.8, 0); romeRoom.add(L); kit.lampAt(L, { hang: .8 }); }
   kit.box(1.6, .6, .8, '#5a4130', R0 - 2.6, .3, -2.8); [[-2.9, -2.8], [-2.3, -2.7]].forEach(([x, z]) => { const r = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .34, 8), kit.mat('#e8dcbc')); r.rotation.z = Math.PI / 2; r.position.set(R0 + x + .3, .65, z); sites.rome.add(r); });
   const guardR = fig('roman', R0 + 3, 2.6, null, { colors: RMC }); faceTo(guardR, R0, 0);
   const chainR = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, 2.4, 4), kit.mat('#5a5a58', { metalness: .6 })); chainR.rotation.z = Math.PI / 2.6; chainR.position.set(R0 + 1.6, .55, 1.5); sites.rome.add(chainR);

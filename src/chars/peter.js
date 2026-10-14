@@ -1045,7 +1045,12 @@ async function world(kit, { audio, sleep }) {
   const robe = kit.box(.9, .05, .6, '#e9e2d2', GO.x - .2, hJr(GO.x, GO.z + 4.2) + .03, GO.z + 4.2);  // 통으로 짠 속옷 (요 19:23)
   const women = [[-2.2, -.2], [-1.4, -.6], [-.8, .1], [-3, .4]].map(([dx, dz], i) => fig('woman', GO.x + dx - 2, hJr(GO.x + dx - 2, GO.z + dz), GO.z + dz, Math.atan2(2 - dx, -2 - dz), { tint: ['#ece6d8', '#e4dccb', '#dcd3c0', '#d9d4cc'][i] }));
   const beloved = fig('fisherman', GO.x - 1.2, hJr(GO.x - 1.2, GO.z + .6), GO.z + .6, Math.PI * .1, { tint: '#bfae8a', colors: { headcloth: '#6a5a3a' } });
-  const mockers = kit.throng({ n: 50, height: hJr, place: i => [GO.x + rnd(-14, 14), GO.z + rnd(10, 22), Math.PI + rnd(-.5, .5)] });
+  const mockers = kit.throng({ n: 36, height: hJr, place: i => [GO.x + rnd(-16, 16), GO.z + rnd(14, 24), Math.PI + rnd(-.5, .5)] });
+  // 가까이 선 사람들은 진짜 인물로: 지나가며 머리를 흔드는 사람들(마 27:39), 대제사장들과 서기관과 장로들(마 27:41), 구경하는 백성(눅 23:35). 둘러보면 보인다
+  const crowdX = Array.from({ length: 14 }, (_, i) => {
+    const a = -1.15 + i / 13 * 2.3, r = 7.5 + (i % 3) * 1.8, x = GO.x + Math.sin(a) * r, z = GO.z - 2 + Math.cos(a) * r, role = i % 5 === 0 ? 'elder' : i % 7 === 3 ? 'woman_veil' : 'man';
+    return fig(role, x, hJr(x, z), z, Math.atan2(GO.x - x, GO.z - 2 - z), { tint: ['#5a4a3a', '#7a6a50', '#3a3430', '#8a7a5a', '#4a4038', '#6a5a48'][i % 6] });
+  });
   const farOnes = kit.throng({ n: 40, height: hJr, place: i => [GO.x + rnd(-40, -25), GO.z + rnd(30, 50), Math.PI * .8], colors: ['#33507e', '#5a4a62', '#6a5a48', '#4a3c30'] });
   const elders = [0, 1, 2].map(i => fig('elder', GO.x + 6 + i * 1.1, hJr(GO.x + 6, GO.z + 9), GO.z + 9 + i * .4, Math.PI * 1.05, { tint: ['#e8e0d0', '#d8d0c0', '#3a4a6a'][i], colors: { mantle: ['#3a4a6a', '#5b2a5e', '#2a3448'][i], headcloth: '#f1ece0' } }));
   const splitRocks = [[-8, 6], [7, 8], [-12, -4]].map(([dx, dz]) => { const a = kit.box(1.4, 1.2, 1.6, '#8a7a66', GO.x + dx - .36, hJr(GO.x + dx, GO.z + dz) + .5, GO.z + dz), b = kit.box(1.4, 1.2, 1.6, '#8a7a66', GO.x + dx + .36, hJr(GO.x + dx, GO.z + dz) + .5, GO.z + dz); a.userData.x0 = a.position.x; b.userData.x0 = b.position.x; return [a, b]; });
@@ -1148,6 +1153,7 @@ async function world(kit, { audio, sleep }) {
       kit.camOnWater(false); kit.groundCam(null); carrying = false; jesusLight.intensity = 0; fish.visible = false; fishAt.on = 0;
       kit.selfBody(ME); kit.self.clips = {}; kit.self.on = true;
       lookers = [];
+      crowdX.forEach(g => { g.visible = false; });  // 골고다의 가까운 무리는 그 장면에서만
       if (where === 'jordan') {
         only('jordan'); stand(JX + 14, 4); lookNow(JX + 5, -24);
         jesusJ.position.set(JX + 10, hJ(JX + 10, -40), -40); jesusJ.visible = true; jdA.position.set(JX + 5.4, hJ(JX + 5.4, -22.6), -22.6); jdB.position.set(JX + 5.6, hJ(JX + 5.6, -25.4), -25.4); jdA.visible = jdB.visible = true;
@@ -1220,7 +1226,8 @@ async function world(kit, { audio, sleep }) {
       }
       if (where === 'golgotha') {
         only('jer'); kit.selfBody('roman'); soldiersX.forEach(g => { g.visible = true; }); centurion.visible = true; kit.hold(jesusX); kit.hold(jesusX, 'cross');
-        sitAt(GO.x + .6, GO.z + 3.2, 1.0); lookNow(GO.x, GO.z - 2); kit.setEnv({ camP: .38 }, 0);
+        sitAt(GO.x + .7, GO.z + 1.6, 1.0); lookNow(GO.x, GO.z - 2); kit.setEnv({ camP: .55 }, 0);  // 십자가 발치에 앉아 올려다본다 (마 27:36 앉아서 거기서 지키더라)
+        crowdX.forEach(g => { g.visible = true; });
         kit.hold(jesusX, 'cross'); thieves.forEach(t => kit.hold(t, 'cross')); [jesusX, ...thieves].forEach(g => { const F = g.userData.fig; if (F) { F.base = 'Idle_Loop'; F.play('Idle_Loop', 0); } });
         splitRocks.forEach(([a, b]) => { a.position.x = a.userData.x0; b.position.x = b.userData.x0; });
         lookers = [...soldiersX, centurion];
@@ -1412,8 +1419,8 @@ async function world(kit, { audio, sleep }) {
       carrying = false; kit.self.clips = {}; audio.thud(); lookAt(GO.x, GO.z - 2, 2);
     },
     lots() { soldiersX.slice(0, 4).forEach(g => kit.hold(g, 'give')); lookAt(GO.x - .2, GO.z + 4.2, 1.6); kit.setEnv({ camP: -.25 }, 1.6); setTimeout(() => soldiersX.slice(0, 4).forEach(g => kit.hold(g)), 6000); },
-    lookUp() { lookAt(GO.x, GO.z - 2, 1.6); kit.setEnv({ camP: .38 }, 1.6); },
-    mock() { lookAt(GO.x + 2, GO.z + 14, 1.8); kit.setEnv({ camP: 0 }, 1.6); mockers.userData.items.forEach(o => { o.ry += rnd(-.3, .3); }); mockers.userData.draw(); },
+    lookUp() { lookAt(GO.x, GO.z - 2, 1.6); kit.setEnv({ camP: .55 }, 1.6); },
+    mock() { lookAt(GO.x + 2, GO.z + 9, 1.8); kit.setEnv({ camP: .02 }, 1.6); mockers.userData.items.forEach(o => { o.ry += rnd(-.3, .3); }); mockers.userData.draw(); },
     mother() { lookAt(GO.x - 3, GO.z, 1.8); kit.setEnv({ camP: .1 }, 1.6); faceTo(beloved, GO.x, GO.z - 2); },
     darken() { kit.setEnv('darkness', 10); audio.wind(.25, 8); audio.drone(.18, 8); lookAt(GO.x, GO.z - 2, 3); kit.setEnv({ camP: .32 }, 3); },
     cry() { audio.thud(); kit.setEnv({ shake: .08 }, .4).then(() => kit.setEnv({ shake: 0 }, 1)); },
