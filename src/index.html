@@ -214,6 +214,9 @@ body:not(.playing) #text-toggle{visibility:hidden}
 .part[aria-checked="true"]{color:var(--bone)}
 .part[aria-checked="true"] b::before{content:"";display:inline-block;width:.42rem;height:.42rem;border-radius:50%;background:var(--ember);margin-right:.55rem;vertical-align:.12em}
 .part .done{color:var(--star)}
+.nametag{position:fixed;left:0;top:0;z-index:5;pointer-events:none;transform:translate(-50%,-100%);padding:.24rem .65rem;border-radius:999px;background:rgba(12,10,9,.55);border:1px solid rgba(230,205,150,.45);color:#f3e6c8;font:500 .78rem/1.25 var(--f-ui);letter-spacing:.04em;white-space:nowrap;opacity:0;transition:opacity .35s ease;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.nametag.on{opacity:1}
+body:not(.playing) .nametag{display:none}
 .hint{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);z-index:11;margin:0;max-width:calc(100% - 32px);padding:.55rem .95rem;font:500 .8rem/1.5 var(--f-ui);letter-spacing:.03em;color:var(--bone);background:rgba(12,10,9,.62);border:1px solid var(--line);border-radius:999px;text-align:center;pointer-events:none;opacity:0;transition:opacity .8s ease}
 .hint.on{opacity:1}
 .readmore{display:grid;gap:.35rem;padding:.8rem 1rem;border-left:2px solid var(--wheat);background:rgba(12,10,9,.5)}
@@ -570,7 +573,7 @@ const audio = (() => {
 /* ---------- 화면 장치 ---------- */
 const stage = $('#stage-inner');
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-const clearStage = () => stage.replaceChildren();
+const clearStage = () => { stage.replaceChildren(); try { curKit && curKit.quiet && curKit.quiet(); } catch (e) {} };  // 화면이 바뀌면 이전 대사 이름표·말하는 몸짓 표시를 끝낸다
 let C = null;            // 지금 고른 인물의 모듈
 let textMode = 'easy';   // 'easy' 풀어 쓴 말 · 'orig' 개역한글 원문
 const isEasy = () => textMode === 'easy';
@@ -668,7 +671,7 @@ async function direction(text, { auto = false, ms = 0 } = {}) {
 function choose(question, options, heard) {
   return new Promise(res => { res = live(res);
     clearStage();
-    if (heard && heard.line && !heard.quiet) stage.append(sayTag(heard.who), el('p', 'say-line', heard.line)); else stage.append(stageTag());
+    if (heard && heard.line && !heard.quiet) { stage.append(sayTag(heard.who), el('p', 'say-line', heard.line)); talkIn3D(heard.who, heard.line); } else stage.append(stageTag());
     if (question) stage.append(el('p', 'prompt', question));
     const list = el('div', 'choices'); list.setAttribute('role', 'group'); list.setAttribute('aria-label', question);
     let fired = false;
@@ -692,7 +695,7 @@ function speak(prompt, { submit = '말하기', skip = '말하지 않기', heard 
     const no = el('button', 'btn-ghost', skip); no.type = 'button';
     row.append(send, no);
     form.append(ta, row, el('p', 'note', '입력한 말은 이 화면에서만 쓰이고 어디에도 저장되지 않습니다. Enter로 보내고 Shift+Enter로 줄을 바꿉니다.'));
-    if (heard && heard.line && !heard.quiet) stage.append(sayTag(heard.who), el('p', 'say-line', heard.line));
+    if (heard && heard.line && !heard.quiet) { stage.append(sayTag(heard.who), el('p', 'say-line', heard.line)); talkIn3D(heard.who, heard.line); }
     stage.append(el('p', 'prompt', prompt), form);
     let done = false;
     const finish = v => { if (done) return; done = true; res(v); };

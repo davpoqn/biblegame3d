@@ -660,7 +660,21 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   const STAND_IDLES = ['Idle_Loop', 'Idle_Loop', 'Idle_FoldArms_Loop', 'Idle_Loop', 'Idle_FoldArms_Loop'];
   const IDLE_SET = new Set(['Idle_Loop', 'Idle_FoldArms_Loop', 'Sitting_Idle_Loop']);
   const NOLOOK = new Set(['Death01', 'LayToIdle', 'Swim_Fwd_Loop', 'Swim_Idle_Loop', 'Sword_Attack', 'OverhandThrow', 'Hit_Chest', 'Hit_Head', 'Hit_Knockback', 'TreeChopping_Loop', 'PickUp_Table', 'Push_Loop', 'Dance_Loop']);
-  const talkState = { speaker: null, until: 0 };
+  const talkState = { speaker: null, until: 0, who: '' };
+  // 대사 인물 이름표 (사용자 요청, 2026-10-15): 말하는 사람 머리 위에 대사의 이름을 띄운다. 모양은 index.html의 .nametag
+  const tagEl = document.createElement('div'); tagEl.className = 'nametag'; tagEl.setAttribute('aria-hidden', 'true'); document.body.appendChild(tagEl);
+  const _tagP = new THREE.Vector3();
+  function stepNameTag() {
+    const sp = talkState.speaker, on = !!(sp && talkState.who && clock < talkState.until - .4 && shown(sp) && sp.userData.head);
+    let vis = false;
+    if (on) {
+      sp.userData.head.getWorldPosition(_tagP); _tagP.y += .34 * sp.scale.y;
+      const dist = _tagP.distanceTo(camera.position); _tagP.project(camera);
+      vis = _tagP.z < 1 && Math.abs(_tagP.x) < .95 && _tagP.y < .95 && _tagP.y > -.85 && dist < 30;  // 화면 안, 너무 멀지 않을 때만
+      if (vis) { tagEl.style.left = ((_tagP.x + 1) / 2 * innerWidth).toFixed(1) + 'px'; tagEl.style.top = ((1 - _tagP.y) / 2 * innerHeight).toFixed(1) + 'px'; if (tagEl.textContent !== talkState.who) tagEl.textContent = talkState.who; }
+    }
+    tagEl.classList.toggle('on', vis);
+  }
   function autoStep(g, F) {
     const A = F.auto;
     if (F.role === 'jesus' || g === me.g || F.gest) return;
@@ -734,7 +748,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     let sp = cands.filter(g => g.userData.fig.name && who && who.includes(g.userData.fig.name));
     if (!sp.length) {
       const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
-      sp = cands.map(g => { g.getWorldPosition(_tp); _tp.y += 1.4 * g.scale.y; /* 얼굴 높이로 잰다 */ const d = _tp.sub(camera.position); const dist = d.length(); return { g, dist, ang: d.normalize().angleTo(fwd) }; })
+      const plain = cands.filter(g => !g.userData.fig.name);  // 이름 없는 사람의 말은 이름 있는 인물(안드레 등)에게 붙이지 않는다
+      sp = (plain.length ? plain : cands).map(g => { g.getWorldPosition(_tp); _tp.y += 1.4 * g.scale.y; /* 얼굴 높이로 잰다 */ const d = _tp.sub(camera.position); const dist = d.length(); return { g, dist, ang: d.normalize().angleTo(fwd) }; })
         .filter(o => o.dist < 14 && o.ang < .55).sort((a, b) => (a.ang + a.dist * .03) - (b.ang + b.dist * .03)).slice(0, many ? 3 : 1).map(o => o.g);
     }
     if (!sp.length) return;
@@ -743,7 +758,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       const c = F.base.startsWith('Sitting') ? 'Sitting_Talking_Loop' : 'Idle_Talking_Loop';
       F.auto.clip = c; F.auto.until = clock + dur; F.play(c, .5, F.speed);
     }
-    talkState.speaker = sp[0]; talkState.until = clock + dur + .8;
+    talkState.speaker = sp[0]; talkState.until = clock + dur + .8; talkState.who = who || '';
     cands.filter(g => !sp.includes(g) && g.position.distanceTo(sp[0].position) < 7 && Math.random() < .45).slice(0, 2)
       .forEach((g, i) => { g.userData.fig.auto.nodAt = clock + dur * .75 + i * .5; });
   }
@@ -1866,6 +1881,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       dofK += ((on && dofF < 9 ? .009 : 0) - dofK) * Math.min(1, dt * 2.2);
       bokeh.enabled = dofK > .0004; bokeh.uniforms.focus.value = dofF; bokeh.uniforms.maxblur.value = dofK;
     }
+    stepNameTag();
     composer.render(dt);
     raf = requestAnimationFrame(frame);
   }
@@ -1876,6 +1892,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
 
   return {
     setSpeed(s) { SPEED = s; },
+    quiet() { talkState.until = 0; },  // 대사 이름표·배경 흐림을 끝낸다 (새 화면)
     THREE, scene, camera, renderer, PR, env, fx, sparks, dust,
     u: { clamp, lerp, ease, rnd, smooth, vnoise, hash2, sleep, reduceMotion },
     get clock() { return clock; },
@@ -1904,7 +1921,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       resetFns.forEach(fn => fn());
     },
     dispose() {
-      dead = true; cancelAnimationFrame(raf);
+      dead = true; cancelAnimationFrame(raf); tagEl.remove();
       window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); window.removeEventListener('resize', resize);
       canvas.removeEventListener('wheel', onWheel); document.documentElement.removeEventListener('mouseleave', onLeave);
       scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); });
