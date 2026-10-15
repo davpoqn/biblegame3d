@@ -83,7 +83,8 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   const PR = Math.min(window.devicePixelRatio || 1, 1.5);
   renderer.setPixelRatio(PR);
   renderer.setSize(innerWidth, innerHeight, false);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMapping = THREE.AgXToneMapping;  // 그래픽 1단계(2026-10-15): ACES는 피부가 주황빛으로 쏠려 더 자연스러운 AgX로. 노출은 TONE_K로 맞춘다
+  const TONE_K = 1.15, HQ = !(window.matchMedia && matchMedia('(pointer: coarse)').matches);  // HQ: 마우스로 하는 PC (무거운 효과는 PC만)
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
@@ -92,7 +93,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, .05, 3000);
   camera.rotation.order = 'YXZ';
 
-  const composer = new EffectComposer(renderer);
+  const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth * PR, innerHeight * PR, { type: THREE.HalfFloatType, samples: HQ ? 4 : 2 }));  // 계단 현상 없애기(MSAA)
   composer.setPixelRatio(PR);
   composer.setSize(innerWidth, innerHeight);
   composer.addPass(new RenderPass(scene, camera));
@@ -105,6 +106,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
       void main(){
         vec4 c = texture2D(tDiffuse, vUv);
+        c.rgb = max(mix(vec3(dot(c.rgb, vec3(.2126, .7152, .0722))), c.rgb, 1.18), 0.);  // 채도를 조금 (AgX는 색이 옅다)
         vec2 q = vUv - .5;
         c.rgb *= clamp(1.0 - dot(q, q) * 1.35, 0.0, 1.0);
         float g = h(vUv * vec2(1931.0, 1087.0) + fract(uTime) * 97.0) - .5;
@@ -186,6 +188,26 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     });
   }
   const hemi = new THREE.HemisphereLight('#ffffff', '#332211', .6); scene.add(hemi);
+  // 하늘빛 조명(IBL, 그래픽 1단계): 지금 하늘색·땅빛·해로 작은 환경 지도를 만들어 모든 재질에 은은한 빛과 반사를 준다. 하늘이 바뀌면 다시 만든다 (고른 빛 hemi는 그만큼 줄인다)
+  const pmrem = new THREE.PMREMGenerator(renderer), ENV_K = .75, HEMI_K = .55;
+  const envU = { uTop: { value: new THREE.Color() }, uHor: { value: new THREE.Color() }, uGround: { value: new THREE.Color() }, uSun: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3(0, 1, 0) } };
+  const envScene = new THREE.Scene();
+  envScene.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), new THREE.ShaderMaterial({ uniforms: envU, side: THREE.BackSide, depthWrite: false,
+    vertexShader: 'varying vec3 vD; void main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: `uniform vec3 uTop; uniform vec3 uHor; uniform vec3 uGround; uniform vec3 uSun; uniform vec3 uSunDir; varying vec3 vD;
+      void main(){ vec3 d = normalize(vD); float h = d.y;
+        vec3 c = h > 0. ? mix(uHor, uTop, smoothstep(0., .55, h)) : mix(uHor, uGround, smoothstep(0., -.25, h));
+        c += uSun * pow(max(dot(d, uSunDir), 0.), 48.) * 3.;
+        gl_FragColor = vec4(c, 1.); }` })));
+  let envRT = null, envKey = '', envAt = -9;
+  function stepEnvMap() {
+    const k = env.hemiI * ENV_K;
+    envU.uTop.value.copy(env.top).multiplyScalar(k); envU.uHor.value.copy(env.horizon).multiplyScalar(k); envU.uGround.value.copy(env.fog).multiplyScalar(k * .55);
+    envU.uSun.value.copy(env.sun).multiplyScalar(sun.intensity * .12); envU.uSunDir.value.copy(sunDir);
+    const key = [envU.uTop.value, envU.uHor.value, envU.uGround.value, envU.uSun.value].map(c => c.getHexString()).join() + sunDir.toArray().map(v => v.toFixed(2)).join();
+    if (key === envKey) return; envKey = key;
+    const old = envRT; envRT = pmrem.fromScene(envScene, .04); scene.environment = envRT.texture; if (old) old.dispose();
+  }
   const moon = new THREE.AmbientLight('#9aa8d0', 0); scene.add(moon);  // 어두운 장면에서도 사람과 사물이 보이게 하는 고른 빛
 
   /* --- 자연 질감 (2026-10-14, 사용자가 보낸 사진: 나무 사이 흙길, 바위 언덕의 흙길, 해 질 녘 물결) ---
@@ -786,6 +808,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     body.traverse(o => { if (o.isMesh && o.material && bare.has(o.material.name)) o.material.color.setRGB(avg[0] * tone[0], avg[1] * tone[1], avg[2] * tone[2], THREE.SRGBColorSpace); });
     return null;
   }
+  const CLOTH = new Set(['tunic_long', 'tunic_short', 'mantle', 'headcloth', 'dress', 'veil', 'sash', 'royal_mantle', 'cloak', 'mantle_j']), _white = new THREE.Color('#ffffff');
   // 옷을 사람마다 다르게 (사용자 요청 2026-10-15: "여자랑 남자 옷이 다 저렇게 똑같아야 하나"). 그 시대 천연 염료 색(아마·양털 그대로, 쪽빛, 꼭두서니 빨강, 황토, 올리브, 잿빛)
   const DYE = {
     tunic: ['#d9ceb2', '#e6dfcf', '#c4b591', '#b9b3a6', '#cdb994', '#a8916a', '#9fb0bf', '#c9a46a'],
@@ -858,7 +881,12 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       o.frustumCulled = false;
       if (!o.name.startsWith('Mannequin')) o.visible = spec.wear.includes(o.name);
       o.material = o.material.clone();
+      if (HQ && CLOTH.has(o.name)) {  // 옷감 광택(sheen, 그래픽 1단계): 천 가장자리에 부드럽게 도는 빛. PC만
+        const pm = new THREE.MeshPhysicalMaterial(); THREE.MeshStandardMaterial.prototype.copy.call(pm, o.material); pm.defines = { STANDARD: '', PHYSICAL: '' };
+        pm.sheen = .7; pm.sheenRoughness = .65; o.material = pm;
+      }
       const c = col[o.material.name]; if (c) o.material.color.set(c);
+      if (o.material.sheen) o.material.sheenColor.copy(o.material.color).lerp(_white, .4);
       const pt = spec.pat && spec.pat[o.name]; if (pt) clothPattern(o, pt);
       if (o.material.metalness > .5) { o.material.metalness = .35; o.material.roughness = .45; }  // 반사 환경이 없어도 금빛이 보이게
     });
@@ -1775,11 +1803,12 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       sun.castShadow = env.sunEl > -1 && sun.intensity > .08; }
     if (clock > shadowSweepAt) { shadowSweepAt = clock + 1.5; shadowSweep(); }
     windU.value = clock;
-    hemi.color.copy(env.top).lerp(env.horizon, .55); hemi.groundColor.copy(env.fog).multiplyScalar(.6); hemi.intensity = env.hemiI + fx.flash * 1.6;
+    hemi.color.copy(env.top).lerp(env.horizon, .55); hemi.groundColor.copy(env.fog).multiplyScalar(.6); hemi.intensity = env.hemiI * HEMI_K + fx.flash * 1.6;
+    if (clock > envAt) { envAt = clock + .5; stepEnvMap(); }
     // 어두운 장면일수록(해가 지고 하늘빛이 약할수록) 고른 빛과 노출을 더한다
-    const dark = clamp(1 - (sun.intensity * .4 + hemi.intensity) / .8, 0, 1);
+    const dark = clamp(1 - (sun.intensity * .4 + env.hemiI + fx.flash * 1.6) / .8, 0, 1);
     moon.intensity = dark * .7;
-    renderer.toneMappingExposure = env.exposure * (1.15 + dark * .35);
+    renderer.toneMappingExposure = env.exposure * (1.15 + dark * .35) * TONE_K;
     ashU.uTime.value = clock; ashU.uAmt.value = env.ash; ashU.uWind.value = env.wind; ashU.uTint.value.copy(env.fog).multiplyScalar(1.5).addScalar(.06); ashU.uCam.value.copy(camera.position);
     let bn = 0;
     for (const b of boats) { if (bn >= 4 || !shown(b)) continue; waters[0] && waters.forEach(({ u }) => { u.uBoat.value[bn].set(b.position.x, b.position.z, Math.cos(b.rotation.y), Math.sin(b.rotation.y)); u.uBoatL.value[bn] = b.userData.len / 2; }); bn++; }
