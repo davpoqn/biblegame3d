@@ -14,7 +14,19 @@ SPECS = {
               skin='middleage_caucasian_male', brow='eyebrow001', hairs=['short02', 'short03', 'short04', 'long01']),
     'f': dict(macros={'gender': 0., 'age': .45, 'muscle': .45, 'weight': .5, 'height': .5, 'african': .2, 'asian': .05, 'caucasian': .75},
               skin='middleage_caucasian_female', brow='eyebrow010', hairs=['long01', 'braid01', 'ponytail01', 'bob02']),
+    # 예수님 (사용자 요청 2026-10-15: 넙대대하지 않게 다시 — 길고 좁은 얼굴, 높은 광대, 좁고 각진 턱, 곧은 코, 짙은 눈썹. 연출: 성경에는 생김새가 없다)
+    'j': dict(macros={'gender': 1., 'age': .56, 'muscle': .55, 'weight': .35, 'height': .55, 'african': .15, 'asian': .05, 'caucasian': .8},
+              skin='young_caucasian_male', brow='eyebrow003', hairs=['long01', 'short02', 'short04'],
+              targets={'head/head-oval': .4, 'head/head-scale-horiz-decr': .3, 'head/head-fat-decr': .5, 'head/head-scale-vert-incr': .15,
+                       'forehead/forehead-temple-decr': .5,
+                       **{f'cheek/{s}-cheek-{k}': w for s in 'lr' for k, w in [('bones-incr', .55), ('volume-decr', .6), ('inner-decr', .3)]},
+                       'chin/chin-width-decr': .45, 'chin/chin-prominent-incr': .25, 'chin/chin-bones-decr': .3, 'chin/chin-triangle': .2, 'chin/chin-height-incr': .15,
+                       'nose/nose-scale-horiz-decr': .3, 'nose/nose-nostrils-width-decr': .35, 'nose/nose-point-width-decr': .3, 'nose/nose-greek-incr': .25,
+                       'nose/nose-hump-decr': .3, 'nose/nose-scale-vert-incr': .15,
+                       'mouth/mouth-lowerlip-volume-decr': .35, 'mouth/mouth-upperlip-volume-decr': .35, 'mouth/mouth-angles-up': .15,
+                       'eyebrows/eyebrows-trans-down': .25}),
 }
+WHO = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else ['m', 'f']  # blender -b -P mh_build.py -- j  → 예수님만
 
 
 def imp(pkg, key):
@@ -64,11 +76,13 @@ def mesh_arrays(obj, keep_vert=None):
 
 
 os.makedirs(OUT, exist_ok=True)
-for sex, sp in SPECS.items():
+TARGETS = imp('mpfb.services.locationservice', 'LocationService').get_mpfb_data('targets')
+for sex, sp in [(k, SPECS[k]) for k in WHO]:
     for o in list(bpy.data.objects): bpy.data.objects.remove(o)
     h = HumanService.create_human()
     for k, v in sp['macros'].items(): HOP.set_value(k, v, entity_reference=h)
     TargetService.reapply_macro_details(h)
+    for t, w in sp.get('targets', {}).items(): TargetService.load_target(h, os.path.join(TARGETS, t + '.target.gz'), weight=w)  # 얼굴 세부 (머리카락·눈썹은 이 모양에 맞춰 붙는다)
     rig = HumanService.add_builtin_rig(h, 'game_engine', import_weights=True)
     data = {}
     # 몸: 앞의 13380개가 MakeHuman 기본 몸 정점(그 뒤는 도우미 정점)

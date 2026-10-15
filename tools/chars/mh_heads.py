@@ -1,9 +1,10 @@
 # MakeHuman(CC0) 머리: 얼굴·눈·눈썹·속눈썹 + 머리카락 몇 가지 + 수염 두 가지를 한 파일에 담는다 (남녀 하나씩).
 # 얼굴은 모두 같고(사용자 뜻), 엔진(kit.js dressHead)이 사람마다 피부색·머리카락·수염과 그 색을 골라 보인다.
 # 머리카락·눈썹·수염 텍스처는 밝은 회색으로 바꿔 두고 엔진이 색을 곱한다. 피부도 엔진이 색을 곱한다.
-#   python3 tools/chars/mh_heads.py   → assets/chars/mh_head_m.glb, mh_head_f.glb
+#   python3 tools/chars/mh_heads.py [m f j]   → assets/chars/mh_head_m.glb, mh_head_f.glb, jesus_head.glb
+# 예수님(j)은 따로 만든 얼굴(mh_build.py의 'j')에 머리카락 하나·짧은 수염만 담고, 엔진이 색을 곱하지 않으니 그림에 색을 칠해 둔다
 # 재료: assets/raw/mh/ (tools/chars/mh_build.py), 수염: assets/raw/jesus/의 beard_sigmund (MakeHuman Community, CC0)
-import io, json, struct, pathlib
+import io, json, os, struct, sys, pathlib
 import numpy as np
 from PIL import Image
 
@@ -11,6 +12,7 @@ S = pathlib.Path(__file__).resolve().parents[2]
 RAW = S / 'assets/raw/mh'
 NECK = .14   # 눈 높이에서 이만큼(m) 아래로 목을 자른다 (옷깃이 가린다)
 HAIR = .19   # 긴 머리카락은 눈 높이에서 이만큼 아래(어깨)에서 자른다
+JESUS = {'hair': os.environ.get('JHAIR', 'long01'), 'hair_cut': float(os.environ.get('JHAIRCUT', .13)), 'skin': [.8, .71, .62], 'hair_rgb': [44, 30, 22]}  # 예수님: 머리카락, 피부에 곱할 색, 머리카락·수염·눈썹 색
 
 
 def tex(sex, key):
@@ -50,6 +52,12 @@ def gray(im, gain=1.):
     return Image.fromarray(np.stack([np.clip(lum, 0, 255), a[..., 3]], -1).astype(np.uint8), 'LA')  # 회색+투명이면 파일이 작다
 
 
+def colorize(im, rgb, gain=1.):
+    """회색 그림(gray)에 색을 칠한다 (예수님 머리는 엔진이 색을 곱하지 않는다)"""
+    a = np.asarray(gray(im, gain).convert('LA')).astype(np.float32)
+    return Image.fromarray(np.concatenate([np.clip(a[..., :1] / 204 * np.array(rgb), 0, 255), a[..., 1:]], -1).astype(np.uint8), 'RGBA')
+
+
 def png(im, size): im = im.resize((size, size), Image.LANCZOS); b = io.BytesIO(); im.save(b, 'PNG', optimize=True); return b.getvalue(), 'image/png'
 def jpg(im, size): im = im.convert('RGB'); im.thumbnail((size, size), Image.LANCZOS); b = io.BytesIO(); im.save(b, 'JPEG', quality=86); return b.getvalue(), 'image/jpeg'
 
@@ -84,7 +92,7 @@ def beards(D):
     return {'beard_full': (B2, tri, uvs, None), 'beard_short': (short, tri, uvs, keep)}
 
 
-for sex in ('m', 'f'):
+for sex in (sys.argv[1:] or ['m', 'f', 'j']):
     D = np.load(RAW / f'mh_{sex}.npz')
     eye_z = float(D['eyes_V'][:, 2].mean())
     P = {}
@@ -92,25 +100,26 @@ for sex in ('m', 'f'):
     P['face'] = part(to_gltf(bv), D['body_T'], D['body_UV'], keep=bv[:, 2] > eye_z - NECK)
     # 머릿수건·면사포·투구를 쓴 사람용: 앞얼굴만 (정수리·뒷머리·귀는 덮개가 가리니 빼서 덮개 밖으로 비치지 않게)
     eye_y = float(D['eyes_V'][:, 1].mean())  # Blender에서 얼굴은 -Y 쪽
-    P['face_cov'] = part(to_gltf(bv), D['body_T'], D['body_UV'], keep=(bv[:, 2] > eye_z - NECK) & (bv[:, 2] < eye_z + .045) & (bv[:, 1] < eye_y + .07))
+    if sex != 'j': P['face_cov'] = part(to_gltf(bv), D['body_T'], D['body_UV'], keep=(bv[:, 2] > eye_z - NECK) & (bv[:, 2] < eye_z + .045) & (bv[:, 1] < eye_y + .07))
     for k in ('eyes', 'brows', 'lashes'): P[k] = part(to_gltf(D[f'{k}_V'].astype(float)), D[f'{k}_T'], D[f'{k}_UV'])
     # 눈: 바깥 각막 껍질은 그림의 투명한 곳을 쓴다. 불투명하게 그리면 눈동자를 덮어 흰자만 보이는 멍한 눈이 되므로 뺀다
     T, UV = D['eyes_T'], D['eyes_UV']; ea = np.asarray(tex(sex, 'eyes').convert('RGBA'))[..., 3]; c = UV.mean(1)
     sel = ea[np.clip(((1 - c[:, 1]) * ea.shape[0]).astype(int), 0, ea.shape[0] - 1), np.clip((c[:, 0] * ea.shape[1]).astype(int), 0, ea.shape[1] - 1)] >= 128
     P['eyes'] = part(to_gltf(D['eyes_V'].astype(float)), T[sel], UV[sel])
-    hairs = [k[:-2] for k in D.files if k.startswith('hair_') and k.endswith('_V')]
+    hairs = [k[:-2] for k in D.files if k.startswith('hair_') and k.endswith('_V') and (sex != 'j' or k == f"hair_{JESUS['hair']}_V")]
     for k in hairs:
         hv = D[f'{k}_V'].astype(float)
-        P[k] = part(to_gltf(hv), D[f'{k}_T'], D[f'{k}_UV'], keep=hv[:, 2] > eye_z - HAIR)
+        P[k] = part(to_gltf(hv), D[f'{k}_T'], D[f'{k}_UV'], keep=hv[:, 2] > eye_z - (JESUS['hair_cut'] if sex == 'j' else HAIR))  # 예수님은 목 길이
     if sex == 'm':
         for k, (bv2, t, u, keep) in beards(D).items(): P[k] = part(to_gltf(bv2), t, u, keep)
+    if sex == 'j': bv2, t, u, keep = beards(D)['beard_short']; P['beard'] = part(to_gltf(bv2), t, u, keep)  # 짧게 다듬은 수염
     # 피부: 머리 부분만 잘라 쓴다(UV를 그 안으로 옮긴다)
     skin = tex(sex, 'skin').convert('RGB'); W, H = skin.size
     uvb = P['face'][2]
     x0, y0 = max(0, int(uvb[:, 0].min() * W) - 8), max(0, int(uvb[:, 1].min() * H) - 8)
     x1, y1 = min(W, int(uvb[:, 0].max() * W) + 8), min(H, int(uvb[:, 1].max() * H) + 8)
     crop = skin.crop((x0, y0, x1, y1)); cw, ch = crop.size
-    for u_ in (uvb, P['face_cov'][2]): u_[:, 0] = (u_[:, 0] * W - x0) / cw; u_[:, 1] = (u_[:, 1] * H - y0) / ch
+    for u_ in [P[k][2] for k in ('face', 'face_cov') if k in P]: u_[:, 0] = (u_[:, 0] * W - x0) / cw; u_[:, 1] = (u_[:, 1] * H - y0) / ch
     avg = np.asarray(crop).reshape(-1, 3).mean(0) / 255
     beard_im = Image.open(S / 'assets/raw/jesus/textures/beard_sigmund_diffuse.webp')
     face_im = jpg(crop, 1024)
@@ -119,6 +128,11 @@ for sex in ('m', 'f'):
     for k in hairs: MATS[k] = (png(gray(tex(sex, k)), 512), 'MASK', .7)
     if sex == 'm':
         b = png(gray(beard_im), 512); MATS['beard_full'] = (b, 'MASK', .8); MATS['beard_short'] = (b, 'MASK', .8)
+    if sex == 'j':  # 색을 칠한 그림 (피부는 따뜻한 올리브빛, 머리카락·수염·눈썹은 짙은 갈색)
+        c = JESUS['hair_rgb']
+        MATS.update({'face': (jpg(Image.fromarray(np.clip(np.asarray(crop).astype(np.float32) * JESUS['skin'], 0, 255).astype(np.uint8)), 1024), 'OPAQUE', .6),
+                     'brows': (png(colorize(tex(sex, 'brows'), c), 256), 'MASK', .8), 'lashes': (png(colorize(tex(sex, 'lashes'), c, .5), 128), 'MASK', .8),
+                     'beard': (png(colorize(beard_im, c), 512), 'MASK', .8), **{k: (png(colorize(tex(sex, k), c), 1024), 'MASK', .7) for k in hairs}})
     # --- glb 쓰기 (노드 하나에 메시 하나, 이름으로 고른다) ---
     bin_, views, accs = bytearray(), [], []
     def view(data, target=None):
@@ -141,8 +155,10 @@ for sex in ('m', 'f'):
                                                      'indices': accessor(idx, 'SCALAR', 5123 if idx.dtype == np.uint16 else 5125, 34963), 'material': len(materials) - 1}]})
         nodes.append({'mesh': len(meshes) - 1, 'name': name})
     e = to_gltf(D['eyes_V'].astype(float)); L, R = e[e[:, 0] > 0].mean(0), e[e[:, 0] < 0].mean(0)
-    root = {'name': f'mh_head_{sex}', 'children': list(range(len(nodes))),
+    root = {'name': 'jesus_head' if sex == 'j' else f'mh_head_{sex}', 'children': list(range(len(nodes))),
             'extras': {'eyeMid': ((L + R) / 2).tolist(), 'eyeDist': float(np.linalg.norm(L - R)), 'skinAvg': avg.tolist(), 'hairs': hairs}}
+    if sex == 'j':  # 엔진은 눈 사이 거리로 크기를 정한다. 예수님 얼굴은 눈 사이가 좁아 머리가 커지므로, 다른 남자 머리(m)와 같은 크기가 되게 그 눈 사이 거리를 적는다
+        em = to_gltf(np.load(RAW / 'mh_m.npz')['eyes_V'].astype(float)); root['extras']['eyeDist'] = float(np.linalg.norm(em[em[:, 0] > 0].mean(0) - em[em[:, 0] < 0].mean(0)))
     nodes.append(root)
     gltf = {'asset': {'version': '2.0', 'generator': 'tools/chars/mh_heads.py (MakeHuman CC0)'}, 'scene': 0, 'scenes': [{'nodes': [len(nodes) - 1]}],
             'nodes': nodes, 'meshes': meshes, 'materials': materials, 'textures': textures, 'images': images,
@@ -150,5 +166,5 @@ for sex in ('m', 'f'):
     js = json.dumps(gltf, separators=(',', ':')).encode(); js += b' ' * (-len(js) % 4)
     while len(bin_) % 4: bin_.append(0)
     glb = struct.pack('<III', 0x46546C67, 2, 28 + len(js) + len(bin_)) + struct.pack('<II', len(js), 0x4E4F534A) + js + struct.pack('<II', len(bin_), 0x004E4942) + bytes(bin_)
-    out = S / f'assets/chars/mh_head_{sex}.glb'; out.write_bytes(glb)
+    out = S / ('assets/chars/jesus_head.glb' if sex == 'j' else f'assets/chars/mh_head_{sex}.glb'); out.write_bytes(glb)
     print(out.name, len(glb), 'bytes', {k: len(v[3]) // 3 for k, v in P.items()}, 'skinAvg', np.round(avg, 3).tolist())

@@ -586,7 +586,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     }
     C.lag.set(C.x.x, 0, C.x.y);
   }
-  const JHEAD = { y: .122, z: .136 };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준, 예전 얼굴의 눈 자리)
+  const JHEAD = { y: .1, z: .136 };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준). 다른 남자 머리(MHEAD.m)와 같다 — 같은 MakeHuman 얼굴로 만든다
   function dressJesus(body) {
     body.updateMatrixWorld(true);  // 지금 동작 자세 그대로 머리·가슴 뼈에 붙인다 (skeleton.pose()는 뼈 크기가 달라진다)
     const head = body.getObjectByName('Head'), chest = body.getObjectByName('spine_03'), hp = body.worldToLocal(head.getWorldPosition(new THREE.Vector3())), cp = body.worldToLocal(chest.getWorldPosition(new THREE.Vector3()));  // 몸 기준 좌표 (앉은 사람은 몸이 내려가 있다)
