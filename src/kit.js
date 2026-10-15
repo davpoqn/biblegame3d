@@ -116,6 +116,20 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   });
   composer.addPass(grain);
   composer.addPass(new OutputPass());
+  // 그래픽 2단계(2026-10-15, PC만): 틈새 그림자(GTAO: 옷 주름·맞닿은 곳·처마 밑이 어두워져 입체감)와 대화할 때 배경 흐림(피사계 심도)
+  let gtao = null, bokeh = null, dofK = 0, dofF = 3;
+  if (HQ) {
+    try {
+      const [{ GTAOPass }, { BokehPass }] = await Promise.all([import('three/addons/postprocessing/GTAOPass.js'), import('three/addons/postprocessing/BokehPass.js')]);
+      gtao = new GTAOPass(scene, camera, innerWidth, innerHeight);
+      gtao.updateGtaoMaterial({ radius: .45, distanceExponent: 1.5, thickness: 1, scale: 1, samples: 12 }); gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 4, rings: 2, samples: 12 });
+      gtao.blendIntensity = .75;
+      const gs = gtao.setSize.bind(gtao); gtao.setSize = (w, h) => gs(Math.round(w * .6), Math.round(h * .6));  // 0.6배 해상도로 (무겁다)
+      composer.insertPass(gtao, 1);
+      bokeh = new BokehPass(scene, camera, { focus: 3, aperture: .006, maxblur: 0 }); bokeh.enabled = false; composer.insertPass(bokeh, 2);
+      composer.setSize(innerWidth, innerHeight);
+    } catch (e) { console.warn('틈새 그림자·배경 흐림을 켜지 못했습니다:', e); gtao = bokeh = null; }
+  }
 
   /* --- 하늘 --- */
   const skyU = {
@@ -775,7 +789,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       const key = m.customProgramCacheKey.bind(m); m.customProgramCacheKey = () => key() + '|infl' + N;
     });
   }
-  const MHEAD = { m: { y: .1, z: .136, eye: .078 }, f: { y: .055, z: .128, eye: .067 } };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준)와 눈 사이 거리
+  const MHEAD = { m: { y: .1, z: .136, eye: .078 }, f: { y: .043, z: .133, eye: .067 } };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준)와 눈 사이 거리
   function dressHead(body, sex, spec, L) {
     const src = figSrc.mhHead[sex]; if (!src) return null;
     body.updateMatrixWorld(true);
@@ -1785,7 +1799,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   /* --- 매 프레임 --- */
   const fx = { flash: 0 };
   const frameFns = [], resetFns = [];
-  const sunDir = new THREE.Vector3();
+  const sunDir = new THREE.Vector3(), _dofP = new THREE.Vector3();
   let last = performance.now(), raf = 0, dead = false;
   function frame(now) {
     if (dead) return;
@@ -1846,6 +1860,12 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     stepSelf(dt);
     grain.uniforms.uTime.value = clock;
 
+    if (bokeh) {  // 누가 말하는 동안 그 사람 머리에 초점을 맞추고 뒤를 흐린다 (서서히 켜고 끈다)
+      const sp = talkState.speaker, on = !!(sp && clock < talkState.until && shown(sp) && sp.userData.head);
+      if (on) { sp.userData.head.getWorldPosition(_dofP); const d = camera.position.distanceTo(_dofP); dofF += (d - dofF) * Math.min(1, dt * 4); }
+      dofK += ((on && dofF < 9 ? .009 : 0) - dofK) * Math.min(1, dt * 2.2);
+      bokeh.enabled = dofK > .0004; bokeh.uniforms.focus.value = dofF; bokeh.uniforms.maxblur.value = dofK;
+    }
     composer.render(dt);
     raf = requestAnimationFrame(frame);
   }
