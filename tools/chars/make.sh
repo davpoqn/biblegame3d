@@ -5,7 +5,7 @@
 set -e
 cd "$(dirname "$0")/../.."
 python3 tools/chars/build_chars.py "$@"   # MakeHuman 손·발도 붙인다(assets/raw/mh, 다시 뽑기: blender -b -P tools/chars/mh_build.py)
-python3 tools/chars/mh_heads.py            # MakeHuman 머리(얼굴·머리카락·수염): 남녀 + 예수님(jesus_head.glb, 재료: blender -b -P tools/chars/mh_build.py -- j)
+python3 tools/chars/mh_heads.py            # MakeHuman 머리(얼굴 남7·여4·머리카락·수염): 남녀 + 예수님(jesus_head.glb). 재료: blender -b -P tools/chars/mh_build.py -- heads (그리고 -- j)
 python3 tools/chars/build_animals.py
 for k in sheep ram goat ox donkey colt camel pig; do node tools/chars/slim.mjs assets/chars/build/an_$k.glb assets/chars/build/an_${k}_s.glb >/dev/null; npx gltf-transform quantize assets/chars/build/an_${k}_s.glb assets/chars/an_$k.glb >/dev/null; done
 node tools/chars/anims.mjs

@@ -719,8 +719,39 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     const n = lookN++, old = role === 'elder';
     const hairs = (figSrc.mhHead[sex].getObjectByName('mh_head_' + sex) || {}).userData?.hairs || [];
     const pool = role === 'boy' ? hairs.filter(h => h.startsWith('hair_short')) : hairs;
-    return { skin: (n * 3) % SKIN_TONES.length, hair: pool[(n * 7 + 1) % pool.length], hairColor: old ? HAIR_COLORS[4 + n % 2] : HAIR_COLORS[(n * 5) % 4],
-      beard: sex === 'f' || role === 'boy' || role === 'roman' ? null : old || role === 'goliath' || n % 3 ? 'beard_full' : 'beard_short', ...look };
+    // 얼굴과 체형도 돌려 가며 고른다 (사용자 요청 2026-10-15: 복제인간처럼 보이지 않게). 얼굴 번호는 mh_head의 faces 순서, 체형은 BODY
+    const fp = FACE_PICK[sex][role] || FACE_PICK[sex].any, bp = BODY_PICK[sex][role] || BODY_PICK[sex].any;
+    const body = bp[n % bp.length], face = sex === 'm' && body === 'heavy' ? 4 : fp[(n * 3 + (n >> 2)) % fp.length];  // 살찐 사람은 살찐 얼굴
+    return { skin: (n * 3) % SKIN_TONES.length, hair: pool[(n * 7 + 1) % pool.length], hairColor: old ? HAIR_COLORS[4 + n % 2] : HAIR_COLORS[(n * 5) % 4], face, body,
+      beard: sex === 'f' || role === 'boy' || role === 'roman' ? null : old || role === 'goliath' ? 'beard_full' : BEARDS[(n * 5 + (n >> 1)) % BEARDS.length], ...look };
+  }
+  const BEARDS = ['beard_short', 'beard_trim', 'beard_full', 'beard_goatee', 'beard_trim', 'beard_short'];  // 다듬은 수염이 많고 덥수룩한 수염은 가끔
+  // 남자 얼굴: 0 갸름 1 각진 2 젊은 3 나이 든 4 살찐 5 긴 얼굴 6 아프리카계에 가까운 / 여자: 0 고운 1 따뜻한 2 앳된 3 어머니 (tools/chars/mh_build.py HEADS)
+  const FACE_PICK = { m: { boy: [2], elder: [3, 5, 3, 4], roman: [1, 0, 6, 2], goliath: [1], any: [0, 1, 5, 2, 6, 1, 0, 5, 3] }, f: { any: [0, 1, 2, 3, 0, 2, 1] } };
+  const BODY_PICK = { m: { boy: ['slim'], elder: ['slim', 'avg', 'heavy'], roman: ['muscle', 'avg', 'muscle'], goliath: ['muscle'], king: ['avg', 'heavy'], any: ['avg', 'slim', 'muscle', 'avg', 'heavy', 'slim', 'muscle', 'avg'] },
+    f: { any: ['shapely', 'slim', 'shapely', 'avg'] } };
+  // 체형: 뼈마다 몸과 옷을 그 겉면 방향으로 이만큼(m) 부풀리거나 줄인다. 옷도 같은 뼈를 따라 함께 움직여 겹이 그대로다 (뼈 크기를 바꾸면 팔·머리까지 찌그러진다)
+  const BODY = {
+    slim: { spine_01: -.03, spine_02: -.025, spine_03: -.016, pelvis: -.015, clavicle: -.008, upperarm: -.012, lowerarm: -.007, thigh: -.018, calf: -.008, neck_01: -.006 },
+    muscle: { spine_03: .05, spine_02: .026, clavicle: .04, upperarm: .035, lowerarm: .018, neck_01: .02, thigh: .026, calf: .014, spine_01: -.01 },
+    heavy: { spine_01: .1, spine_02: .085, pelvis: .07, spine_03: .045, clavicle: .025, thigh: .05, calf: .018, upperarm: .028, lowerarm: .015, neck_01: .026 },
+    shapely: { spine_01: -.032, spine_02: -.014, pelvis: .026, thigh: .02, spine_03: .016, clavicle: -.006, upperarm: -.007, lowerarm: -.005 } };
+  function shapeBody(body, type) {
+    const B = BODY[type]; if (!B) return;
+    body.traverse(o => {
+      if (!o.isSkinnedMesh) return;
+      const bones = o.skeleton.bones, arr = new Float32Array(Math.max(1, bones.length));
+      const outer = /mantle|veil|shawl|belt|collar|trim|cloak/.test(o.name);  // 겉옷은 조금 더 부풀리고 덜 줄인다 (속옷이 비쳐 나오지 않게)
+      bones.forEach((b, i) => { const v = B[b.name] ?? B[b.name.replace(/_[lr]$/, '')] ?? 0; arr[i] = outer ? (v > 0 ? v * 1.15 + .004 : v * .8) : v; });
+      const m = o.material, prev = m.onBeforeCompile, N = arr.length;
+      m.onBeforeCompile = (sh, r) => {
+        if (prev) prev.call(m, sh, r);
+        sh.uniforms.uInfl = { value: arr };
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>\nuniform float uInfl[${N}];`)
+          .replace('#include <skinning_vertex>', '#include <skinning_vertex>\ntransformed += normalize(objectNormal) * (skinWeight.x * uInfl[int(skinIndex.x)] + skinWeight.y * uInfl[int(skinIndex.y)] + skinWeight.z * uInfl[int(skinIndex.z)] + skinWeight.w * uInfl[int(skinIndex.w)]);');
+      };
+      const key = m.customProgramCacheKey.bind(m); m.customProgramCacheKey = () => key() + '|infl' + N;
+    });
   }
   const MHEAD = { m: { y: .1, z: .136, eye: .078 }, f: { y: .055, z: .128, eye: .067 } };  // 새 머리의 두 눈 가운데를 둘 자리(머리 뼈 기준)와 눈 사이 거리
   function dressHead(body, sex, spec, L) {
@@ -728,14 +759,17 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     body.updateMatrixWorld(true);
     const head = body.getObjectByName('Head'), hp = body.worldToLocal(head.getWorldPosition(new THREE.Vector3()));  // 몸 기준 좌표 (앉은 사람은 몸이 내려가 있어 그대로 쓰면 얼굴이 가슴께로 간다)
     const h = src.clone(true), root = h.getObjectByName('mh_head_' + sex) || h, ex = root.userData || {}, A = MHEAD[sex];
-    const k = A.eye / (ex.eyeDist || .064), mid = new THREE.Vector3(...(ex.eyeMid || [0, 1.64, .1]));
+    // 얼굴 여러 개 중 하나만 남긴다 (노드 이름 끝의 #번호). 크기는 첫 얼굴의 눈 사이 거리로 같게 하고, 자리는 그 얼굴의 두 눈 가운데로 맞춘다
+    const faces = ex.faces || [ex], fi = Math.min(L.face || 0, faces.length - 1);
+    for (const c of [...root.children]) if (c.name.includes('#') && !c.name.endsWith('#' + fi)) root.remove(c);
+    const k = A.eye / (ex.eyeDist || .064), mid = new THREE.Vector3(...(faces[fi].eyeMid || ex.eyeMid || [0, 1.64, .1]));
     h.scale.setScalar(k); h.position.set(hp.x - mid.x * k, hp.y + A.y - mid.y * k, hp.z + A.z - mid.z * k);
     const covered = spec.wear.some(w => ['headcloth', 'veil', 'helmet'].includes(w));  // 머리를 덮는 것을 쓰면 머리카락은 숨긴다
     const tone = SKIN_TONES[L.skin] || SKIN_TONES[0];
     h.traverse(o => {
       if (!o.isMesh) return;
       o.frustumCulled = false; o.material = o.material.clone();
-      const n = o.name;
+      const n = o.name.split('#')[0];
       if (n.startsWith('hair_')) o.visible = !covered && n === L.hair;
       if (n.startsWith('beard_')) o.visible = n === L.beard;
       if (n === 'face' || n === 'face_cov') { o.visible = (n === 'face_cov') === covered; o.material.color.setRGB(...tone, THREE.SRGBColorSpace); }
@@ -752,9 +786,66 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     body.traverse(o => { if (o.isMesh && o.material && bare.has(o.material.name)) o.material.color.setRGB(avg[0] * tone[0], avg[1] * tone[1], avg[2] * tone[2], THREE.SRGBColorSpace); });
     return null;
   }
+  // 옷을 사람마다 다르게 (사용자 요청 2026-10-15: "여자랑 남자 옷이 다 저렇게 똑같아야 하나"). 그 시대 천연 염료 색(아마·양털 그대로, 쪽빛, 꼭두서니 빨강, 황토, 올리브, 잿빛)
+  const DYE = {
+    tunic: ['#d9ceb2', '#e6dfcf', '#c4b591', '#b9b3a6', '#cdb994', '#a8916a', '#9fb0bf', '#c9a46a'],
+    mantle: ['#7a5a3c', '#4e3a2a', '#33507e', '#8e3b2e', '#6b6a3a', '#6a665e', '#3a3028', '#a8916a', '#5b4a6e'],
+    headcloth: ['#e3dac4', '#cdb994', '#33507e', '#9a5a3a', '#8c867a', '#e3dac4', '#6b6a3a'],
+    belt: ['#5a3d25', '#8e3b2e', '#3a3028', '#6b6a3a', '#a07a3a'],
+    dress: ['#ece6d8', '#c9b48e', '#8e3b2e', '#33507e', '#6b7a5a', '#b98a5e', '#7a4f6e', '#d8c7a6'],
+    sash: ['#c9a23a', '#9b2a22', '#33507e', '#a8916a', '#5b6e3a'],
+    veil: ['#e3dac4', '#cdb994', '#8a6a48', '#5b6e8c', '#9a5a3a', '#ece6d8'],
+    stripe: ['#e3dac4', '#3a3028', '#8e3b2e', '#c9a46a', '#33507e'] };
+  const VARY = new Set(['man', 'elder', 'shepherd', 'fisherman', 'boy', 'woman', 'woman_veil']);  // 왕·군인·골리앗은 정해진 옷
+  let outfitN = 0;
+  function dressUp(role, spec, tint, colors) {
+    if (!VARY.has(role)) return spec;
+    const n = outfitN++, P = (list, k) => list[(n * k + (n >> 1) + k) % list.length], male = spec.body !== 'f';
+    const fixed = new Set(Object.keys(colors || {})), t = tint && TINT.find(([w]) => spec.wear.includes(w)); if (t) fixed.add(t[1]);  // 이야기가 정한 색은 그대로
+    const wear = new Set(spec.wear), bare = new Set(spec.bare || []), c = {}, pat = {};
+    const drop = (w, slot) => { if (!fixed.has(slot)) wear.delete(w); };
+    if (male) {
+      Object.assign(c, { tunic: P(DYE.tunic, 3), mantle: P(DYE.mantle, 5), headcloth: P(DYE.headcloth, 7), belt: P(DYE.belt, 2) });
+      if (role === 'man' && n % 4 === 1 && !fixed.has('tunic')) { wear.delete('tunic_long'); wear.add('tunic_short'); bare.add('under_calf'); }  // 무릎까지 오는 짧은 옷
+      if ((role === 'man' || role === 'shepherd') && n % 5 === 2) drop('mantle', 'mantle');                                                   // 겉옷 없이
+      if ((role === 'man' || role === 'fisherman' || role === 'boy') && n % 4 === 3) drop('headcloth', 'headcloth');                      // 머릿수건 없이 (머리카락이 보인다)
+      if (n % 2 === 0) pat.mantle = { kind: 1, freq: 8 + (n % 4) * 2, width: .12 + (n % 3) * .05, color: P(DYE.stripe, 11) };                // 겉옷 세로 줄무늬
+      if (n % 3 === 1) pat.tunic_long = pat.tunic_short = { kind: 2, color: P(DYE.mantle, 13) };                                          // 옷단 띠
+      if (n % 4 === 2) pat.headcloth = { kind: 1, freq: 16, width: .1, color: P(DYE.stripe, 9) };
+    } else {
+      Object.assign(c, { dress: P(DYE.dress, 3), sash: P(DYE.sash, 5), veil: P(DYE.veil, 7), mantle: P(DYE.mantle, 2), tunic: P(DYE.dress, 5), belt: P(DYE.belt, 3) });
+      if (role === 'woman') { if (n % 5 === 1 || n % 5 === 3) wear.add('veil'); if (n % 3 === 0) wear.delete('necklace'); if (n % 2) wear.delete('bracelets'); }
+      if (role === 'woman_veil' && n % 3 === 1) drop('mantle', 'mantle');
+      if (n % 3 === 0) pat.dress = pat.tunic_long = { kind: 2, color: P(DYE.sash, 3) };
+      if (n % 4 === 1) pat.veil = { kind: 2, color: P(DYE.stripe, 9) };
+      if (n % 4 === 3) pat.mantle = { kind: 1, freq: 10, width: .15, color: P(DYE.stripe, 7) };
+    }
+    if (role === 'elder' || role === 'boy') { delete c.headcloth; if (role === 'boy') delete c.mantle; }
+    for (const k of fixed) delete c[k];
+    const under = male || role === 'woman_veil' ? c.tunic : c.dress;  // 소매 밑 팔 부분도 같은 옷 색
+    return { ...spec, wear: [...wear], bare: [...bare], colors: { ...(spec.colors || {}), ...c }, under: under || spec.under, pat };
+  }
+  // 옷 무늬: 원래 모양(뼈를 움직이기 전) 기준이라 옷이 움직여도 무늬가 따라간다. kind 1 세로 줄무늬, 2 아랫단 띠
+  function clothPattern(o, pt) {
+    o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox;
+    const U = new THREE.Vector4(bb.min.y, bb.max.y, (bb.min.x + bb.max.x) / 2, (bb.min.z + bb.max.z) / 2), PU = new THREE.Vector4(pt.kind, pt.freq || 10, pt.width || .15, 0), PC = new THREE.Color(pt.color);
+    const m = o.material, prev = m.onBeforeCompile;
+    m.onBeforeCompile = (sh, r) => {
+      if (prev) prev.call(m, sh, r);
+      Object.assign(sh.uniforms, { uBB2: { value: U }, uPat: { value: PU }, uPC: { value: PC } });
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRest2;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvRest2 = position;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vRest2; uniform vec4 uBB2; uniform vec4 uPat; uniform vec3 uPC;').replace('#include <color_fragment>', `#include <color_fragment>
+        { float t = (vRest2.y - uBB2.x) / (uBB2.y - uBB2.x), a = atan(vRest2.x - uBB2.z, vRest2.z - uBB2.w) * uPat.y / 6.2832, s = 0.;
+          if (uPat.x != 2.) { float f = fract(a + .5), w = fwidth(a) * 1.5; s += smoothstep(uPat.z + w, uPat.z - w, f); }
+          if (uPat.x >= 2.) s += step(.035, t) * step(t, .07) + step(.095, t) * step(t, .11);
+          diffuseColor.rgb = mix(diffuseColor.rgb, uPC, clamp(s, 0., 1.) * .9); }`);
+    };
+    const key = m.customProgramCacheKey.bind(m); m.customProgramCacheKey = () => key() + '|pat';
+  }
   function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3, look, noHead = false, name, mantle = true } = {}) {
-    const spec = role === 'jesus' ? (figSrc && (mantle ? JESUS : { ...JESUS, wear: JESUS.wear.filter(w => w !== 'mantle_j') })) : figSrc && figSrc.outfits.roles[role];
-    if (!spec) return person(tint || '#4a3c30', { pose, scale, visible });
+    const spec0 = role === 'jesus' ? (figSrc && (mantle ? JESUS : { ...JESUS, wear: JESUS.wear.filter(w => w !== 'mantle_j') })) : figSrc && figSrc.outfits.roles[role];
+    if (!spec0) return person(tint || '#4a3c30', { pose, scale, visible });
+    const spec = noHead ? spec0 : dressUp(role, spec0, tint, colors);  // 사람마다 옷 색·무늬·조합을 다르게 (내 몸은 그대로)
     const d = figSrc.outfits.default_colors, col = { ...d };  // 색 규칙은 tools/chars/build_chars.py role_colors와 같다
     for (const u of UNDER) col[u] = spec.under || d.tunic;
     for (const u of spec.bare || []) col[u] = d.M_Main;
@@ -768,6 +859,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       if (!o.name.startsWith('Mannequin')) o.visible = spec.wear.includes(o.name);
       o.material = o.material.clone();
       const c = col[o.material.name]; if (c) o.material.color.set(c);
+      const pt = spec.pat && spec.pat[o.name]; if (pt) clothPattern(o, pt);
       if (o.material.metalness > .5) { o.material.metalness = .35; o.material.roughness = .45; }  // 반사 환경이 없어도 금빛이 보이게
     });
     if (pose === 'seat' && !clip) body.position.y = -seatDrop;  // 의자 높이로 앉는 동작을 땅·배 위에 맞춘다
@@ -787,7 +879,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     else if (!noHead && figSrc.mhHead[spec.body === 'f' ? 'f' : 'm']) {
       const sex = spec.body === 'f' ? 'f' : 'm';
       body.traverse(o => { if (o.isMesh && ['beard', 'hair', 'circlet'].includes(o.name)) o.visible = false; });  // 마네킹용 수염·머리카락 대신 MakeHuman 것 (머리띠는 새 머리 위에 떠서 후광처럼 보인다)
-      F.play('Idle_Loop', 0); mixer.update(0); F.hideHead = dressHead(body, sex, spec, pickLook(role, sex, look)); F.cur = null; mixer.stopAllAction();
+      F.play('Idle_Loop', 0); mixer.update(0); const L = pickLook(role, sex, look); F.hideHead = dressHead(body, sex, spec, L); shapeBody(body, L.body); F.cur = null; mixer.stopAllAction();
     }
     F.play(F.base, 0, IDLE_SET.has(F.base) ? F.speed : 1); mixer.update(Math.random() * 3);  // 여러 사람이 같은 박자로 움직이지 않게
     const bones = {}; F.bone = n => bones[n] || (bones[n] = body.getObjectByName(n)); F.name = name;
