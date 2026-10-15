@@ -380,8 +380,8 @@ async function world(kit, { audio, sleep }) {
   kit.box(8, 3.4, 6, '#9a8b74', 0, 1.7, -6, yard); kit.box(8.6, .3, 6.6, '#7d6d58', 0, 3.5, -6, yard);
   kit.glow(1.1, 1.9, .85, .42, .15, 1.4, .95, -2.98, yard);  // 열린 문 안의 등잔 불빛 (하얗게 타지 않게 어둑한 주황)
   kit.box(14, 1, .5, '#8c7d68', 0, .5, 4, yard);
-  const samuel = kit.figure('elder', { tint: '#cfc6b5', visible: true }); samuel.position.set(.6, 0, -1.6); yard.add(samuel);
-  const jesse = kit.figure('elder', { tint: '#5b4a3a', visible: true }); jesse.position.set(-1.6, 0, -2.2); yard.add(jesse);
+  const samuel = kit.figure('elder', { name: '사무엘', tint: '#cfc6b5', visible: true }); samuel.position.set(.6, 0, -1.6); yard.add(samuel);
+  const jesse = kit.figure('elder', { name: '이새', tint: '#5b4a3a', visible: true }); jesse.position.set(-1.6, 0, -2.2); yard.add(jesse);
   const brothers = Array.from({ length: 7 }, (_, i) => { const g = kit.figure('man', { tint: ['#4a3b2e', '#5a4636', '#3e3329', '#54412f', '#463a2d', '#5e4a39', '#3b3028'][i], scale: 1.06 - i * .015, visible: true }); g.position.set(-5 + i * 1.5, 0, -.2 - Math.abs(i - 3) * .3); g.rotation.y = Math.atan2(-g.position.x, 5 - g.position.z); yard.add(g); return g; });
   const runner = kit.person('#463a2e'); const rw = kit.walker(runner, { height: h0 });
   const elders = kit.throng({ n: 6, place: i => [HOUSE.x - 5 + i * 2, HOUSE.z - 9.5, 0], height: h0 });
@@ -393,7 +393,7 @@ async function world(kit, { audio, sleep }) {
   kit.rocks({ n: 80, height: h1, center: [X1, -45], rMin: 4, rMax: 140, sMax: .7 });
   const israel = kit.throng({ n: 130, height: h1, place: i => { let x, z; do { x = rnd(-60, 60); z = rnd(-3, 5); } while (Math.abs(x) < 3.5 || Math.hypot(x, z - 1) < 8); return [X1 + x, z, Math.PI]; }, colors: ['#4a3d30', '#584736', '#3c332a', '#6a5541'] });
   const philistia = kit.throng({ n: 150, height: h1, place: i => [X1 + rnd(-70, 70), rnd(-96, -88), 0], colors: ['#5d4630', '#6f5236', '#4d3a29', '#7b5f40'] });
-  const goliath = kit.figure('goliath', { scale: 2.05, visible: true });
+  const goliath = kit.figure('goliath', { name: '골리앗', scale: 2.05, visible: true });
   const spear = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 2.6, 6), new THREE.MeshStandardMaterial({ color: '#3a2c1f' })); spear.position.set(.42, 1.1, .1); spear.rotation.z = .08; goliath.add(spear);
   const helm = new THREE.Mesh(new THREE.SphereGeometry(.16, 12, 8, 0, Math.PI * 2, 0, Math.PI * .55), new THREE.MeshStandardMaterial({ color: '#8a6a3c', roughness: .4, metalness: .7 })); helm.position.y = 1.6; goliath.add(helm); helm.visible = !goliath.userData.fig;  // 캐릭터는 놋투구를 이미 썼다
   const GOL = v3(X1 + 2, 0, -42), GOL0 = v3(X1 + 2, 0, -72); goliath.position.set(GOL.x, h1(GOL.x, GOL.z), GOL.z);  // GOL0: 블레셋 진, GOL: 싸움을 거는 자리
@@ -421,7 +421,7 @@ async function world(kit, { audio, sleep }) {
     });
     armyBack.k = 0;
   }
-  const saul = kit.figure('king', { tint: '#4c2f2b', scale: 1.12, visible: true }); saul.position.set(X1 - 2.4, h1(X1 - 2.4, -1.8), -1.8); saul.rotation.y = Math.atan2(2.4, 1.8);
+  const saul = kit.figure('king', { name: '사울', tint: '#4c2f2b', scale: 1.12, visible: true }); saul.position.set(X1 - 2.4, h1(X1 - 2.4, -1.8), -1.8); saul.rotation.y = Math.atan2(2.4, 1.8);
   const armor = kit.box(.01, .01, .01, '#000'); armor.visible = false;
 
   /* --- 3 · 엔게디 굴 --- */
@@ -440,8 +440,8 @@ async function world(kit, { audio, sleep }) {
     shell.count = k; }
   scene.add(shell);
   kit.box(26, .1, 30, '#2d2620', X2, -.05, -2);
-  const saulCave = kit.figure('king', { tint: '#5a3a2a', pose: 'kneel', scale: 1.08 }); saulCave.position.set(X2 + .4, 0, -9.6); saulCave.rotation.y = Math.PI;
-  const saulOut = kit.figure('king', { tint: '#5a3a2a', scale: 1.08 });
+  const saulCave = kit.figure('king', { name: '사울', tint: '#5a3a2a', pose: 'kneel', scale: 1.08 }); saulCave.position.set(X2 + .4, 0, -9.6); saulCave.rotation.y = Math.PI;
+  const saulOut = kit.figure('king', { name: '사울', tint: '#5a3a2a', scale: 1.08 });
   const scw = kit.walker(saulOut, { height: h2, pace: 5, amp: .03, lean: .05, standLean: .02 });
   const men = [[-2.4, .6], [2.2, .4], [-3.4, -1.8], [3.2, -2], [-1.2, 1.8]].map(([x, z]) => { const g = kit.person('#2f2823', { pose: 'kneel', visible: true }); g.position.set(X2 + x, 0, z); g.rotation.y = Math.atan2(-x, -z) + Math.PI; return g; });
   const saulArmy = kit.throng({ n: 70, height: h2, place: i => [X2 + rnd(-40, 40), rnd(-70, -50), 0], colors: ['#4c2f2b', '#5a4030', '#3f3226'] });
@@ -465,7 +465,7 @@ async function world(kit, { audio, sleep }) {
   kit.box(16, .1, 14, '#3a3028', 0, -.05, 0, hall); kit.box(16, 6, .3, null, 0, 3, -7, hall, hm); kit.box(.3, 6, 14, null, -8, 3, 0, hall, hm); kit.box(.3, 6, 14, null, 8, 3, 0, hall, hm); kit.box(16, .3, 14, null, 0, 6, 0, hall, hm); kit.box(16, 6, .3, null, 0, 3, 7, hall, hm);
   [-4, 4].forEach(x => [-3, 2].forEach(z => kit.box(.6, 6, .6, '#6a5a48', x, 3, z, hall)));
   const hallLights = [[-3, -5], [3, -5], [0, 4]].map(([x, z]) => { const L = new THREE.PointLight('#ffb070', 4, 12, 2); L.position.set(x, 1.8, z + .4); hall.add(L); kit.lampAt(L, { hang: .9 }); return L; });  // 매단 등잔
-  const nathan = kit.figure('elder', { tint: '#6e665a', visible: true }); nathan.position.set(.3, 0, -2.6); hall.add(nathan);
+  const nathan = kit.figure('elder', { name: '나단', tint: '#6e665a', visible: true }); nathan.position.set(.3, 0, -2.6); hall.add(nathan);
   kit.addFloor(HALL.x, HALL.z, 16, 14, 0, hall);  // 바닥 높이 (없으면 아래 땅을 읽어 앉은 다윗이 선 자세가 된다)
   kit.box(.64, .45, .52, '#4a3424', 0, .225, 2.72, hall); kit.box(.64, .95, .08, '#4a3424', 0, .925, 3.02, hall);  // 다윗이 앉은 나무 의자
 
@@ -516,19 +516,19 @@ async function world(kit, { audio, sleep }) {
   { const L = new THREE.PointLight('#ffc890', 9, 16, 1.3); L.position.set(SR.x, 3.2, SR.z); saulRoom.add(L); L.position.set(0, 3.2, 0); kit.lampAt(L, { hang: .8 }); }  // 방 전체를 비추는 등잔 불빛
   kit.box(2, .5, 1.4, '#4a3828', SR.x, .25, SR.z - 4); kit.box(2, 1.6, .3, '#4a3828', SR.x, 1.05, SR.z - 4.6);  // 왕의 자리
   kit.box(.5, .42, .45, '#4a3828', SR.x, .21, SR.z + .85);  // 다윗이 앉는 걸상
-  const saulD = figD('king', SR.x, .5, SR.z - 3.8, 0, { tint: '#4c2f2b', pose: 'seat' });
+  const saulD = figD('king', SR.x, .5, SR.z - 3.8, 0, { name: '사울', tint: '#4c2f2b', pose: 'seat' });
   const SPEAR_REST = () => { spearD.position.set(SR.x + .75, 1.25, SR.z - 3.7); spearD.rotation.set(-Math.PI / 2 + .12, 0, 0); };
   const spearStuck = [];
   const spearD = new THREE.Group(); { const s = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, 2.4, 6), kit.mat('#4a3626')); s.rotation.x = Math.PI / 2; spearD.add(s); const t = new THREE.Mesh(new THREE.ConeGeometry(.05, .25, 6), kit.mat('#9a9a92', { metalness: .5 })); t.rotation.x = Math.PI / 2; t.position.z = 1.3; spearD.add(t); }
   spearD.visible = false; sitesD.gibeah.add(spearD);
   const courtiers = [[-4.4, -1.4], [4.4, -1.2], [-4.6, 1.6]].map(([x, z], i) => figD('man', SR.x + x, 0, SR.z + z, Math.atan2(-x, -3.8 - z), { tint: ['#4a3d30', '#5a4636', '#3e3329'][i] }));
-  const jonathan = figD('man', SR.x + 2, 0, SR.z - 1.6, -.6, { tint: '#d8ccb4', colors: { mantle: '#7a2f2a', headcloth: '#e3dac4' } });
+  const jonathan = figD('man', SR.x + 2, 0, SR.z - 1.6, -.6, { name: '요나단', tint: '#d8ccb4', colors: { mantle: '#7a2f2a', headcloth: '#e3dac4' } });
   const JM = '#7a2f2a';
   // 성읍 밖: 춤추며 노래하는 여인들 (삼상 18:6–7)
   const dancers = Array.from({ length: 10 }, (_, i) => figD('woman', GB + (i % 5 - 2) * 1.6 + rnd(-.3, .3), 0, -10 - Math.floor(i / 5) * 1.8, 0, { colors: { dress: ['#ece6d8', '#e4dccb', '#e8e1d3', '#dcd3c0', '#d9d4cc'][i % 5], sash: ['#9e2430', '#33507e', '#c9a23a', '#6a3a7a', '#2a6a5a'][i % 5] } }));
   dancers.forEach(g => { g.position.y = hGb(g.position.x, g.position.z); });
   const welcome = kit.throng({ n: 120, height: hGb, place: i => { const s = i % 2 ? 1 : -1; return [GB + s * rnd(5.5, 14), rnd(-30, 2), s > 0 ? -Math.PI / 2 : Math.PI / 2]; } });
-  const saulOutD = figD('king', GB - .6, 0, -2, Math.PI, { tint: '#4c2f2b' }); saulOutD.position.y = hGb(saulOutD.position.x, -2);
+  const saulOutD = figD('king', GB - .6, 0, -2, Math.PI, { name: '사울', tint: '#4c2f2b' }); saulOutD.position.y = hGb(saulOutD.position.x, -2);
   const armyD = kit.throng({ n: 60, height: hGb, place: i => { let x, z; do { x = rnd(-4.5, 4.5); z = rnd(-1, 18); } while (Math.hypot(x - 2.4, z + 4) < 3 || Math.hypot(x + .6, z + 2) < 1.2); return [GB + x, z, Math.PI]; }, colors: ['#4a3d30', '#584736', '#3c332a'] });
   let danceOn = false;
   kit.onFrame((dt, t) => { if (!danceOn) return; dancers.forEach((g, i) => { g.position.y = hGb(g.position.x, g.position.z) + Math.max(0, Math.sin(t * 6 + i)) * .12; g.rotation.y = Math.sin(t * 2 + i) * .6; }); });
@@ -543,7 +543,7 @@ async function world(kit, { audio, sleep }) {
   for (let i = 0; i < 7; i++) { const b = kit.box(rnd(1.2, 2.2), rnd(1.2, 2.2), rnd(1.4, 2.4), null, EZ - 3 + rnd(-1, .6), hEz(EZ - 3, 0) + .7, rnd(-1.2, 1.6), undefined, kit.mat('#8a7e6a', { flatShading: true })); b.rotation.set(rnd(-.3, .3), rnd(0, 3), rnd(-.3, .3)); }  // 에셀 바위
   kit.trees('tamarisk', { n: 24, place: i => [EZ + rnd(-90, 90), rnd(-120, -40)], height: hEz });
   const EZC = [EZ - .2, 2.2];  // 다윗이 숨어 앉은 자리
-  const jonE = figD('man', EZ + 1, 0, -26, 0, { tint: '#d8ccb4', colors: { mantle: JM, headcloth: '#e3dac4' } }); jonE.position.y = hEz(jonE.position.x, -26); const jonW = kit.walker(jonE, { height: hEz });
+  const jonE = figD('man', EZ + 1, 0, -26, 0, { name: '요나단', tint: '#d8ccb4', colors: { mantle: JM, headcloth: '#e3dac4' } }); jonE.position.y = hEz(jonE.position.x, -26); const jonW = kit.walker(jonE, { height: hEz });
   const lad = figD('boy', EZ + 2, 0, -25, 0, { scale: .78, tint: '#b8a47e' }); lad.position.y = hEz(lad.position.x, -25); const ladW = kit.walker(lad, { height: hEz });
   const arrows = [0, 1, 2].map(() => { const a = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .7, 4), kit.mat('#5a4030')); a.visible = false; sitesD.ezel.add(a); return a; });
   kit.into(null);
@@ -569,9 +569,9 @@ async function world(kit, { audio, sleep }) {
   { const L = new THREE.PointLight('#ffc890', 6, 13, 1.3); L.position.set(0, 3, 0); chamber.add(L); kit.lampAt(L, { hang: .8 }); }  // 침상 위에 앉으면 몸이 침상 위에 온다
   const elderServ = [[1.6, -1.2], [2.6, 0], [.8, 1.4], [2.2, 1.8]].map(([x, z], i) => figD('man', CB.x + x, 0, CB.z + z, 0, { tint: ['#4a3d30', '#5a4636', '#3e3329', '#6a5541'][i] }));
   elderServ.forEach(g => faceTo(g, CB.x - .6, CB.z - .4));
-  const bathsheba = figD('woman', CB.x - .4, 0, CB.z + 2.6, Math.PI, { colors: { dress: '#ece6d8' } }); bathsheba.visible = false; const bsW = kit.walker(bathsheba, {});
-  const nathanC = figD('elder', CB.x + 1.6, 0, CB.z + 2.4, Math.PI, { tint: '#6e665a' }); nathanC.visible = false;
-  const solomon = figD('man', CB.x + .4, 0, CB.z + 1.2, Math.PI, { tint: '#f1ece0', colors: { mantle: '#5b2a5e', beard: '#2a1c12' } }); solomon.visible = false;
+  const bathsheba = figD('woman', CB.x - .4, 0, CB.z + 2.6, Math.PI, { name: '밧세바', colors: { dress: '#ece6d8' } }); bathsheba.visible = false; const bsW = kit.walker(bathsheba, {});
+  const nathanC = figD('elder', CB.x + 1.6, 0, CB.z + 2.4, Math.PI, { name: '나단', tint: '#6e665a' }); nathanC.visible = false;
+  const solomon = figD('man', CB.x + .4, 0, CB.z + 1.2, Math.PI, { name: '솔로몬', tint: '#f1ece0', colors: { mantle: '#5b2a5e', beard: '#2a1c12' } }); solomon.visible = false;
   const baby = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), kit.mat('#efe6d4')); baby.scale.set(1, .7, 1.5); baby.visible = false; sitesD.chamber.add(baby);
   kit.into(null);
 
@@ -591,14 +591,14 @@ async function world(kit, { audio, sleep }) {
   ark.position.set(AS + 8, hAs(AS + 8, 2), 2); sitesD.ascent.add(ark);
   const levites = [[-1, .5], [1, .5], [-1, -.5], [1, -.5]].map(([dx, dz]) => figD('man', AS + 8 + dx, 0, 2 + dz * 1.2, -Math.PI / 2, { tint: '#ece6d8', colors: { mantle: '#d8cfba', headcloth: '#ece6d8' } }));
   levites.forEach(g => { g.position.y = hAs(g.position.x, g.position.z); });
-  const zadok = figD('elder', AS + 9.6, 0, 3.4, -Math.PI / 2, { tint: '#f1ece0', colors: { mantle: '#3a4a6a', headcloth: '#f1ece0' } }); zadok.position.y = hAs(zadok.position.x, 3.4);
+  const zadok = figD('elder', AS + 9.6, 0, 3.4, -Math.PI / 2, { name: '사독', tint: '#f1ece0', colors: { mantle: '#3a4a6a', headcloth: '#f1ece0' } }); zadok.position.y = hAs(zadok.position.x, 3.4);
   const servantsAs = [[-2, 2.6], [2, 2.4], [-1.4, -2.4], [1.8, -2.2]].map(([dx, dz], i) => figD('man', AS + 16 + dx, 0, 1 + dz, -Math.PI / 2, { tint: ['#4a3d30', '#5a4636', '#3e3329', '#6a5541'][i] }));
   servantsAs.forEach(g => { g.position.y = hAs(g.position.x, g.position.z); });
   kit.into(null);
   showOnly(null);
   // 엘라 진의 형 셋 (17:13), 사울 곁의 아브넬 (17:55)
   const elahBros = [[4.4, .4], [5.4, 1.6], [4.2, 2.6]].map(([x, z], i) => { const g = figD('man', X1 + x, h1(X1 + x, z), z, 0, { tint: ['#4a3b2e', '#5a4636', '#3e3329'][i], colors: { tunic: '#8a7a60' } }); g.visible = false; return g; });
-  const abner = figD('man', X1 - 3.4, h1(X1 - 3.4, -.6), -.6, .9, { tint: '#5d3a2a', colors: { tunic: '#8c6a3c' } }); abner.visible = false;
+  const abner = figD('man', X1 - 3.4, h1(X1 - 3.4, -.6), -.6, .9, { name: '아브넬', tint: '#5d3a2a', colors: { tunic: '#8c6a3c' } }); abner.visible = false;
   const ROLE_D = { field: 'boy', yard: 'boy', harp: 'boy', elah: 'boy', saulTent: 'boy', jonathan: 'boy', women: 'shepherd', spear: 'shepherd', ezel: 'shepherd', cave: 'shepherd', hebron: 'shepherd', roof: 'king', hall: 'king', sick: 'king', ascent: 'king', gate: 'king', deathbed: 'king' };
   const SELF_OPTS = { boy: { tint: '#c4b591' }, shepherd: { tint: '#b9a888', colors: { mantle: '#6b4f35' } }, king: { tint: '#2f4a6a' } };
 

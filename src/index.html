@@ -86,7 +86,8 @@ h1 .comma{color:var(--ember)}
 }
 
 #stage{position:fixed;left:0;right:0;bottom:0;z-index:5;padding-inline:var(--gutter);padding-block:120px calc(env(safe-area-inset-bottom,0px) + clamp(20px,6vh,56px));background:linear-gradient(to top,rgba(10,8,7,.86) 0%,rgba(10,8,7,.6) 45%,rgba(10,8,7,0) 100%);pointer-events:none}
-.stage-inner{max-width:42rem;display:grid;gap:.85rem;justify-items:start;pointer-events:auto;max-height:min(68vh,40rem);overflow-y:auto;scrollbar-width:thin;min-width:0;padding:5px;margin-inline:-5px}
+.stage-inner{max-width:42rem;display:grid;gap:.85rem;justify-items:start;pointer-events:none;max-height:min(68vh,40rem);overflow-y:auto;scrollbar-width:thin;min-width:0;padding:5px;margin-inline:-5px}
+.stage-inner button,.stage-inner a,.stage-inner input,.stage-inner textarea,.stage-inner select,.stage-inner label,.stage-inner [role=button]{pointer-events:auto}  /* 글 위를 끌어도 둘러볼 수 있게: 누르는 것만 받고 나머지는 3D 화면으로 (2026-10-15) */
 .stage-inner:empty{pointer-events:none}
 .layer-tag{display:inline-flex;align-items:center;gap:.4rem;font:500 .66rem var(--f-ui);letter-spacing:.16em;padding:.18rem .5rem;border:1px solid currentColor;border-radius:2px;opacity:.9}
 .tag-text{color:var(--star)}
@@ -857,7 +858,7 @@ async function makeWorld() {
   if (!kitMod || glFailed) throw new Error('3D 없음');
   const canvas = $('#gl');
   const kit = await kitMod.createKit(canvas, { presets: C.presets, initial: C.initialEnv, audio });
-  curKit = kit; kit.setSpeed(speed);
+  curKit = kit; kit.setSpeed(speed); kit.setTagAvoid(stage);
   return await C.world(kit, { audio, sleep });
 }
 

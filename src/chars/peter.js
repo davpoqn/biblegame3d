@@ -715,6 +715,11 @@ const presets = {
 
 async function world(kit, { audio, sleep }) {
   const { THREE, scene } = kit;
+  // 제자는 장면마다 같은 옷 색으로 나온다 → 그 색으로 이름을 붙여, 어느 장면에서나 같은 얼굴·체형과 이름표가 되게 한다 (사용자 요청 2026-10-15: "한 번 그 사람이였던 캐릭터는 계속 그 이름으로")
+  // 이름은 마 10:2–4 (베드로는 나). '다른 제자'·'사랑하시는 제자'처럼 성경이 이름을 말하지 않는 사람은 따로 이름을 준다
+  const DISC = { '#c9b48e': '안드레', '#d8ccb0': '야고보', '#bfae8a': '요한', '#8a7a5a': '빌립', '#a89878': '바돌로매', '#7a6a4a': '도마', '#9a8a6a': '마태',
+    '#b9a888': '알패오의 아들 야고보', '#a08c6a': '다대오', '#6e5e48': '가나안인 시몬', '#6a5a3a': '유다' };
+  { const figure0 = kit.figure; kit.figure = (role, o = {}) => figure0(role, !o.name && o.tint && DISC[o.tint] && role !== 'jesus' ? { ...o, name: DISC[o.tint] } : o); }
   const { clamp, lerp, rnd, smooth, vnoise } = kit.u;
   const v3 = (x, y, z) => new THREE.Vector3(x, y, z);
   const sites = {};
@@ -759,8 +764,8 @@ async function world(kit, { audio, sleep }) {
   const crowd = kit.throng({ n: 54, height: heightAt, place: i => { const s = i % 2 ? 1 : -1, x = s * rnd(6, 18), z = rnd(-4, 9); return [x, z, Math.atan2(-x, -6 - z)]; } });
   // 배 안의 동업자들: 가까운 사람은 캐릭터 (야고보, 요한, 안드레)
   const andrewBoat = kit.figure('fisherman', { tint: '#c9b48e', colors: { headcloth: '#7a3a2a' }, pose: 'seat', visible: true }); andrewBoat.position.set(.55, .25, 1.4); andrewBoat.rotation.y = Math.PI; boatA.add(andrewBoat);
-  const crewA = [andrewBoat, ...[[-.55, -1.6]].map(([x, z]) => { const g = kit.person('#43362a', { pose: 'seat' }); g.position.set(x, .25, z); boatA.add(g); g.visible = true; return g; })];
-  const crewB = [[.5, .8], [-.5, -1], [0, -2.4]].map(([x, z], i) => { const g = i < 2 ? kit.figure('fisherman', { tint: ['#d8ccb0', '#bfae8a'][i], colors: { headcloth: ['#3c5a7a', '#6a5a3a'][i] }, pose: 'seat', visible: true }) : kit.person('#3c3127', { pose: 'seat' }); g.position.set(x, .25, z); boatB.add(g); g.visible = true; return g; });
+  const crewA = [andrewBoat, ...[[-.55, -1.6, '어부 1', '#b8a882'], [.55, -1.45, '어부 2', '#9c8a6c']].map(([x, z, name, tint]) => { const g = kit.figure('fisherman', { name, tint, pose: 'seat', visible: true }); g.position.set(x, .25, z); g.rotation.y = Math.PI; boatA.add(g); g.visible = true; return g; })];  // 내 배의 일꾼 둘 (눅 5:9)
+  const crewB = [[.5, .8], [-.5, -1], [0, -2.4]].map(([x, z], i) => { const g = i < 2 ? kit.figure('fisherman', { tint: ['#d8ccb0', '#bfae8a'][i], colors: { headcloth: ['#3c5a7a', '#6a5a3a'][i] }, pose: 'seat', visible: true }) : kit.figure('fisherman', { name: '건너편 배 어부', tint: '#8c7a5c', pose: 'seat', visible: true }); g.position.set(x, .25, z); boatB.add(g); g.visible = true; return g; });
   const crewSea = [[.6, -.2], [-.6, .3], [.5, -3.1]].map(([x, z]) => { const g = kit.person('#3a2f26', { pose: 'seat' }); g.position.set(x, .25, z); boatA.add(g); return g; });
   const jesusSeat = kit.figure('jesus', { pose: 'seat' }); jesusSeat.position.set(0, .25, -2.6); boatA.add(jesusSeat);
 
@@ -828,7 +833,7 @@ async function world(kit, { audio, sleep }) {
   kit.rocks({ n: 50, height: hJ, center: [JX, 0], rMin: 10, rMax: 90, sMax: .5 });
   const baptist = fig('shepherd', JX + 4.2, hJ(JX + 4.2, -24), -24, -Math.PI / 2, { tint: '#6b5236', colors: { mantle: '#5a4028' } });  // 요한 (낙타 털옷, 마 3:4)
   const jdA = fig('fisherman', JX + 5.4, hJ(JX + 5.4, -22.6), -22.6, -2, { tint: '#c9b48e', colors: { headcloth: '#7a3a2a' } });  // 안드레
-  const jdB = fig('man', JX + 5.6, hJ(JX + 5.6, -25.4), -25.4, -1.2, { tint: '#b9a888' });  // 다른 제자
+  const jdB = fig('man', JX + 5.6, hJ(JX + 5.6, -25.4), -25.4, -1.2, { name: '다른 제자', tint: '#b9a888' });  // 다른 제자
   const jesusJ = fig('jesus', JX + 9, hJ(JX + 9, -60), -60, 0); const jjw = kit.walker(jesusJ, { height: hJ, pace: 4, noRun: true });
   const ajw = kit.walker(jdA, { height: hJ }), bjw = kit.walker(jdB, { height: hJ });
   const bathers = kit.throng({ n: 26, height: hJ, place: i => [JX + rnd(3, 9) * (i % 3 ? 1 : -1), rnd(-34, -12), rnd(0, 6)] });
@@ -844,12 +849,12 @@ async function world(kit, { audio, sleep }) {
   const street = (x, z) => Math.abs(x - CX) < 3.5 || (Math.abs(z - 2) < 3 && Math.abs(x - CX) < 40);
   kit.village({ center: [CX, 6], n: 26, rMin: 9, rMax: 46, height: hC, avoid: (x, z) => street(x, z) || Math.hypot(x - (CX + 7), z - 10) < 7 || Math.hypot(x - (CX - 9), z - 18) < 7 || Math.hypot(x - (CX - 16), z - 2) < 9, seed: 9 });
   kit.trees('palm', { n: 10, place: i => [CX + rnd(-50, 50), rnd(-38, -26)], height: hC });
-  kit.trees('fig', { n: 8, place: i => [CX + (i % 2 ? 1 : -1) * rnd(5, 9), rnd(-20, 30)], height: hC });
+  kit.trees('fig', { n: 8, place: i => { let x, z; do { x = CX + (i % 2 ? 1 : -1) * rnd(5, 9); z = rnd(-20, 30); } while (Math.abs(x - (CX - 9)) < 7 && Math.abs(z - 18) < 7); return [x, z]; }, height: hC });  // 야이로의 집 둘레는 비운다 (나무가 집을 뚫고 방 안을 가렸다)
   // 시몬과 안드레의 집: 안이 보이는 방, 문은 길 쪽(-x)
   const PH = v3(CX + 7, hC(CX + 7, 10), 10);
   const peterHouse = kit.room({ at: [PH.x, PH.y, PH.z], w: 7, d: 6, h: 3, color: '#8f7558', floor: '#6a5641', door: 0, lamps: [[-2.2, -2.2, .7], [2.2, -1.6, .7]] });
   peterHouse.rotation.y = -Math.PI / 2;  // 문(+z)이 길(-x)을 본다
-  const mil = fig('woman', PH.x + 1.6, PH.y + .08, PH.z - 1.2, 0, { tint: '#e4dccb' });  // 시몬의 장모
+  const mil = fig('woman', PH.x + 1.6, PH.y + .08, PH.z - 1.2, 0, { name: '시몬의 장모', tint: '#e4dccb' });  // 시몬의 장모
   const mat0 = kit.box(1.9, .08, .8, '#7a6a52', PH.x + 1.4, PH.y + .04, PH.z - 1.2);
   const doorCrowd = kit.throng({ n: 60, height: hC, place: i => [CX + rnd(-3, 2.6), PH.z + rnd(-8, 8), Math.PI / 2 + rnd(-.5, .5)] });
   const sick = [0, 1, 2, 3].map(i => { const g = kit.person(['#5a4a3a', '#4a4036', '#6a5a48', '#3a3028'][i], { pose: i % 2 ? 'seat' : 'kneel', visible: true }); g.position.set(CX + .8 + i * .5, hC(CX + 1, PH.z), PH.z - 2.4 + i * 1.4); g.rotation.y = Math.PI / 2; return g; });
@@ -870,8 +875,8 @@ async function world(kit, { audio, sleep }) {
   jairusHouse.rotation.y = Math.PI / 2;
   const girl = fig('woman', JH.x - 1.2, JH.y + .08, JH.z, Math.PI / 2, { scale: .78, colors: { dress: '#d8ccb4' } });
   kit.box(1.7, .08, .8, '#7a6a52', JH.x - 1.4, JH.y + .04, JH.z);
-  const jairus = fig('elder', CX - 1, hC(CX - 1, -24), -24, 0, { tint: '#3a4a6a', colors: { mantle: '#2a3448' } }); const jaw = kit.walker(jairus, { height: hC });
-  const mother = fig('woman', JH.x - 2.2, JH.y, JH.z + 1.6, Math.PI, { tint: '#dcd3c0' });
+  const jairus = fig('elder', CX - 1, hC(CX - 1, -24), -24, 0, { name: '야이로', tint: '#3a4a6a', colors: { mantle: '#2a3448' } }); const jaw = kit.walker(jairus, { height: hC });
+  const mother = fig('woman', JH.x - 2.2, JH.y, JH.z + 1.6, Math.PI, { name: '아이의 어머니', tint: '#dcd3c0' });
   const mourners = kit.throng({ n: 40, height: hC, place: i => [JH.x + 4 + rnd(0, 6), JH.z + rnd(-6, 6), -Math.PI / 2 + rnd(-.6, .6)] });
   const throngC = kit.throng({ n: 70, height: hC, place: i => [CX + rnd(-4, 4), rnd(-30, -10), rnd(0, 6.3)] });
   const messenger = fig('man', CX + 2, hC(CX + 2, 14), 14, Math.PI, { tint: '#6a5a48' }); const msw = kit.walker(messenger, { height: hC });
@@ -927,8 +932,8 @@ async function world(kit, { audio, sleep }) {
   const SUM = v3(MX, hM(MX, 0), 0);  // 꼭대기 (마 17)
   const jesusT = fig('jesus', SUM.x, SUM.y, SUM.z - 3, 0);
   const glowT = new THREE.PointLight('#ffffff', 0, 16, 1.5); glowT.position.set(0, 1.4, .4); jesusT.add(glowT);
-  const moses = fig('elder', SUM.x - 2.4, hM(SUM.x - 2.4, -3.6), -3.6, .6, { tint: '#ece6d8', colors: { mantle: '#d8cfba' } });
-  const elijah = fig('elder', SUM.x + 2.4, hM(SUM.x + 2.4, -3.6), -3.6, -.6, { tint: '#e2dccc', colors: { mantle: '#b9a888' } });
+  const moses = fig('elder', SUM.x - 2.4, hM(SUM.x - 2.4, -3.6), -3.6, .6, { name: '모세', tint: '#ece6d8', colors: { mantle: '#d8cfba' } });
+  const elijah = fig('elder', SUM.x + 2.4, hM(SUM.x + 2.4, -3.6), -3.6, -.6, { name: '엘리야', tint: '#e2dccc', colors: { mantle: '#b9a888' } });
   const jamesT = fig('fisherman', SUM.x - 1.4, hM(SUM.x - 1.4, 2.2), 2.2, Math.PI, { tint: '#d8ccb0', colors: { headcloth: '#3c5a7a' } }), johnT = fig('fisherman', SUM.x + 1.4, hM(SUM.x + 1.4, 2.4), 2.4, Math.PI, { tint: '#bfae8a', colors: { headcloth: '#6a5a3a' } });
   const cloud = new THREE.Group(); for (let i = 0; i < 14; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(rnd(2.5, 4.5), 12, 8), new THREE.MeshBasicMaterial({ color: '#fffaf0', transparent: true, opacity: .0, depthWrite: false, fog: false })); m.position.set(rnd(-7, 7), rnd(1, 5), rnd(-8, 4)); cloud.add(m); }
   cloud.position.copy(SUM); cloud.visible = false; sites.mtn.add(cloud);
@@ -941,7 +946,14 @@ async function world(kit, { audio, sleep }) {
   kit.terrain({ height: hK, size: 500, seg: 130, at: [KX, 0], lo: '#5a5444', hi: '#9a8e74', yMul: .02 });
   for (let i = 0; i < 9; i++) { const b = kit.box(rnd(8, 16), rnd(14, 26), rnd(6, 10), null, KX - 40 + i * 10, 8, -18 - rnd(0, 4), undefined, kit.mat('#7d7262', { flatShading: true })); b.rotation.set(rnd(-.08, .08), rnd(-.3, .3), rnd(-.06, .06)); }
   kit.rocks({ n: 60, height: hK, center: [KX, -12], rMin: 2, rMax: 30, sMax: 1.4, color: '#7a6e5c', avoid: (x, z) => Math.hypot(x - KX, z) < 6 });
-  kit.box(5, 6, 3, '#1a1612', KX + 2, 3, -14);  // 바위 굴
+  { // 바위 굴: 절벽 앞면에 아치 모양으로 뚫린 어두운 입구 (전에는 검은 상자가 절벽 앞에 튀어나와 보였다)
+    kit.box(16, 22, 8, null, KX + 2, 9, -19, undefined, kit.mat('#7d7262', { flatShading: true }));  // 굴이 뚫린 절벽 (앞면 z -15)
+    const sh = new THREE.Shape(); sh.moveTo(-2.1, 0); sh.lineTo(-2.1, 2.9); sh.absarc(0, 2.9, 2.1, Math.PI, 0, true); sh.lineTo(2.1, 0); sh.lineTo(-2.1, 0);
+    const gm = new THREE.ShapeGeometry(sh, 18), uv = gm.attributes.position;
+    const col = []; for (let i = 0; i < uv.count; i++) { const r = Math.min(1, Math.hypot(uv.getX(i) / 2.1, (uv.getY(i) - 2.4) / 2.6)); col.push(.003 + r * .022, .0025 + r * .018, .002 + r * .014); }  // 안쪽일수록 어둡게
+    gm.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    const cave = new THREE.Mesh(gm, new THREE.MeshBasicMaterial({ vertexColors: true, fog: true })); cave.position.set(KX + 2, hK(KX + 2, -14.8) - .25, -14.96); sites.caes.add(cave);
+  }
   kit.water({ y: .1, size: 7, seg: 4, at: [KX + 3, -11.5], deep: '#20443c' });
   kit.trees('fig', { n: 18, place: i => [KX + rnd(-40, 40), rnd(-6, 30)], height: hK });
   kit.trees('tamarisk', { n: 12, place: i => [KX + rnd(-60, 60), rnd(10, 50)], height: hK });
@@ -1026,7 +1038,7 @@ async function world(kit, { audio, sleep }) {
   const sleepers = [[-1.1, .6], [1.2, .4]].map(([dx, dz], i) => fig('fisherman', GE.x + dx, hJr(GE.x + dx, GE.z + dz), GE.z + dz, Math.PI, { tint: ['#d8ccb0', '#bfae8a'][i], colors: { headcloth: ['#3c5a7a', '#6a5a3a'][i] }, pose: 'seat' }));
   const others8 = Array.from({ length: 8 }, (_, i) => { const g = kit.person(['#4a3c30', '#5a4a3a', '#3a3029', '#6a5541'][i % 4], { pose: 'seat', visible: true }); g.position.set(GE.x - 8 + rnd(-3, 3), 0, GE.z + 9 + rnd(-2, 2)); g.position.y = hJr(g.position.x, g.position.z); g.rotation.y = rnd(0, 6); return g; });
   const judas = fig('man', GE.x - 40, 0, GE.z + 16, Math.PI / 2, { tint: '#6a5a3a', colors: { mantle: '#4a3a2a' } }); const jdw = kit.walker(judas, { height: hJr });
-  const malchus = fig('man', GE.x - 42, 0, GE.z + 18, Math.PI / 2, { tint: '#5a5048', colors: { headcloth: '#9a9080' } }); const mlw = kit.walker(malchus, { height: hJr });
+  const malchus = fig('man', GE.x - 42, 0, GE.z + 18, Math.PI / 2, { name: '말고', tint: '#5a5048', colors: { headcloth: '#9a9080' } }); const mlw = kit.walker(malchus, { height: hJr });
   const band = Array.from({ length: 14 }, (_, i) => {
     const role = i % 3 === 0 ? 'roman' : 'man', g = kit.figure(role, { tint: role === 'man' ? ['#4a4038', '#3a3430', '#5a4a3a'][i % 3] : undefined, visible: true });
     g.position.set(GE.x - 44 - (i % 5) * 1.3, 0, GE.z + 14 + Math.floor(i / 5) * 1.6); g.position.y = hJr(g.position.x, g.position.z);
@@ -1041,10 +1053,10 @@ async function world(kit, { audio, sleep }) {
   const jesusX = fig('jesus', 0, 0, 0, 0, { colors: { tunic: '#e9e2d2' }, mantle: false }); hang(jesusX, crosses[1]);  // 군병들이 그 옷을 취하였다 (요 19:23)
   const thieves = [0, 2].map(ci => { const g = fig('boy', 0, 0, 0, 0, { tint: '#9a8a6a' }); hang(g, crosses[ci]); return g; });
   const soldiersX = [[-2.4, 3.6, 'seat'], [-1, 4.4, 'seat'], [1.2, 4.6, 'seat'], [2.6, 3.8, 'seat'], [-4.4, 1.6, 'stand'], [4.6, 1.8, 'stand']].map(([dx, dz, p]) => { const g = fig('roman', GO.x + dx, hJr(GO.x + dx, GO.z + dz), GO.z + dz, Math.atan2(-dx, -dz - 2), { pose: p }); return g; });
-  const centurion = fig('roman', GO.x - 2.2, hJr(GO.x - 2.2, GO.z + 1.6), GO.z + 1.6, 0, { colors: { cloak: '#7a1a18' } });
+  const centurion = fig('roman', GO.x - 2.2, hJr(GO.x - 2.2, GO.z + 1.6), GO.z + 1.6, 0, { name: '백부장', colors: { cloak: '#7a1a18' } });
   const robe = kit.box(.9, .05, .6, '#e9e2d2', GO.x - .2, hJr(GO.x, GO.z + 4.2) + .03, GO.z + 4.2);  // 통으로 짠 속옷 (요 19:23)
   const women = [[-2.2, -.2], [-1.4, -.6], [-.8, .1], [-3, .4]].map(([dx, dz], i) => fig('woman', GO.x + dx - 2, hJr(GO.x + dx - 2, GO.z + dz), GO.z + dz, Math.atan2(2 - dx, -2 - dz), { tint: ['#ece6d8', '#e4dccb', '#dcd3c0', '#d9d4cc'][i] }));
-  const beloved = fig('fisherman', GO.x - 1.2, hJr(GO.x - 1.2, GO.z + .6), GO.z + .6, Math.PI * .1, { tint: '#bfae8a', colors: { headcloth: '#6a5a3a' } });
+  const beloved = fig('fisherman', GO.x - 1.2, hJr(GO.x - 1.2, GO.z + .6), GO.z + .6, Math.PI * .1, { name: '사랑하시는 제자', ident: '요한', tint: '#bfae8a', colors: { headcloth: '#6a5a3a' } });
   const mockers = kit.throng({ n: 36, height: hJr, place: i => [GO.x + rnd(-16, 16), GO.z + rnd(14, 24), Math.PI + rnd(-.5, .5)] });
   // 가까이 선 사람들은 진짜 인물로: 지나가며 머리를 흔드는 사람들(마 27:39), 대제사장들과 서기관과 장로들(마 27:41), 구경하는 백성(눅 23:35). 둘러보면 보인다
   const crowdX = Array.from({ length: 14 }, (_, i) => {
@@ -1072,7 +1084,7 @@ async function world(kit, { audio, sleep }) {
   const linen = kit.box(.5, .07, 1.7, '#efe9da', 0, 0, 0); linen.position.copy(shelfAt(0, .2)); linen.rotation.y = Math.PI;  // 놓여 있는 고운 베 (요 20:6)
   const napkin = kit.box(.24, .06, .2, '#efe9da', 0, 0, 0); napkin.position.copy(shelfAt(-.05, -1.4));  // 따로 개켜 있는 수건 (요 20:7)
   kit.trees('olive', { n: 14, place: i => [TB.x + rnd(-20, 20), TB.z + rnd(-26, -6)], height: hJr });
-  const otherDisc = fig('fisherman', 0, 0, 0, 0, { tint: '#bfae8a', colors: { headcloth: '#6a5a3a' } }); const odw = kit.walker(otherDisc, { height: hJr }); otherDisc.visible = false;
+  const otherDisc = fig('fisherman', 0, 0, 0, 0, { name: '다른 제자', ident: '요한', tint: '#bfae8a', colors: { headcloth: '#6a5a3a' } }); const odw = kit.walker(otherDisc, { height: hJr }); otherDisc.visible = false;
   // 베다니 앞 (눅 24:50)
   const BE = v3(JR + 210, 0, -38); BE.y = hJr(BE.x, BE.z);
   const jesusAsc = fig('jesus', BE.x, BE.y, BE.z - 4, 0);
@@ -1114,7 +1126,7 @@ async function world(kit, { audio, sleep }) {
   const hideDisc = [[-2.4, -1.2], [2.2, -1.4], [-1, -2.4], [1, -2.6], [-3.2, .4], [3.2, .2], [-.2, -.6], [1.8, .8], [-1.8, .9], [.2, 1.6]].map(([x, z], i) => { const g = i < 5 ? kit.figure(i < 3 ? 'fisherman' : 'man', { tint: ['#c9b48e', '#d8ccb0', '#bfae8a', '#a89878', '#8a7a5a'][i], pose: 'seat', visible: true }) : kit.person(['#3e3228', '#4a3b2f', '#352c25'][i % 3], { pose: 'seat', visible: true }); g.position.set(HIDE.x + x, 0, HIDE.z + z); faceTo(g, HIDE.x, HIDE.z - .4); return g; });
   const thomas = fig('man', HIDE.x + 1.6, 0, HIDE.z - .2, -Math.PI / 2, { tint: '#7a6a4a', colors: { mantle: '#3a4a3a' } }); thomas.visible = false;
   const johnHide = hideDisc[1];
-  const magdalene = fig('woman', HIDE.x, 0, HIDE.z + 3.2, Math.PI, { tint: '#e4dccb' }); magdalene.visible = false; const mgw = kit.walker(magdalene, {});
+  const magdalene = fig('woman', HIDE.x, 0, HIDE.z + 3.2, Math.PI, { name: '막달라 마리아', tint: '#e4dccb' }); magdalene.visible = false; const mgw = kit.walker(magdalene, {});
   const jesusHide = fig('jesus', HIDE.x, 0, HIDE.z - 1, 0, { colors: { tunic: '#f2eee4' } }); jesusHide.visible = false;
   const hideLight = new THREE.PointLight('#fff0d8', 0, 6, 2); hideLight.position.set(0, 2.4, 1.2); jesusHide.add(hideLight);
   // 못 자국과 옆구리 (요 20:20, 27)

@@ -173,13 +173,13 @@ async function world(kit, { audio, sleep }) {
   const lamp = new THREE.PointLight('#ffae66', 3.2, 9, 2); lamp.position.set(-1.2, .6, -2.4); scene.add(lamp);
   const lampG = kit.lampAt(lamp);  // 장막 안의 진흙 등잔 ("등잔 하나가 탄다")
   kit.box(2.6, .08, 1.8, '#5a3f2e', .3, .04, -3.4);
-  const isaac = kit.figure('elder', { tint: '#8b806c', pose: 'seat', visible: true }); isaac.position.set(.3, .08, -3.6);
+  const isaac = kit.figure('elder', { name: '이삭', aka: ['아버지'], tint: '#8b806c', pose: 'seat', visible: true }); isaac.position.set(.3, .08, -3.6);
   // 내 몸 (1인칭). 27:15–16 에서의 좋은 옷을 입고 손과 목에 염소 새끼 가죽을 두르면 팔이 털 덮인 팔로 바뀐다
   const JACOB = { tint: '#5a4a3a', colors: { tunic: '#d9ceb2' } }, DISGUISE = { tint: '#7a3a2a', colors: { tunic: '#e6dfcf', M_Main: '#4a3828', M_Joints: '#4a3828' } };
   kit.selfBody('man', JACOB);
   const faceIsaac = () => { isaac.rotation.y = Math.atan2(.28 - isaac.position.x, -2.5 - isaac.position.z); };
-  const rebekah = kit.figure('woman', { tint: '#ece6d8', scale: .96, visible: true }); rebekah.position.set(-1.6, 0, .6); rebekah.rotation.y = Math.PI * .7;
-  const esau = kit.figure('shepherd', { tint: '#7a4a2a', scale: 1.06 }); const ew = kit.walker(esau, { height: h0 });
+  const rebekah = kit.figure('woman', { name: '리브가', aka: ['어머니'], tint: '#ece6d8', scale: .96, visible: true }); rebekah.position.set(-1.6, 0, .6); rebekah.rotation.y = Math.PI * .7;
+  const esau = kit.figure('shepherd', { name: '에서', tint: '#7a4a2a', scale: 1.06 }); const ew = kit.walker(esau, { height: h0 });
   [[-14, -6, .4], [12, -10, -.5]].forEach(([x, z, r]) => kit.tent({ at: [x, h0(x, z), z], ry: r }));
   const goats0 = kit.herd('goat', { n: 30, center: [-20, 14], rx: 10, rz: 7, height: h0 });
 
@@ -203,8 +203,8 @@ async function world(kit, { audio, sleep }) {
   kit.box(10, 3.2, 6, '#a08c70', 0, 1.6, -11, court); kit.box(16, 1.2, .5, '#8c7a62', 0, .6, 6, court);
   const feast = kit.throng({ n: 22, place: i => { const a = (i / 22) * Math.PI * 2, r = 4.5 + (i % 2) * 1.2; return [X2 + Math.cos(a) * r, -4 + Math.sin(a) * r * .6, Math.atan2(-Math.cos(a), -Math.sin(a))]; }, pose: 'seat' });
   const feastFire = kit.fire([X2, .05, -4], { level: 0 });
-  const laban = kit.figure('elder', { tint: '#5a4a3a', visible: true }); laban.position.set(X2 + 1.8, 0, -2.6);
-  const leah = kit.figure('woman', { tint: '#e4dccb', scale: .94 }); leah.position.set(X2 - .9, 0, -1.6);
+  const laban = kit.figure('elder', { name: '라반', tint: '#5a4a3a', visible: true }); laban.position.set(X2 + 1.8, 0, -2.6);
+  const leah = kit.figure('woman', { name: '레아', tint: '#e4dccb', scale: .94 }); leah.position.set(X2 - .9, 0, -1.6);
   const flocks2 = kit.herd('sheep', { n: 40, center: [X2 + 20, -24], rx: 14, rz: 8, height: h2 });
 
   /* --- 4 · 얍복 나루 --- */
@@ -217,12 +217,12 @@ async function world(kit, { audio, sleep }) {
   const crossers = [...family, ...kids].map(g => ({ g, w: kit.walker(g, { height: h3, pace: 6, amp: .04, lean: .06, standLean: .02 }) }));
   const herds3 = [kit.herd('sheep', { n: 46, center: [X3 - 16, 8], rx: 12, rz: 6, height: h3 }), kit.herd('goat', { n: 30, center: [X3 + 14, 9], rx: 10, rz: 5, height: h3 }), kit.herd('camel', { n: 12, center: [X3 + 4, 16], rx: 8, rz: 4, height: h3 }), kit.herd('ox', { n: 14, center: [X3 - 6, 18], rx: 8, rz: 4, height: h3 }), kit.herd('donkey', { n: 10, center: [X3 + 22, 18], rx: 6, rz: 4, height: h3 })];
   const herdHome = herds3.map(g => g.position.clone());
-  const stranger = kit.figure('man', { tint: '#24201d', scale: 1.04 });
+  const stranger = kit.figure('man', { name: '어떤 사람', tint: '#24201d', scale: 1.04 });
 
   /* --- 5 · 에서를 만나는 들 --- */
   const X4 = SITE[4], h4 = land(X4, .6, 14);
   kit.terrain({ height: h4, size: 700, seg: 120, at: [X4, -100], lo: '#6e5c42', hi: '#c0a77c' });
-  const esau4 = kit.figure('shepherd', { tint: '#7a4a2a', scale: 1.06 }); const ew4 = kit.walker(esau4, { height: h4, pace: 12, amp: .1, lean: .25 });
+  const esau4 = kit.figure('shepherd', { name: '에서', tint: '#7a4a2a', scale: 1.06 }); const ew4 = kit.walker(esau4, { height: h4, pace: 12, amp: .1, lean: .25 });
   const fourHundred = kit.throng({ n: 160, height: h4, place: i => [X4 + rnd(-40, 40), rnd(-170, -130), 0], colors: ['#5a4430', '#6b5238', '#4a3a2a'] });
   const behind = [[-1.4, 3, '#5a4a3a'], [1.4, 3.2, '#5e4e44'], [-1, 6, '#6a5a6e'], [1.2, 6.4, '#6a5a6e'], [0, 9.5, '#7b5a4a']].map(([x, z, c]) => { const g = kit.person(c, { scale: .95 }); g.position.set(X4 + x, h4(X4 + x, z), z); g.rotation.y = Math.PI; return g; });
   const behindKids = Array.from({ length: 12 }, (_, i) => { const g = kit.person('#5b4a3a', { scale: .52 + (i % 4) * .08 }); const x = rnd(-3, 3), z = [3.8, 7, 10][i % 3] + rnd(-.4, .4); g.position.set(X4 + x, h4(X4 + x, z), z); g.rotation.y = Math.PI; return g; });

@@ -663,7 +663,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   const talkState = { speaker: null, until: 0, who: '' };
   // 대사 인물 이름표 (사용자 요청, 2026-10-15): 말하는 사람 머리 위에 대사의 이름을 띄운다. 모양은 index.html의 .nametag
   const tagEl = document.createElement('div'); tagEl.className = 'nametag'; tagEl.setAttribute('aria-hidden', 'true'); document.body.appendChild(tagEl);
-  const _tagP = new THREE.Vector3();
+  const _tagP = new THREE.Vector3(); let tagAvoid = null;
   function stepNameTag() {
     const sp = talkState.speaker, on = !!(sp && talkState.who && clock < talkState.until - .4 && shown(sp) && sp.userData.head);
     let vis = false;
@@ -671,6 +671,10 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       sp.userData.head.getWorldPosition(_tagP); _tagP.y += .34 * sp.scale.y;
       const dist = _tagP.distanceTo(camera.position); _tagP.project(camera);
       vis = _tagP.z < 1 && Math.abs(_tagP.x) < .95 && _tagP.y < .95 && _tagP.y > -.85 && dist < 30;  // 화면 안, 너무 멀지 않을 때만
+      if (vis && tagAvoid) {  // 대사 글자 위에는 띄우지 않는다
+        const r = tagAvoid.getBoundingClientRect(), x = (_tagP.x + 1) / 2 * innerWidth, y = (1 - _tagP.y) / 2 * innerHeight;
+        if (r.height > 0 && x > r.left - 20 && x < r.right + 20 && y > r.top - 6 && y < r.bottom + 30) vis = false;
+      }
       if (vis) { tagEl.style.left = ((_tagP.x + 1) / 2 * innerWidth).toFixed(1) + 'px'; tagEl.style.top = ((1 - _tagP.y) / 2 * innerHeight).toFixed(1) + 'px'; if (tagEl.textContent !== talkState.who) tagEl.textContent = talkState.who; }
     }
     tagEl.classList.toggle('on', vis);
@@ -744,13 +748,19 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   function talk(who, { dur = 4 } = {}) {
     const cands = figs.filter(g => g !== me.g && shown(g) && g.userData.fig.role !== 'jesus');
     if (!cands.length) return;
-    const many = /들$|무리|여럿|사람들|지파/.test(who || '');
-    let sp = cands.filter(g => g.userData.fig.name && who && who.includes(g.userData.fig.name));
+    // 말하는 사람 고르기 (사용자 요청 2026-10-15: "한 번 그 사람이였던 캐릭터는 계속 그 이름으로, 바꾸지마"):
+    // 1) 그 이름(또는 다른 이름 aka)을 가진 사람 2) 없으면 화면 가운데 가까운, 아직 이름이 없는 사람 하나를 그 이름으로 정한다 — 그 뒤로 바뀌지 않는다
+    // 여럿(…들, …무리, 여럿)이 말하면 이름 없는 사람 몇이 말하는 몸짓만 하고 이름표는 띄우지 않는다
+    const key = (who || '').trim(), many = /(들|무리|여럿)$|사람들|지파/.test(key);
+    const names = g => { const F = g.userData.fig; return F.name ? [F.name, ...(F.aka || [])] : []; };
+    let sp = key ? cands.filter(g => names(g).includes(key)) : [];
+    if (!sp.length && key) sp = cands.filter(g => names(g).some(n => n.length > 1 && key.includes(n)));
     if (!sp.length) {
       const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
-      const plain = cands.filter(g => !g.userData.fig.name);  // 이름 없는 사람의 말은 이름 있는 인물(안드레 등)에게 붙이지 않는다
-      sp = (plain.length ? plain : cands).map(g => { g.getWorldPosition(_tp); _tp.y += 1.4 * g.scale.y; /* 얼굴 높이로 잰다 */ const d = _tp.sub(camera.position); const dist = d.length(); return { g, dist, ang: d.normalize().angleTo(fwd) }; })
+      const plain = cands.filter(g => !g.userData.fig.name);  // 이름 있는 사람에게 다른 이름을 붙이지 않는다
+      sp = plain.map(g => { g.getWorldPosition(_tp); _tp.y += 1.4 * g.scale.y; /* 얼굴 높이로 잰다 */ const d = _tp.sub(camera.position); const dist = d.length(); return { g, dist, ang: d.normalize().angleTo(fwd) }; })
         .filter(o => o.dist < 14 && o.ang < .55).sort((a, b) => (a.ang + a.dist * .03) - (b.ang + b.dist * .03)).slice(0, many ? 3 : 1).map(o => o.g);
+      if (sp.length && key && !many) sp[0].userData.fig.name = key;  // 이제부터 이 사람의 이름
     }
     if (!sp.length) return;
     for (const g of sp) {
@@ -758,16 +768,17 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
       const c = F.base.startsWith('Sitting') ? 'Sitting_Talking_Loop' : 'Idle_Talking_Loop';
       F.auto.clip = c; F.auto.until = clock + dur; F.play(c, .5, F.speed);
     }
-    talkState.speaker = sp[0]; talkState.until = clock + dur + .8; talkState.who = who || '';
+    talkState.speaker = sp[0]; talkState.until = clock + dur + .8; talkState.who = many ? '' : key;
     cands.filter(g => !sp.includes(g) && g.position.distanceTo(sp[0].position) < 7 && Math.random() < .45).slice(0, 2)
       .forEach((g, i) => { g.userData.fig.auto.nodAt = clock + dur * .75 + i * .5; });
+    return sp[0];
   }
   // MakeHuman 머리(assets/chars/mh_head_m·f.glb, CC0, tools/chars/mh_heads.py). 얼굴은 모두 같고(사용자 뜻) 사람마다 피부색·머리카락·수염·그 색이 다르다 (연출: 성경에는 생김새가 없다)
   const SKIN_TONES = [[.92, .86, .8], [.86, .78, .7], [.8, .71, .62], [.72, .62, .53], [.62, .52, .44]];  // 얼굴 텍스처에 곱하는 색 (밝은 올리브 ~ 짙은 갈색)
   const HAIR_COLORS = ['#1b130e', '#2a1c13', '#3b2819', '#553b28', '#7a7470', '#bdb8b0'];  // 검정, 짙은 갈색, 갈색, 밝은 갈색, 희끗, 흰
   let lookN = 0;
-  function pickLook(role, sex, look = {}) {
-    const n = lookN++, old = role === 'elder';
+  function pickLook(role, sex, look = {}, seed = null) {
+    const n = seed ?? lookN++, old = role === 'elder';  // seed: 이름이 있는 사람은 이름으로 정한다 (어느 장면에서나 같은 얼굴·체형·수염)
     const hairs = (figSrc.mhHead[sex].getObjectByName('mh_head_' + sex) || {}).userData?.hairs || [];
     const pool = role === 'boy' ? hairs.filter(h => h.startsWith('hair_short')) : hairs;
     // 얼굴과 체형도 돌려 가며 고른다 (사용자 요청 2026-10-15: 복제인간처럼 보이지 않게). 얼굴 번호는 mh_head의 faces 순서, 체형은 BODY
@@ -850,9 +861,10 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     stripe: ['#e3dac4', '#3a3028', '#8e3b2e', '#c9a46a', '#33507e'] };
   const VARY = new Set(['man', 'elder', 'shepherd', 'fisherman', 'boy', 'woman', 'woman_veil']);  // 왕·군인·골리앗은 정해진 옷
   let outfitN = 0;
-  function dressUp(role, spec, tint, colors) {
+  const nameSeed = s => { let h = 7; for (const ch of s) h = (h * 31 + ch.codePointAt(0)) % 100003; return h; };
+  function dressUp(role, spec, tint, colors, seed = null) {
     if (!VARY.has(role)) return spec;
-    const n = outfitN++, P = (list, k) => list[(n * k + (n >> 1) + k) % list.length], male = spec.body !== 'f';
+    const n = seed ?? outfitN++, P = (list, k) => list[(n * k + (n >> 1) + k) % list.length], male = spec.body !== 'f';
     const fixed = new Set(Object.keys(colors || {})), t = tint && TINT.find(([w]) => spec.wear.includes(w)); if (t) fixed.add(t[1]);  // 이야기가 정한 색은 그대로
     const wear = new Set(spec.wear), bare = new Set(spec.bare || []), c = {}, pat = {};
     const drop = (w, slot) => { if (!fixed.has(slot)) wear.delete(w); };
@@ -894,10 +906,11 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     };
     const key = m.customProgramCacheKey.bind(m); m.customProgramCacheKey = () => key() + '|pat';
   }
-  function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3, look, noHead = false, name, mantle = true } = {}) {
+  function figure(role, { tint, colors, pose = 'stand', clip, scale = 1, visible = false, seatDrop = .3, look, noHead = false, name, ident, aka, mantle = true } = {}) {
+    const seed = (ident || name) ? nameSeed(ident || name) : null;  // ident: 이름표는 name, 생김새는 ident (사래·사라처럼 이름이 바뀌어도 같은 사람)
     const spec0 = role === 'jesus' ? (figSrc && (mantle ? JESUS : { ...JESUS, wear: JESUS.wear.filter(w => w !== 'mantle_j') })) : figSrc && figSrc.outfits.roles[role];
     if (!spec0) return person(tint || '#4a3c30', { pose, scale, visible });
-    const spec = noHead ? spec0 : dressUp(role, spec0, tint, colors);  // 사람마다 옷 색·무늬·조합을 다르게 (내 몸은 그대로)
+    const spec = noHead ? spec0 : dressUp(role, spec0, tint, colors, seed);  // 사람마다 옷 색·무늬·조합을 다르게 (내 몸은 그대로)
     const d = figSrc.outfits.default_colors, col = { ...d };  // 색 규칙은 tools/chars/build_chars.py role_colors와 같다
     for (const u of UNDER) col[u] = spec.under || d.tunic;
     for (const u of spec.bare || []) col[u] = d.M_Main;
@@ -936,10 +949,10 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
     else if (!noHead && figSrc.mhHead[spec.body === 'f' ? 'f' : 'm']) {
       const sex = spec.body === 'f' ? 'f' : 'm';
       body.traverse(o => { if (o.isMesh && ['beard', 'hair', 'circlet'].includes(o.name)) o.visible = false; });  // 마네킹용 수염·머리카락 대신 MakeHuman 것 (머리띠는 새 머리 위에 떠서 후광처럼 보인다)
-      F.play('Idle_Loop', 0); mixer.update(0); const L = pickLook(role, sex, look); F.hideHead = dressHead(body, sex, spec, L); shapeBody(body, L.body); F.cur = null; mixer.stopAllAction();
+      F.play('Idle_Loop', 0); mixer.update(0); const L = pickLook(role, sex, look, seed); F.hideHead = dressHead(body, sex, spec, L); shapeBody(body, L.body); F.cur = null; mixer.stopAllAction();
     }
     F.play(F.base, 0, IDLE_SET.has(F.base) ? F.speed : 1); mixer.update(Math.random() * 3);  // 여러 사람이 같은 박자로 움직이지 않게
-    const bones = {}; F.bone = n => bones[n] || (bones[n] = body.getObjectByName(n)); F.name = name;
+    const bones = {}; F.bone = n => bones[n] || (bones[n] = body.getObjectByName(n)); F.name = name; F.aka = aka;
     g.userData.fig = F; g.userData.head = body.getObjectByName('Head');
     g.scale.setScalar(scale * .92); g.visible = visible; R().add(g); figs.push(g);
     return g;
@@ -1893,6 +1906,7 @@ export async function createKit(canvas, { presets = {}, initial = 'start', audio
   return {
     setSpeed(s) { SPEED = s; },
     quiet() { talkState.until = 0; },  // 대사 이름표·배경 흐림을 끝낸다 (새 화면)
+    setTagAvoid(el) { tagAvoid = el; },  // 이름표가 이 요소(대사 글) 위에 오면 숨긴다
     THREE, scene, camera, renderer, PR, env, fx, sparks, dust,
     u: { clamp, lerp, ease, rnd, smooth, vnoise, hash2, sleep, reduceMotion },
     get clock() { return clock; },

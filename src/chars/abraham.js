@@ -399,8 +399,8 @@ async function world(kit, { audio, sleep }) {
   const tents0 = [[-7, -4, .4], [6, -6, -.3], [-2, -11, 0], [11, 3, -1]].map(([x, z, r]) => kit.tent({ at: [x, h0(x, z), z], ry: r, color: '#3a2f27' }));
   const herds0 = [kit.herd('sheep', { n: 50, center: [-24, -14], rx: 14, rz: 10, height: h0 }), kit.herd('goat', { n: 30, center: [22, -18], rx: 10, rz: 8, height: h0 }), kit.herd('camel', { n: 12, center: [12, -32], rx: 9, rz: 6, height: h0 }), kit.herd('donkey', { n: 10, center: [-8, -28], rx: 6, rz: 5, height: h0 })];
   const herdHome = herds0.map(g => g.position.clone());
-  const sarai = kit.figure('woman', { tint: SARAI, scale: .95, visible: true });  // 창 12:11 아리따운 여인 sarai.position.set(-5.4, h0(-5.4, -2.2), -2.2); sarai.rotation.y = Math.atan2(5.4, 2.2);
-  const lot = kit.figure('man', { tint: '#4b3d30', visible: true }); lot.position.set(3.4, h0(3.4, -3), -3); lot.rotation.y = Math.atan2(-3.4, 3);
+  const sarai = kit.figure('woman', { name: '사래', ident: '사라', tint: SARAI, scale: .95, visible: true });  // 창 12:11 아리따운 여인 sarai.position.set(-5.4, h0(-5.4, -2.2), -2.2); sarai.rotation.y = Math.atan2(5.4, 2.2);
+  const lot = kit.figure('man', { name: '롯', tint: '#4b3d30', visible: true }); lot.position.set(3.4, h0(3.4, -3), -3); lot.rotation.y = Math.atan2(-3.4, 3);
   const people0 = kit.throng({ n: 22, height: h0, place: i => { const a = rnd(0, 6.3), r = rnd(9, 22); return [Math.cos(a) * r, -8 + Math.sin(a) * r * .7]; } });
   const fire0 = kit.fire([1.2, h0(1.2, -6) + .05, -6], { level: 0, smoke: true });
 
@@ -425,9 +425,9 @@ async function world(kit, { audio, sleep }) {
   kit.terrain({ height: h3, size: 700, seg: 120, at: [X3, -150], lo: '#9a8160', hi: '#e2cba2', yMul: .02 });
   kit.rocks({ n: 40, height: h3, center: [X3, 0], rMin: 10, rMax: 120, color: '#a08a6a', sMax: .5 });
   [[-6, -3, .3], [5, -5, -.4]].forEach(([x, z, r]) => kit.tent({ at: [X3 + x, h3(X3 + x, z), z], ry: r, color: '#3d3129' }));
-  const sarah = kit.figure('woman', { tint: SARAI, scale: .95, visible: true }); sarah.position.set(X3 - 5.2, h3(X3 - 5.2, -1), -1);
-  const isaacChild = kit.figure('boy', { tint: '#a8977e', scale: .5, visible: true }); isaacChild.position.set(X3 - 4.2, h3(X3 - 4.2, -.4), -.4);
-  const hagar = kit.figure('woman', { tint: '#e4dccb', scale: .95 }), ishmael = kit.figure('boy', { tint: '#5a4a3a', scale: .78 });
+  const sarah = kit.figure('woman', { name: '사라', tint: SARAI, scale: .95, visible: true }); sarah.position.set(X3 - 5.2, h3(X3 - 5.2, -1), -1);
+  const isaacChild = kit.figure('boy', { name: '이삭', tint: '#a8977e', scale: .5, visible: true }); isaacChild.position.set(X3 - 4.2, h3(X3 - 4.2, -.4), -.4);
+  const hagar = kit.figure('woman', { name: '하갈', tint: '#e4dccb', scale: .95 }), ishmael = kit.figure('boy', { tint: '#5a4a3a', scale: .78 });
   const hw = kit.walker(hagar, { height: h3, pace: 5, amp: .03, lean: .06, standLean: .02 }), iw = kit.walker(ishmael, { height: h3, pace: 6, amp: .04, lean: .06, standLean: .02 });
   const herds3 = [kit.herd('sheep', { n: 30, center: [X3 + 22, -16], rx: 12, rz: 8, height: h3 }), kit.herd('camel', { n: 6, center: [X3 - 18, -20], rx: 6, rz: 4, height: h3 })];
 
@@ -481,11 +481,11 @@ async function world(kit, { audio, sleep }) {
     }
   });
   const tent4 = kit.tent({ at: [X4 + 4, h4(X4 + 4, 4), 4], ry: -.5 });
-  const isaac = kit.figure('boy', { tint: '#a8977e', scale: .88 });
+  const isaac = kit.figure('boy', { name: '이삭', tint: '#a8977e', scale: .88 });
   const iw4 = kit.walker(isaac, { height: h4, pace: 6, amp: .04, lean: .08, standLean: .03, noRun: true });
   const wood = kit.box(.25, .25, 1.1, '#5a4130', 0, 1.15, -.15, isaac); wood.rotation.x = .3; wood.visible = false;  // 번제 나무는 22:6부터 이삭이 진다
   // 이삭은 나귀를 타고 간다(연출: 본문은 나귀에 안장을 지웠다고만 한다, 22:3)
-  const isaacRide = kit.figure('boy', { tint: '#a8977e', scale: .88, pose: 'seat' });
+  const isaacRide = kit.figure('boy', { name: '이삭', tint: '#a8977e', scale: .88, pose: 'seat' });
   // 두 종(22:3)
   const servants4 = [0, 1].map(i => { const g = kit.figure('man', { tint: ['#6a5541', '#5a4a3a'][i] }); return { g, w: kit.walker(g, { height: h4, noRun: true }) }; });
   const donkey = kit.herd('donkey', { n: 1, center: [X4, 0], rx: .1, rz: .1, height: h4, placer: () => [0, 0] });
@@ -522,7 +522,7 @@ async function world(kit, { audio, sleep }) {
   const altar4 = kit.altar({ at: [SUM.x, SUM.y, SUM.z - 3] }); altar4.visible = false;
   const woodPile = kit.box(1.2, .3, .7, '#5a4130', SUM.x, SUM.y + 1.15, SUM.z - 3); woodPile.visible = false;
   // 결박되어 단 나무 위에 놓인 이삭 (22:9): 누운 자세와 두 줄의 끈
-  const isaacBound = kit.figure('boy', { tint: '#a8977e', scale: .88 });
+  const isaacBound = kit.figure('boy', { name: '이삭', tint: '#a8977e', scale: .88 });
   const ropes = [0, 1].map(() => { const r = kit.box(.05, .05, .4, '#8a7a5a', 0, 0, 0); r.visible = false; return r; });
   const thicket = new THREE.Group(); scene.add(thicket);
   for (let i = 0; i < 9; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(rnd(.5, .9), 8, 6), new THREE.MeshStandardMaterial({ color: '#4a5032', roughness: 1, flatShading: true })); b.position.set(SUM.x + rnd(-2.2, 2.2), SUM.y + rnd(.3, .8), SUM.z + 6 + rnd(-1, 1)); thicket.add(b); }
@@ -567,8 +567,8 @@ async function world(kit, { audio, sleep }) {
   kit.village({ center: [SH + 268, -44], n: 7, rMin: 3, rMax: 14, height: hSh, seed: 67 });  // 동쪽은 아이
   [[7, 3, -.6], [-8, 5, .5], [-3, 13, 0]].forEach(([x, z, r]) => kit.tent({ at: [SH + x, hSh(SH + x, z), z], ry: r, color: '#3a2f27' }));
   kit.herd('sheep', { n: 40, center: [SH + 18, 14], rx: 10, rz: 7, height: hSh });
-  const saraiSh = figA('woman', SH - 1.6, 8.2, hSh, { tint: SARAI, scale: .95 });
-  const lotSh = figA('man', SH + 3.4, 7.6, hSh, { tint: '#4b3d30' });
+  const saraiSh = figA('woman', SH - 1.6, 8.2, hSh, { name: '사래', ident: '사라', tint: SARAI, scale: .95 });
+  const lotSh = figA('man', SH + 3.4, 7.6, hSh, { name: '롯', tint: '#4b3d30' });
   const altarSh = kit.altar({ at: [SH + 1.2, hSh(SH + 1.2, -4.6), -4.6] }); altarSh.visible = false;
   kit.throng({ n: 12, height: hSh, place: i => [SH - 58 + rnd(-14, 14), -44 + rnd(-8, 8)] });
   const altarBt = kit.altar({ at: [BT.x, hSh(BT.x, -3.4), -3.4] });
@@ -577,8 +577,8 @@ async function world(kit, { audio, sleep }) {
   kit.herd('sheep', { n: 50, center: [BT.x - 16, 16], rx: 11, rz: 8, height: hSh }); kit.herd('goat', { n: 26, center: [BT.x - 6, 25], rx: 8, rz: 5, height: hSh });
   const herdsLot = [kit.herd('sheep', { n: 46, center: [BT.x + 18, 17], rx: 10, rz: 8, height: hSh }), kit.herd('ox', { n: 12, center: [BT.x + 27, 5], rx: 6, rz: 5, height: hSh })];
   const herdsmen = [[-3, 9.6], [-1.8, 10.8], [1.2, 9.8], [2.6, 8.8]].map(([x, z], i) => figA('shepherd', BT.x + x, z, hSh, { tint: ['#6b4f35', '#5a4430', '#3e4a5a', '#4a3a5a'][i] }));
-  const lotB = figA('man', BT.x + 2.2, -.6, hSh, { tint: '#4b3d30' });
-  const saraiB = figA('woman', BT.x - 2.6, 1.8, hSh, { tint: SARAI, scale: .95 });
+  const lotB = figA('man', BT.x + 2.2, -.6, hSh, { name: '롯', tint: '#4b3d30' });
+  const saraiB = figA('woman', BT.x - 2.6, 1.8, hSh, { name: '사래', ident: '사라', tint: SARAI, scale: .95 });
   kit.into(null);
 
   // 애굽 (12:10–20): 강가의 종려나무와 밭, 바로의 궁. 궁 안에서 바로가 아브람을 꾸짖는다
@@ -601,8 +601,8 @@ async function world(kit, { audio, sleep }) {
   const EGF = [PAL.x + 3, PAL.z + 50];  // 아브람이 서는 자리 (궁 정면)
   kit.throng({ n: 46, height: hEg, place: i => { let x; do { x = rnd(-26, 26); } while (Math.abs(x) < 7); return [PAL.x + x, PAL.z + rnd(8, 38)]; }, colors: ['#e8e0cc', '#d8ccb0', '#cfc2a4', '#efe8d8'] });
   const princes = [0, 1, 2].map(i => figA('man', PAL.x - 1.6 + i * 1.6, PAL.z + 8, hEg, { colors: EGC }));
-  const saraiEg = figA('woman', EGF[0] + 1.4, EGF[1] - 1.6, hEg, { tint: SARAI, scale: .95 });
-  const lotEg = figA('man', EGF[0] - 1.8, EGF[1] + 1, hEg, { tint: '#4b3d30' });
+  const saraiEg = figA('woman', EGF[0] + 1.4, EGF[1] - 1.6, hEg, { name: '사래', ident: '사라', tint: SARAI, scale: .95 });
+  const lotEg = figA('man', EGF[0] - 1.8, EGF[1] + 1, hEg, { name: '롯', tint: '#4b3d30' });
   kit.throng({ n: 14, height: hEg, place: i => [EGF[0] + rnd(3, 10), EGF[1] + rnd(3, 12), Math.PI + rnd(-.3, .3)] });
   const gifts = [kit.herd('sheep', { n: 30, center: [EGF[0] + 15, EGF[1] + 8], rx: 8, rz: 6, height: hEg }), kit.herd('ox', { n: 8, center: [EGF[0] - 12, EGF[1] + 6], rx: 5, rz: 4, height: hEg }), kit.herd('donkey', { n: 8, center: [EGF[0] + 12, EGF[1] - 8], rx: 4, rz: 3, height: hEg }), kit.herd('camel', { n: 6, center: [EGF[0] - 11, EGF[1] - 9], rx: 4, rz: 3, height: hEg })];
   const giftFolk = kit.throng({ n: 10, height: hEg, place: i => [EGF[0] + rnd(-12, -5), EGF[1] + rnd(-3, 3)], colors: ['#e8e0cc', '#cfc2a4'] });
@@ -611,9 +611,9 @@ async function world(kit, { audio, sleep }) {
   { const L = new THREE.PointLight('#ffd8a0', 9, 18, 1.3); L.position.set(0, 4.5, 0); hallEg.add(L); kit.lampAt(L, { hang: .8 }); }
   [-4.5, 4.5].forEach(x => [-3.5, 1.5].forEach(z => { const c = new THREE.Mesh(new THREE.CylinderGeometry(.5, .6, 6.5, 12), kit.mat('#e2d2a8')); c.position.set(PH.x + x, 3.25, PH.z + z); sitesA.egypt.add(c); }));
   kit.box(2.4, .6, 1.6, '#c9a23a', PH.x, .3, PH.z - 5.6); kit.box(2.4, 2.2, .3, '#c9a23a', PH.x, 1.4, PH.z - 6.4);
-  const pharaoh = figA('king', PH.x, PH.z - 5.4, null, { colors: { royal: '#f4efe2', tunic: '#f4efe2', headcloth: '#2a4a8a', beard: '#1a120c' }, pose: 'seat' }); pharaoh.position.y = .55;
+  const pharaoh = figA('king', PH.x, PH.z - 5.4, null, { name: '바로', colors: { royal: '#f4efe2', tunic: '#f4efe2', headcloth: '#2a4a8a', beard: '#1a120c' }, pose: 'seat' }); pharaoh.position.y = .55;
   [[-3, -4.4], [3, -4.4]].forEach(([x, z]) => figA('man', PH.x + x, PH.z + z, null, { colors: EGC }));
-  const saraiPh = figA('woman', PH.x + 2, PH.z - 3, null, { tint: SARAI, scale: .95 });
+  const saraiPh = figA('woman', PH.x + 2, PH.z - 3, null, { name: '사래', ident: '사라', tint: SARAI, scale: .95 });
   kit.into(null);
 
   // 헤브론 (23장): 사라의 장막, 성문에 앉은 헷 사람들, 막벨라 굴 (25:9 아브라함도 여기 장사된다)
@@ -627,7 +627,7 @@ async function world(kit, { audio, sleep }) {
   [-1, 1].forEach(s => kit.box(.7, .45, 7.4, '#7a6650', HG + s * 3.8, hHg(HG + s * 3.8, -14.4) + .22, -14.4));  // 성문 길 양쪽의 돌 의자
   const HITC = ['#7a3a2a', '#3a5a6a', '#6a5a2a', '#4a3a5a', '#5a6a3a', '#6a3a4a'];
   const hittites = [[-1, -17.4], [-1, -15.8], [-1, -14.2], [-1, -12.6], [-1, -11], [1, -17.4], [1, -15.8], [1, -14.2]].map(([s, z], i) => { const g = figA('elder', HG + s * 4.1, z, hHg, { tint: HITC[i % 6], colors: { headcloth: ['#e3dac4', '#c9b38a', '#8a3a2a'][i % 3] }, pose: 'seat' }); g.position.y += .45; g.rotation.y = -s * Math.PI / 2; return g; });
-  const ephron = figA('man', HG + 4.1, -11.6, hHg, { tint: '#7a2f2a', colors: { tunic: '#e8dcc0', headcloth: '#e3dac4' }, pose: 'seat' }); ephron.position.y += .45; ephron.rotation.y = -Math.PI / 2;
+  const ephron = figA('man', HG + 4.1, -11.6, hHg, { name: '에브론', tint: '#7a2f2a', colors: { tunic: '#e8dcc0', headcloth: '#e3dac4' }, pose: 'seat' }); ephron.position.y += .45; ephron.rotation.y = -Math.PI / 2;
   kit.throng({ n: 40, height: hHg, place: i => { let x; do { x = rnd(-20, 20); } while (Math.abs(x) < 10); return [HG + x, rnd(-19, -2)]; } });
   const silver = new THREE.Group(); { kit.box(.7, .02, .5, '#6b4a2e', 0, .01, 0, silver); for (let i = 0; i < 4; i++) kit.box(.14, .08, .1, '#c8c8c0', -.12 + (i % 2) * .22, .06 + Math.floor(i / 2) * .08, -.05 + (i % 2) * .1, silver); }
   silver.position.set(HG + 2.4, hHg(HG + 2.4, -11.4), -11.4); silver.visible = false; sitesA.hebron.add(silver);
@@ -657,8 +657,8 @@ async function world(kit, { audio, sleep }) {
   const cave = kit.tomb({ at: [MC.x, MC.y, MC.z], ry: Math.PI / 2 }); cave.userData.stone.visible = false;
   kit.trees('olive', { n: 16, place: i => { let a, r; do { a = rnd(0, 6.3); r = rnd(9, 24); } while (Math.cos(a) > .55); return [MC.x + Math.cos(a) * r, MC.z + Math.sin(a) * r]; }, height: hHg });  // 사방에 둘린 수목 (23:17)
   const bier = sarahBody(); bier.position.set(MC.x + 2.8, hHg(MC.x + 2.8, MC.z), MC.z); bier.rotation.y = Math.PI / 2; bier.visible = false; sitesA.hebron.add(bier);
-  const isaacOld = figA('man', MC.x + 4.6, MC.z - 1.7, hHg, { tint: '#3a4a6a', colors: { beard: '#2a1c12' } }); isaacOld.visible = false;
-  const ishmaelOld = figA('man', MC.x + 4.6, MC.z + 1.7, hHg, { tint: '#6a4a2a', colors: { beard: '#1a120c', headcloth: '#8a6a48' } }); ishmaelOld.visible = false;
+  const isaacOld = figA('man', MC.x + 4.6, MC.z - 1.7, hHg, { name: '이삭', tint: '#3a4a6a', colors: { beard: '#2a1c12' } }); isaacOld.visible = false;
+  const ishmaelOld = figA('man', MC.x + 4.6, MC.z + 1.7, hHg, { name: '이스마엘', tint: '#6a4a2a', colors: { beard: '#1a120c', headcloth: '#8a6a48' } }); ishmaelOld.visible = false;
   const mourners = kit.throng({ n: 16, height: hHg, place: i => [MC.x + rnd(7, 13), MC.z + rnd(-7, 7), -Math.PI / 2 + rnd(-.3, .3)] });
   kit.into(null);
   showOnly(null);
@@ -666,8 +666,8 @@ async function world(kit, { audio, sleep }) {
   // 마므레 장막 (13:18, 16–18장): 장막, 사라, 하갈, 이스마엘, 상수리나무 아래 식탁
   const tentM = kit.tent({ at: [X2 - 2, h2(X2 - 2, 12.4), 12.4], w: 5.5, d: 4.4, h: 2.6, ry: Math.PI, color: '#3a2f27' });
   const altarM = kit.altar({ at: [X2 + 5, h2(X2 + 5, 7.5), 7.5] }); altarM.visible = false;
-  const sarahM = figA('woman', X2 - 3.4, 9.2, h2, { tint: SARAI, scale: .95 }); sarahM.visible = false;
-  const hagarM = figA('woman', X2 + 1.8, 8.4, h2, { tint: '#e4dccb', scale: .95 }); hagarM.visible = false;
+  const sarahM = figA('woman', X2 - 3.4, 9.2, h2, { name: '사라', tint: SARAI, scale: .95 }); sarahM.visible = false;
+  const hagarM = figA('woman', X2 + 1.8, 8.4, h2, { name: '하갈', tint: '#e4dccb', scale: .95 }); hagarM.visible = false;
   const ishmaelM = figA('boy', X2 + 2.4, 6.6, h2, { tint: '#5a4a3a', scale: .86 }); ishmaelM.visible = false;
   const mealM = new THREE.Group(); scene.add(mealM);
   { const y = h2(X2 - 6, 2.2); kit.box(1.4, .3, .8, '#5a4130', X2 - 6, y + .15, 2.2, mealM); for (let i = 0; i < 3; i++) { const b = kit.prop('prop_bread'); if (b) { b.position.set(X2 - 6.4 + i * .4, y + .31, 2.2); b.rotation.y = i * 1.3; mealM.add(b); } } const bowl = new THREE.Mesh(new THREE.CylinderGeometry(.14, .1, .1, 10), kit.mat('#e8e2d0')); bowl.position.set(X2 - 5.5, y + .35, 2.05); mealM.add(bowl); }
