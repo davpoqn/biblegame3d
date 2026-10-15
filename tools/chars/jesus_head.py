@@ -43,7 +43,18 @@ def sculpt(V, G):
     hc = g(.72, -.98, .28, .24) * front                          # 광대 아래 볼은 들어가게
     d[:, 0] -= sx * SC['hollow'] * hc; d[:, 2] -= SC['hollow'] * .6 * hc
     d[:, 2] -= SC['lower'] * ss(.55, 1.05, -y) * (1 - ss(.7, 1.3, ax)) * front   # 하관(입·턱)을 뒤로
-    d[:, 2] -= SC['lips'] * g(0, -.95, .4, .2) * front           # 입술을 조금 더 뒤로
+    d[:, 2] -= SC['lips'] * g(0, -1.06, .42, .12) * front         # 윗입술을 뒤로 (아랫입술을 덮어 입이 벌어진 듯 보이던 것)
+    d[:, 1] += SC['corners'] * g(.42, -1.17, .1, .08) * front     # 입꼬리를 살짝 위로 (처진 입이 멍해 보인다)
+    d[:, 0] -= x * SC['vline'] * ss(.95, 1.9, -y)                 # 하관 V라인: 턱 끝으로 갈수록 좁게
+    t = -(y + .85); d[:, 1] += SC['lower_h'] * t * ss(0, .3, t) * front   # 코 밑~턱 끝을 조금 짧게 (얼굴 3등분을 1:1:1에 가깝게)
+    d[:, 0] -= x * SC['forehead'] * ss(.35, 1.0, y) * ss(.2, .55, ax)     # 이마·관자놀이 폭을 좁게
+    d[:, 2] += SC['browridge'] * g(.42, .42, .3, .12) * front     # 눈썹뼈를 조금 또렷하게
+    d[:, 2] += SC['bridge'] * g(0, -.05, .12, .2) * front         # 콧대를 곧게 (미간 아래가 꺼지지 않게)
+    d[:, 0] -= x * SC['nose_w'] * g(0, -.75, .45, .16) * front    # 콧볼을 조금 좁게
+    d[:, 1] += (-1.17 - y) * SC['lip_thin'] * g(0, -1.17, .45, .14) * front   # 입술 두께를 얇게 (입 선 쪽으로 모은다)
+    brows = np.array(sorted({v for f in G['eyebrow001.obj'] for v, _ in f}))
+    for side in (q[brows, 0] > 0, q[brows, 0] < 0):           # 눈썹을 조금 두껍게(위아래로 넓혀) 하고 살짝 내린다
+        b = brows[side]; cy = q[b, 1].mean(); d[b, 1] += (q[b, 1] - cy) * (SC['brow_thick'] - 1) - SC['brow_down']
     d[:, 0] -= x * SC['jaw'] * ss(-.95, -1.6, -y) * ss(.3, .7, ax)   # 턱선을 조금 좁게
     q2 = q + d
     # 얼굴 폭 줄이기: 두 눈은 그대로 두고 눈 바깥쪽(관자놀이·볼·턱·귀·뒷머리)을 안으로. 폭이 매끄럽게 줄도록 x를 적분한 꼴로 옮긴다
@@ -53,7 +64,9 @@ def sculpt(V, G):
     return mid + q2 * ed
 
 
-SC = {'narrow': .55, 'side': .12, 'cheekbone': .08, 'hollow': .07, 'lower': .2, 'lips': .06, 'jaw': .12}
+SC = {'narrow': .55, 'side': .12, 'cheekbone': .08, 'hollow': .07, 'lower': .2, 'lips': .07, 'jaw': .12,
+      'corners': .035, 'vline': .28, 'lower_h': .05, 'forehead': .18, 'browridge': .04, 'bridge': .035, 'nose_w': .12,
+      'lip_thin': .22, 'brow_thick': 1.5, 'brow_down': .025}
 V = sculpt(V, G)
 keep = {
     'base.obj': lambda f: min(V[i][1] for i, _ in f) >= NECK_Y,
@@ -107,7 +120,9 @@ _p, _n, _u, _t = prims['high-poly.obj']; _t = _t.reshape(-1, 3); _c = _u[_t].mea
 _k = _a[np.clip((_c[:, 1] * 256).astype(int), 0, 255), np.clip((_c[:, 0] * 256).astype(int), 0, 255)] >= 128
 prims['high-poly.obj'] = (_p, _n, _u, _t[_k].ravel()); print('eyes: kept', int(_k.sum()), 'of', len(_k), 'triangles')
 hairT = tint(Image.open(RAW / 'textures/long01_diffuse.webp'), [.95, .9, .86]).resize((1024, 1024), Image.LANCZOS)
-browT = tint(Image.open(RAW / 'textures/eyebrow001.png'), [.42, .3, .22]).resize((256, 256), Image.LANCZOS)
+_b = np.asarray(Image.open(RAW / 'textures/eyebrow001.png').convert('RGBA')).astype(np.float32)  # 원본은 검정이라 곱해도 까맣다 → 짙은 갈색으로 칠한다(투명도는 그대로)
+_b[..., :3] = np.array([70, 48, 34]) * (.75 + .25 * _b[..., :3].mean(-1, keepdims=True) / 255)
+browT = Image.fromarray(np.clip(_b, 0, 255).astype(np.uint8), 'RGBA').resize((256, 256), Image.LANCZOS)
 beardT = tint(Image.open(RAW / 'textures/beard_sigmund_diffuse.webp'), [.5, .36, .26]).resize((512, 512), Image.LANCZOS)
 
 MATS = [  # (이름, 그림, 투명 방식, 거칠기)
