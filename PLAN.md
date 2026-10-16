@@ -53,7 +53,7 @@
   - 남은 한계: 세로 화면은 시야가 좁아 손이 화면에 잘 들어오지 않는다(바울은 든 것을 화면의 손 자리에 붙여 보여 주고, 다른 인물은 아래를 보면 무릎·다리가 보인다).
 - **전체 확장 작업 끝남** (2026-10-10).
 - **웹사이트 게시** (2026-10-10): https://davpoqn.github.io/biblegame3d/
-  - GitHub Pages(소스: GitHub Actions). main에 push하면 `.github/workflows/pages.yml`이 `build.py` → `bundle.py` → `site.py`를 돌려 `_site/index.html`(첫 페이지)과 인물 페이지 여섯 장(`_site/<id>.html`)을 올린다.
+  - GitHub Pages(소스: GitHub Actions). main에 push하면 `.github/workflows/pages.yml`이 `build.py` → `bundle.py web` → `site.py`를 돌려 `_site/index.html`(첫 페이지)과 인물 페이지 여섯 장(`_site/<id>.html`), 모델 파일(`_site/models/`)을 올린다.
   - `tools/site.py`: 한 장짜리 HTML에 문서 틀(doctype, `charset=utf-8`, viewport, 설명)을 씌운다. 아티팩트는 틀을 붙여 주지만 일반 웹서버는 아니라서, 틀 없이 올리면 한글이 깨지고 스크립트가 멈춘다.
   - 첫 화면에서 인물을 고르고 시작한다. 주소 끝에 `#peter`, `#paul`, `#david`, `#abraham`, `#jacob`, `#job`을 붙이면 그 인물이 골라진 채로 열린다.
   - 시작 화면 비율 (2026-10-10, 사용자 의견: 100%로 보면 위가 잘림): 아래 정렬(`align-content:end`)이라 화면보다 내용이 길면 위가 잘리고 스크롤로도 못 올라갔다. `safe end`로 바꾸고, 넓은 가로 화면(가로 960px 이상, 4:3보다 넓음)은 두 단(왼쪽 제목·정보·시작 버튼, 오른쪽 인물·부·소개), 제목 크기는 화면 높이에도 맞춘다(`min(11vw,12vh)`). 휴대폰 세로(620px 이하)는 시작 버튼이 아래에 붙어 늘 보인다. 1273×583(노트북 150% 배율)부터 2850×1305까지 한 화면에 들어오는 것을 확인.
@@ -162,6 +162,13 @@
     - 코드: `src/index.html`의 `SPLIT`(bundle.py가 채운다, 개발 중 null이면 한 페이지에서 다 함), `HASH`, `goPage()`, `#pageload`. `tools/bundle.py` 인자 없음 → 일곱 장, `<id>` → 그 인물만, `all` → 예전처럼 여섯 인물 한 장(`single/all.html`). `tools/site.py`는 일곱 장 모두에 문서 틀을 씌운다.
     - 확인: 로컬 웹서버에서 첫 페이지 → 바울 2부 자동 시작 → ESC → 다윗 → 다윗 페이지 → 뒤로 가기, 예전 `#peter` 링크, 인물 페이지 `inlinecheck`(욥, 베드로).
     - 한계: 아티팩트(claude.ai)에서는 다른 페이지로 넘어갈 수 없어 인물 페이지 하나씩만 쓸 수 있다. 웹사이트가 기준이다.
+  - 웹사이트는 모델 파일을 따로 (2026-10-16, 끝남. 사용자 결정 "모델파일을 따로두자" — Tripo 인물을 많이 넣으려고. 부별로 페이지를 더 나누는 안 대신 이것을 골랐다).
+    - `tools/bundle.py web` → `single/web/`: HTML 일곱 장(첫 페이지 135KB, 인물 페이지 0.35~0.55MB)과 `models/*.glb`(원본 그대로라 base64로 넣을 때의 33% 군살이 없다). 주소 끝 `?v=내용 해시`로 바뀐 모델만 새로 받는다.
+    - `kit.js loadFigs`: `CHAR_GLB` 값이 data URI면 풀고, 주소면 내려받는다. 아티팩트용 한 장짜리(`bundle.py`)는 그대로 data URI.
+    - 첫 페이지는 인트로를 보는 동안 공통 모델 여섯 개(몸 남녀, 동작, 소품, MakeHuman 얼굴 남녀, 약 7MB)를 미리 받는다(`<link rel=prefetch>`). 인물 페이지는 그 인물의 동물·예수님 얼굴만 더 받는다.
+    - 확인(GitHub Pages처럼 max-age=600인 서버): 첫 페이지에서 공통 모델을 한 번 받고, 바울 페이지는 소, 다윗 페이지는 양만 새로 받음. 인물 페이지를 바로 열어도 정상. 아티팩트용 한 장짜리도 `inlinecheck` 통과.
+    - 이제 웹사이트의 한계는 16MB가 아니라 휴대폰 로딩 시간과 메모리다. 한 장면에 띄우는 인물 수로 조절한다.
+    - 다음: 사용자가 Tripo로 만든 인물(GLB, 리깅 없이 T·A자 자세)을 보내면 게임 뼈대에 입혀 동작 46개를 쓰고, 얼굴은 MakeHuman 얼굴(표정·깜빡임)을 붙이고, 한 명 0.5~1MB로 줄인다. 첫 시험은 한 명(예: 안드레). Tripo 플랜의 공개·출처 조건은 사용자가 확인한다.
   - **다음 작업: 사용자가 보낸 참고 사진 의견** (2026-10-14, 인트로 작업 중에 미리 보냄. 아직 시작 안 함. 참고는 다른 성경 게임 리뷰 영상의 캡처 — 그림을 따라 하지 않고 느낌만 본다. 큰 작업이 많으니 하나씩 규모와 시간을 알리고 시작한다):
     1. 지도: 지금 내가 어디에 있는지, 성경 어느 부분인지 보여 주는 양피지 지도(갈릴리 바다, 데가볼리, 사마리아 같은 지명).
     2. 길: 나무와 풀 사이로 난 흙길, 바위 언덕 사이의 흙길을 걸어다니는 느낌. 계절에 따라 달라도 그런 뉘앙스.
@@ -192,7 +199,7 @@
 
 ## 4. 기술 제약 (실제로 확인된 것)
 
-- **모바일 앱의 아티팩트 화면은 옆에 함께 올린 파일을 불러오지 못한다.** 그래서 반드시 **한 장의 HTML로 묶어서** 게시한다(`tools/bundle.py`). 여러 파일로 게시했다가 휴대폰에서 인물이 안 뜨는 오류가 났었다.
+- **모바일 앱의 아티팩트 화면은 옆에 함께 올린 파일을 불러오지 못한다.** 그래서 아티팩트는 반드시 **한 장의 HTML로 묶어서** 게시한다(`tools/bundle.py`). 웹사이트는 해당 없음: 모델 파일을 따로 둔다(`bundle.py web`, 2026-10-16). 여러 파일로 게시했다가 휴대폰에서 인물이 안 뜨는 오류가 났었다.
 - 아티팩트의 외부 리소스: 스크립트만 `cdn.jsdelivr.net` 등에서 불러올 수 있다. 3D 모델이나 음성 같은 바이너리는 **data URI로 HTML 안에 넣어야** 한다. 한 페이지에 16MB 한도가 있어서 인물별 아티팩트로 나눈다.
 - three.js `0.160.0`을 importmap으로 쓴다. 동적 import가 실패하면 글과 소리만으로 진행하는 대체 모드로 넘어간다.
 - 작업 공간 셸에서는 GitHub, npm, PyPI만 접근된다. 다른 사이트에서 다운로드는 안 된다.
@@ -212,7 +219,7 @@ src/index.html        공용 엔진 (화면, 소리, 대사, 선택, 엔딩, 시
 src/kit.js            3D 공용 도구 (지형, 하늘, 물, 사람, 가축 떼, 불, 배, 장막, 제단 …)
 src/chars/*.js        인물별 장면: V(본문 표시), P(풀어 쓴 말), CHOICES, presets, world(), story()
 tools/build.py        V 블록에 개역한글 원문을 넣어 dist/ 생성 + 풀어 쓴 말 누락·없는 구절 참조 검사
-tools/bundle.py       dist/를 한 장짜리 HTML로 묶음 (게시용): single/index.html(첫 페이지) + single/<id>.html(인물 페이지)
+tools/bundle.py       dist/를 한 장짜리 HTML로 묶음 (아티팩트용): single/index.html(첫 페이지) + single/<id>.html(인물 페이지). web → single/web/ (웹사이트용, 모델 따로)
 tools/check.sh        문법 검사
 tools/inlinecheck.py  휴대폰과 비슷한 조건(옆 파일 없이 본문만)에서 첫 장면 로딩 확인
 tools/kv.py           구절 출력: python3 tools/kv.py LUK 5 1-11
@@ -230,8 +237,9 @@ tools/chars/make.sh   캐릭터 전체 빌드: build_chars.py(옷, Blender) → 
 ```
 npm install                              # 로컬 확인용 three
 python3 tools/build.py                   # → dist/
-python3 tools/bundle.py                  # → single/index.html(첫 페이지) + single/<id>.html(인물 페이지 여섯)
-python3 tools/site.py                    # → _site/ (웹사이트. main에 push하면 Actions가 위 세 줄을 돌려 게시)
+python3 tools/bundle.py                  # → single/index.html(첫 페이지) + single/<id>.html(인물 페이지 여섯), 아티팩트용 한 장짜리
+python3 tools/bundle.py web              # → single/web/ (웹사이트용: HTML 일곱 장 + models/*.glb)
+python3 tools/site.py                    # → _site/ (웹사이트. main에 push하면 Actions가 build.py → bundle.py web → site.py를 돌려 게시)
 tools/check.sh                           # 문법 검사
 python3 tools/inlinecheck.py single/peter.html peter   # 로딩 확인 (playwright)
 ```

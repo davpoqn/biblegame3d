@@ -1,5 +1,5 @@
 # main에 push하면 게임을 빌드해서 GitHub Pages에 올린다 → https://davpoqn.github.io/biblegame3d/
-# 사이트는 tools/bundle.py가 만든 한 장짜리 HTML 일곱 장이다: index.html(첫 페이지)과 인물 페이지(peter.html, paul.html …).
+# 사이트는 tools/bundle.py web이 만든 HTML 일곱 장(index.html 첫 페이지, 인물 페이지 peter.html, paul.html …)과 모델 파일(models/*.glb)이다.
 name: 웹사이트 게시
 
 on:
@@ -24,7 +24,7 @@ jobs:
       - name: 빌드
         run: |
           python3 tools/build.py
-          python3 tools/bundle.py
+          python3 tools/bundle.py web
           python3 tools/site.py
       - uses: actions/upload-pages-artifact@v4
         with:

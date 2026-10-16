@@ -27,16 +27,20 @@ export const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 
 const BASE = { top: '#2a3150', horizon: '#c9875a', sun: '#ffb07a', fog: '#84604b', fogD: .0062, sunEl: 5, sunAz: 26, sunI: 2.4, hemiI: .55, stars: .08, storm: .05, ash: .14, wind: .2, camH: 1.65, camP: .02, camY: 0, camX: 0, camZ: 0, camR: 0, exposure: 1, fire: 0, sing: 0, shake: 0, waves: 0 };
 
 /* 성경 인물 캐릭터 (assets/chars, PLAN 6장 1번). 게시본은 window.CHAR_GLB에 GLB가 base64로 들어 있다.
-   게시된 페이지는 fetch로 data URI를 읽지 못하므로 직접 풀어 parse한다. 없거나 실패하면 figure()가 person()으로 대신한다 */
+   게시된 페이지는 fetch로 data URI를 읽지 못하므로 직접 풀어 parse한다. 웹사이트는 모델 파일을 따로 두어(CHAR_GLB 값이 주소) 내려받는다(2026-10-16).
+   없거나 실패하면 figure()가 person()으로 대신한다 */
 let figSrc = null, T3 = null;  // T3: createKit이 넘겨주는 THREE (게시본에서는 createKit 안에서 불러온다)
 async function loadFigs(GLTFLoader) {
   const D = window.CHAR_GLB; if (!D) return null;
-  const buf = u => Uint8Array.from(atob(u.slice(u.indexOf(',') + 1)), c => c.charCodeAt(0)).buffer;
+  const buf = async u => {
+    if (u.startsWith('data:')) return Uint8Array.from(atob(u.slice(u.indexOf(',') + 1)), c => c.charCodeAt(0)).buffer;
+    const r = await fetch(u); if (!r.ok) throw new Error(`${u}: ${r.status}`); return r.arrayBuffer();
+  };
   const ld = new GLTFLoader();
-  const keys = Object.keys(D), G = {};
+  const keys = Object.keys(D), G = {}, bufs = await Promise.all(keys.map(k => buf(D[k])));
   // 얼굴·머리카락 텍스처: GLTFLoader는 보통 fetch(blob:)로 그림을 읽는데 아티팩트 보안 정책이 막는다(connect-src). 그 동안만 createImageBitmap을 감춰 <img>(img-src blob: 허용)로 읽게 한다
   const cib = window.createImageBitmap; try { window.createImageBitmap = undefined; } catch (e) {}
-  try { (await Promise.all(keys.map(k => ld.parseAsync(buf(D[k]), '')))).forEach((g, i) => { G[keys[i]] = g; }); }
+  try { (await Promise.all(keys.map((k, i) => ld.parseAsync(bufs[i], '')))).forEach((g, i) => { G[keys[i]] = g; }); }
   finally { try { window.createImageBitmap = cib; } catch (e) {} }
   const animals = {};
   for (const k of keys) if (k.startsWith('an_')) animals[k.slice(3)] = prepAnimal(G[k]);
