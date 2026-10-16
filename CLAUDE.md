@@ -6,8 +6,8 @@
 
 - 성경 본문은 개역한글(1961)만 쓴다. `data/krv_holybible.jsonl`에서 빌드할 때 넣고, 손으로 옮겨 치지 않는다. 쉬운성경은 쓰지 않는다.
 - 시작, 과정, 마무리가 모두 성경과 일치해야 한다. 본문에 없는 이름과 사건은 넣지 않는다. 게임을 위해 쓴 문장에는 '연출' 표시를 붙인다.
-- 게시는 반드시 한 장짜리 HTML(`tools/bundle.py`)로 한다. 여러 파일로 게시하면 휴대폰 앱에서 인물이 뜨지 않는다.
-- **웹사이트**: https://davpoqn.github.io/biblegame3d/ — main에 push하면 GitHub Actions(`.github/workflows/pages.yml`)가 빌드해서 자동으로 다시 게시한다. 인물별 링크는 주소 끝에 `#peter`, `#paul`처럼 붙인다.
+- 게시는 반드시 한 장짜리 HTML(`tools/bundle.py`)로 한다. 여러 파일로 게시하면 휴대폰 앱에서 인물이 뜨지 않는다. 웹사이트는 첫 페이지(`index.html`, 인트로와 인물 고르기)와 인물마다 한 장씩인 페이지(`peter.html` 등)로 나뉘고, 인물마다 16MB를 따로 쓴다.
+- **웹사이트**: https://davpoqn.github.io/biblegame3d/ — main에 push하면 GitHub Actions(`.github/workflows/pages.yml`)가 빌드해서 자동으로 다시 게시한다. 인물별 링크는 `.../biblegame3d/paul.html`(인물 페이지) 또는 첫 페이지 주소 끝에 `#paul`.
 - **이 저장소는 공개다.** 너진똑 스크립트 같은 남의 저작물, API 키, 개인 정보를 올리지 않는다. 너진똑 자료는 사용자의 비공개 저장소에 따로 있다.
 - 일레븐랩스 API 키는 사용자 PC에서만 쓴다. 받지도 않고, 저장소에 넣지도 않는다.
 
@@ -16,12 +16,12 @@
 ```
 npm install
 python3 tools/build.py                                  # → dist/
-python3 tools/bundle.py                                 # → single/index.html (여섯 인물)
-python3 tools/bundle.py paul                            # → single/paul.html (한 인물, 허브 링크 붙음)
-python3 tools/site.py                                   # → _site/index.html (웹사이트용 문서 틀을 씌움)
+python3 tools/bundle.py                                 # → single/index.html (첫 페이지) + single/<id>.html (인물 페이지 여섯)
+python3 tools/bundle.py paul                            # → single/paul.html 만
+python3 tools/site.py                                   # → _site/ (일곱 장에 웹사이트용 문서 틀을 씌움)
 python3 tools/icon/render.py                            # → assets/icon/ (사이트 아이콘 다시 만들기)
 tools/check.sh                                          # 문법 검사
-python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
+python3 tools/inlinecheck.py single/peter.html peter    # 로딩 확인
 ```
 
 직접 해 보며 확인할 때는 숨은 키로 빠르게 한다: PC는 `Shift+F`, 휴대폰은 위쪽 '1×' 버튼을 길게 누르면 4·8배가 열린다(사용자와 Claude만 쓰는 테스트용. 화면에 알리지 않는다). 그다음 `F`나 버튼으로 1→2→4→8배. 누구나 쓰는 것은 2배와 '자동'(`A`) 진행.
@@ -35,4 +35,4 @@ python3 tools/inlinecheck.py single/index.html peter    # 로딩 확인
 
 ## 다음 할 일
 
-시작 화면(인트로), 사람 실사화 1차(MakeHuman 손·발·얼굴), 동작 자연스럽게(동작 46개, 고개 돌리기, 대사 몸짓), 주변 환경 1·2차(그림자, 나무, 풀, 흙 질감, 흙길 일곱 곳, 물결, 건물 질감), 예수님 옷(평범하게, 뼈에 붙은 올리브색 겉옷, 천처럼 흔들림), 지도(M 키), 십자가 장면 시선, 등잔·횃불, 동물 털, 예수님 얼굴 새로(MPFB2), 얼굴 남7·여4·체형·수염·옷 색과 무늬(복제인간처럼 보이지 않게), 그래픽 1·2단계(MSAA, AgX, 하늘빛 조명, 옷감 광택, 틈새 그림자, 대화 배경 흐림), 대사 인물 이름표, 사이트 아이콘(닫힌 성경책)은 끝났다. 엔진은 Godot으로 옮기지 않고 HTML(three.js)로 계속한다(2026-10-15 사용자 결정). 한 장짜리 HTML은 13.6MB라 16MB에 가까우니 큰 자산을 더하면 인물별 한 장으로 나눌 것. **다음 작업은 사용자가 새 버전을 해 보고 주는 의견이다** — PLAN.md 2장 끝 '다음 작업: 사용자가 보낸 참고 사진 의견'의 남은 것도 함께 본다. 하나씩 규모와 시간을 알리고 시작한다. 그 밖에는 사용자가 새 버전을 해 보고 주는 의견을 반영한다. 사용자는 작업 전에 걸리는 시간을 먼저 알려 주길 원한다. 캐릭터·동물은 `assets/chars/`, 다시 만들기는 `tools/chars/make.sh`.
+시작 화면(인트로), 사람 실사화 1차(MakeHuman 손·발·얼굴), 동작 자연스럽게(동작 46개, 고개 돌리기, 대사 몸짓), 주변 환경 1·2차(그림자, 나무, 풀, 흙 질감, 흙길 일곱 곳, 물결, 건물 질감), 예수님 옷(평범하게, 뼈에 붙은 올리브색 겉옷, 천처럼 흔들림), 지도(M 키), 십자가 장면 시선, 등잔·횃불, 동물 털, 예수님 얼굴 새로(MPFB2), 얼굴 남7·여4·체형·수염·옷 색과 무늬(복제인간처럼 보이지 않게), 그래픽 1·2단계(MSAA, AgX, 하늘빛 조명, 옷감 광택, 틈새 그림자, 대화 배경 흐림), 대사 인물 이름표, 사이트 아이콘(닫힌 성경책)은 끝났다. 엔진은 Godot으로 옮기지 않고 HTML(three.js)로 계속한다(2026-10-15 사용자 결정). 웹사이트는 인물별 페이지로 나뉘었다(2026-10-16): 첫 페이지 135KB, 인물 페이지 10.0~11.6MB(한도 16MB, 인물마다 따로). 인물에 자산을 더할 때 그 인물 페이지 크기를 확인한다. **다음 작업은 사용자가 새 버전을 해 보고 주는 의견이다** — PLAN.md 2장 끝 '다음 작업: 사용자가 보낸 참고 사진 의견'의 남은 것도 함께 본다. 하나씩 규모와 시간을 알리고 시작한다. 그 밖에는 사용자가 새 버전을 해 보고 주는 의견을 반영한다. 사용자는 작업 전에 걸리는 시간을 먼저 알려 주길 원한다. 캐릭터·동물은 `assets/chars/`, 다시 만들기는 `tools/chars/make.sh`.

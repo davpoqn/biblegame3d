@@ -273,7 +273,15 @@ body:not(.playing) #map-toggle,body:not(.playing) #speed-toggle,body:not(.playin
 #intro.flat .intro-words{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:.5rem 1.2rem;padding:0 16px 24vh;font-size:clamp(1.5rem,6vw,2.4rem)}
 #intro.flat .intro-words span{position:static;opacity:1}
 @media (prefers-reduced-motion: reduce){.intro-rays{animation:none}}
+/* 첫 페이지에서 인물 페이지로 넘어가는 동안 (웹사이트는 인물마다 페이지가 따로다, tools/bundle.py) */
+#pageload{position:fixed;inset:0;z-index:40;display:grid;place-items:center;margin:0;background:var(--night);font:400 clamp(.95rem,2.4vw,1.1rem) var(--f-ui);letter-spacing:.32em;color:var(--dust);opacity:0;pointer-events:none;transition:opacity .8s ease}
+.go #pageload{opacity:1;pointer-events:auto}
+.go #intro{display:none}
+#pageload i{font-style:normal;animation:introDot 1.2s infinite}
+#pageload i:nth-child(2){animation-delay:.2s}
+#pageload i:nth-child(3){animation-delay:.4s}
 </style>
+<script>/* 첫 페이지에서 인물을 골라 넘어왔으면(#go) 페이지를 내려받는 동안 loading... 만 보인다 */ if (/^#(.*&)?go(&|=|$)/.test(location.hash)) document.documentElement.classList.add('go');</script>
 
 <div id="backdrop"></div>
 <canvas id="gl" aria-hidden="true"></canvas>
@@ -300,6 +308,8 @@ body:not(.playing) #map-toggle,body:not(.playing) #speed-toggle,body:not(.playin
     </div>
   </div>
 </section>
+
+<p id="pageload" aria-hidden="true"><span>loading<i>.</i><i>.</i><i>.</i></span></p>
 
 <section id="intro" aria-label="시작">
   <div class="intro-rays" aria-hidden="true"></div>
@@ -863,6 +873,11 @@ async function makeWorld() {
 }
 
 /* ---------- 시작 화면 ---------- */
+// 웹사이트는 첫 페이지(인트로와 인물 고르기)와 인물마다 한 장씩인 페이지로 나뉜다. tools/bundle.py가 채운다:
+// { page: '{id}.html' (인물 페이지 주소), here: 이 페이지의 인물 id (첫 페이지에는 없다) }. null(개발 중)이면 한 페이지에서 다 한다
+const SPLIT = null;
+// 주소 끝: #paul (그 인물을 골라 둔다), #paul&title (인트로 없이 고르는 화면), #go&part=1&sound=1 (인물 페이지에서 곧바로 그 부를 시작)
+const HASH = Object.fromEntries(location.hash.slice(1).split('&').filter(Boolean).map(t => { const [k, v = ''] = t.split('='); return [k, v]; }));
 let selected = CHARS[0].id, selectedPart = 0;
 function renderParts() {
   const c = CHARS.find(x => x.id === selected), pp = $('#part-picker'), done = loadProg()[selected] || [];
@@ -906,8 +921,8 @@ function select(id, keepPart) {
   paintBackdrop(c.sky[0], c.sky[1]);
   renderPicker(); renderParts();
 }
-// 주소 끝에 #paul 처럼 인물 id가 있으면 그 인물을 골라 둔다 (웹사이트에서 인물별 링크)
-select((CHARS.find(c => '#' + c.id === location.hash) || CHARS[0]).id);
+// 주소 끝에 #paul 처럼 인물 id가 있으면 그 인물을 골라 둔다 (웹사이트에서 인물별 링크). 없으면 인물 페이지는 그 인물
+select((CHARS.find(c => c.id in HASH) || {}).id || (SPLIT && SPLIT.here) || CHARS[0].id);
 
 const soundBtn = $('#sound-toggle');
 function syncSound() { const on = audio.enabled; soundBtn.textContent = on ? '소리 끄기' : '소리 켜기'; soundBtn.setAttribute('aria-pressed', String(on)); }
@@ -934,8 +949,18 @@ async function runStory() {
   audio.chord(.4, 6);
   showSummary();
 }
+// 이 페이지에 없는 인물은 그 인물의 페이지에서 시작한다. 뒤로 가기로 돌아오면 인트로 없이 고르는 화면이 보이게 주소에 적어 둔다
+function goPage(withSound) {
+  try { history.replaceState(null, '', `#${selected}&title`); } catch (_) {}
+  document.documentElement.classList.add('go');
+  try { location.href = SPLIT.page.replace('{id}', selected) + `#go&part=${selectedPart}&sound=${withSound ? 1 : 0}`; }
+  catch (e) { console.warn('인물 페이지로 넘어가지 못했습니다:', e); document.documentElement.classList.remove('go'); }  // 주소가 없는 곳(아티팩트 미리보기 등)
+}
+addEventListener('pageshow', e => { if (e.persisted && !running) document.documentElement.classList.remove('go'); });
 async function begin(withSound) {
-  if (running) return; running = true;
+  if (running) return;
+  if (SPLIT && selected !== SPLIT.here) { goPage(withSound); return; }
+  running = true;
   const ep = epoch;
   if (withSound) audio.enable();
   syncSound();
@@ -951,6 +976,7 @@ async function begin(withSound) {
     if (ep !== epoch) return;
   } catch (e) {
     console.error(e);
+    document.documentElement.classList.remove('go');
     clearStage(); stage.append(el('p', 'notice', '이 인물의 장면을 불러오지 못했습니다. 페이지를 새로 고친 뒤 다시 시도해 주세요.'));
     running = false; return;
   }
@@ -963,11 +989,20 @@ async function begin(withSound) {
     glFailed = true; $('#gl').style.display = 'none'; $('#gl-notice').hidden = false;
     world = stubWorld();
   }
+  document.documentElement.classList.remove('go');
   clearStage();
   try { await runStory(); } finally { running = false; }
 }
 $('#start-sound').addEventListener('click', () => begin(true));
 $('#start-quiet').addEventListener('click', () => begin(false));
+// 첫 페이지에서 넘어왔으면 곧바로 그 부를 시작한다. 넘어오면서 소리가 막혔을 수 있어 첫 터치·키에서 다시 켠다
+if (SPLIT && SPLIT.here && 'go' in HASH) {
+  const n = parseInt(HASH.part, 10), on = HASH.sound === '1';
+  if (n >= 0 && n < CHARS.find(x => x.id === selected).parts.length) selectedPart = n;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (_) {}
+  if (on) for (const t of ['pointerdown', 'keydown']) addEventListener(t, () => { if (audio.enabled) audio.enable(); }, { once: true, capture: true });
+  begin(on);
+}
 $('#restart').addEventListener('click', async () => {
   if (running) return;
   $('#summary').hidden = true;
@@ -1163,6 +1198,7 @@ const INTRO_BOOKS = [  // [이름, x, y, z, 세로 화면 x, 세로 화면 y]: �
   ['마태복음', 1.3, 2.5, -.2, .8, 4.4], ['마가복음', .02, 1.37, .35, .9, 3.62], ['누가복음', .66, 1.83, 0, .75, 2.84], ['요한복음', 1.8, 1.57, .1, .9, 2.06], ['사도행전', 1.22, 1.05, .3, .7, 1.28]];
 (function intro() {
   const box = $('#intro'), cv = $('#intro-gl'), wbox = $('#intro-words'), go = $('#intro-go'), hint = $('#intro-hint');
+  if ('go' in HASH || 'title' in HASH) { box.remove(); return; }  // 인물 페이지로 곧바로 시작, 또는 인물 페이지에서 돌아옴
   const words = INTRO_BOOKS.map(([t]) => wbox.appendChild(el('span', null, t)));
   const now = () => performance.now() / 1000, cl = v => Math.max(0, Math.min(1, v)), mix = (a, b, t) => a + (b - a) * t;
   const pointer = { x: 0, y: 0, px: -1e4, py: -1e4 };  // x, y: 화면 가운데가 0인 -1..1 (y는 아래가 +), px, py: 화면 좌표

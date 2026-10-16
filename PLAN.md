@@ -45,7 +45,7 @@
   - 바울 (새 인물, 끝남): 3부 16장면. 처음에 배경(행 22:3 가말리엘 문하, 빌 3:5–6, 날 때부터 로마 시민 행 22:28, 장막 만드는 일 행 18:3)을 보여 준다. 1부 예루살렘 가말리엘의 집·스데반(7:54–8:3, 옷을 발 앞에 둠)·다메섹 길(9:1–9, 정오의 빛, 엎드러짐, “주여 뉘시오니이까”, 사흘 동안 화면이 꺼진 채)·직가(9:10–19, 어둠 속에서 아나니아, 비늘이 벗어짐)·광주리(9:20–25, 회당에서 전함, 밤에 성벽으로 달아 내림) / 2부 안디옥(13:1–4)·루스드라(14:8–20, 앉은뱅이, 쓰스와 허메, 옷을 찢음, 돌에 맞고 성 밖에서 일어남)·빌립보 강가(16:9–15, 루디아)·빌립보 옥(16:16–34, 차꼬, 한밤의 찬미, 지진, 간수)·아레오바고(17:16–34, 알지 못하는 신의 단, 고후 11:24–27) / 3부 빌립의 집(21:10–14, 아가보의 띠)·성전 층대(21:27–22:29, 쇠사슬, 층대 위에서 히브리 말, 병영, “로마 사람 된 자를”, “나는 나면서부터로라”)·가이사랴(25–26장, 가이사께 호소, 아그립바와 버니게)·유라굴로(27장, 폭풍 속 배, 떡을 떼어 먹음, 좌초)·멜리데(28:1–6, 독사)·로마(28:16·30–31, 딤후 4:6–8). 장소 8곳(예루살렘, 다메섹과 안디옥, 루스드라, 빌립보, 아덴과 가이사랴, 바다와 멜리데, 로마). 선택 12개, 114절. 손에 든 것(독사, 떡, 쇠사슬)은 화면의 손 자리에 붙여 보여 준다.
   - 확인: 글만으로 세 부 끝까지, 3D 장면 함수 78개 호출 오류 없음, 장소별 스크린샷.
   - 욥·야곱 (그래픽 점검, 끝남): 두 사람 모두 1인칭 몸을 입힌다. 욥은 잿더미에 땅 높이(`addGround`)를 주어 그 위에 앉고, 잿더미 장면부터 재 묻은 옷으로 바뀐다(처음으로 돌아가면 원래 옷). 야곱은 리브가가 염소 새끼 가죽을 손과 목에 입히면(27:15–16) 팔이 털옷으로 바뀌고, 이삭이 손을 더듬는 동안 카메라가 이삭 앞으로 다가가 이삭이 손을 내민다(27:21–23). 장막을 나가면 원래 옷으로.
-  - 인물별 게시와 허브 (끝남): `python3 tools/bundle.py <id>`로 한 인물만 든 한 장짜리 HTML(`single/<id>.html`)을 만든다. 인자가 없으면 여섯 인물 모두(`single/index.html`). 한 인물 HTML은 시작 화면에 '다른 인물 고르기 →'(허브로)가 붙는다. 여섯 파일 모두 `inlinecheck` 통과.
+  - 인물별 게시와 허브 (끝남): `python3 tools/bundle.py <id>`로 한 인물만 든 한 장짜리 HTML(`single/<id>.html`)을 만든다. 인자가 없으면 여섯 인물 모두(`single/index.html`). 한 인물 HTML은 시작 화면에 '다른 인물 고르기 →'(허브로)가 붙는다. 여섯 파일 모두 `inlinecheck` 통과. → 2026-10-16 웹사이트를 첫 페이지와 인물 페이지로 나누면서 바뀜(아래 '인물별 페이지로 나눔').
   - 게시 링크 (비공개, 공유는 사용자가 정한다)
     - 허브(처음 데모 링크를 허브로 바꿈): https://claude.ai/artifact/PCJtDUMSu6sDSikaXrHdNV
     - 여섯 인물 모두: https://claude.ai/artifact/WVdUr7QHvSbZJi5v1Div2B
@@ -53,7 +53,7 @@
   - 남은 한계: 세로 화면은 시야가 좁아 손이 화면에 잘 들어오지 않는다(바울은 든 것을 화면의 손 자리에 붙여 보여 주고, 다른 인물은 아래를 보면 무릎·다리가 보인다).
 - **전체 확장 작업 끝남** (2026-10-10).
 - **웹사이트 게시** (2026-10-10): https://davpoqn.github.io/biblegame3d/
-  - GitHub Pages(소스: GitHub Actions). main에 push하면 `.github/workflows/pages.yml`이 `build.py` → `bundle.py` → `site.py`를 돌려 `_site/index.html`을 올린다.
+  - GitHub Pages(소스: GitHub Actions). main에 push하면 `.github/workflows/pages.yml`이 `build.py` → `bundle.py` → `site.py`를 돌려 `_site/index.html`(첫 페이지)과 인물 페이지 여섯 장(`_site/<id>.html`)을 올린다.
   - `tools/site.py`: 한 장짜리 HTML에 문서 틀(doctype, `charset=utf-8`, viewport, 설명)을 씌운다. 아티팩트는 틀을 붙여 주지만 일반 웹서버는 아니라서, 틀 없이 올리면 한글이 깨지고 스크립트가 멈춘다.
   - 첫 화면에서 인물을 고르고 시작한다. 주소 끝에 `#peter`, `#paul`, `#david`, `#abraham`, `#jacob`, `#job`을 붙이면 그 인물이 골라진 채로 열린다.
   - 시작 화면 비율 (2026-10-10, 사용자 의견: 100%로 보면 위가 잘림): 아래 정렬(`align-content:end`)이라 화면보다 내용이 길면 위가 잘리고 스크롤로도 못 올라갔다. `safe end`로 바꾸고, 넓은 가로 화면(가로 960px 이상, 4:3보다 넓음)은 두 단(왼쪽 제목·정보·시작 버튼, 오른쪽 인물·부·소개), 제목 크기는 화면 높이에도 맞춘다(`min(11vw,12vh)`). 휴대폰 세로(620px 이하)는 시작 버튼이 아래에 붙어 늘 보인다. 1273×583(노트북 150% 배율)부터 2850×1305까지 한 화면에 들어오는 것을 확인.
@@ -152,6 +152,16 @@
     - 야이로의 집: 가버나움 무화과나무가 집을 뚫고 방 안을 가려, 집 둘레 7m에는 심지 않는다.
     - 가이사랴 빌립보 '바위 굴': 절벽 앞에 튀어나온 검은 상자 → 절벽 앞면의 어두운 아치형 입구.
   - 사이트 아이콘을 인트로의 닫힌 성경책으로 (2026-10-15, 끝남. 처음 요청 2026-10-14 "지금은 말고 이따"): 사용자가 인트로의 닫힌 책(갈색 가죽, 금박 십자가, 금빛 책 가장자리, 비스듬히 뜬 모습)을 캡처해 보냈다. `tools/icon/icon.html`(three.js)에 인트로 `intro()`의 책 코드를 옮겨 그리고 `python3 tools/icon/render.py`로 `assets/icon/`(favicon-16·32, apple-touch-icon, icon-192·512, og.jpg)을 다시 만든다. 16px에서도 알아보이게 십자가를 크게. 규모 🟢~🟡. → `tools/icon/icon.html`에 인트로 책의 재료(가죽·금박 십자가·금빛 책장 가장자리·등)와 닫힌 자세(기울기 .62, -.5, .16)를 그대로 옮겨 그렸다. 십자가만 1.3배, 바탕은 인트로처럼 따뜻한 흰색과 금빛. 32px에서도 갈색 책과 십자가가 보인다.
+  - 인물별 페이지로 나눔 (2026-10-16, 끝남. 사용자 요청: "지금처럼 선택은 하되 다른 인물을 선택하면 다른 페이지에서 로딩이 되고 동일한 플레이가 시작" — 인물마다 용량을 따로 써서 이야기를 더 자세하게 하려고).
+    - 첫 페이지 `index.html`(135KB): 인트로와 인물 고르기만. 3D 자산이 없어 빨리 뜬다.
+    - 인물 페이지 `peter.html`, `paul.html`, `david.html`, `abraham.html`, `jacob.html`, `job.html`: 각각 한 장짜리 HTML(휴대폰 조건 그대로). 크기 베드로 11.6MB, 아브라함 11.3MB, 야곱 10.9MB, 욥 10.7MB, 바울 10.0MB, 다윗 10.0MB — 인물마다 16MB 한도를 따로 쓴다(남은 자리 4.4~6MB).
+    - 인물마다 쓰는 자산만 넣는다: 동물은 장면 파일에 이름이 나오는 것(없는 종류는 kit가 비슷한 것으로 대신), 예수님 얼굴은 `figure('jesus')`가 있는 베드로만.
+    - 흐름: 첫 페이지에서 인물·부를 고르고 시작 → `paul.html#go&part=1&sound=1`로 넘어가 내려받는 동안 어두운 화면에 loading... → 인트로·고르는 화면 없이 그 부가 바로 시작. 소리는 넘어오면서 막힐 수 있어 첫 터치·키에서 다시 켠다.
+    - 인물 페이지에서 '처음 화면으로'·ESC: 그 페이지 안의 고르는 화면(여섯 인물 모두 보임). 같은 인물은 그 자리에서 시작, 다른 인물을 고르면 그 인물 페이지로 간다. 뒤로 가기로 돌아오면 인트로 없이 고르는 화면(`#david&title`).
+    - 예전 링크 `.../#peter`는 그대로 그 인물이 골라진 첫 페이지. 인물 페이지를 바로 열면(`paul.html`) 인트로부터.
+    - 코드: `src/index.html`의 `SPLIT`(bundle.py가 채운다, 개발 중 null이면 한 페이지에서 다 함), `HASH`, `goPage()`, `#pageload`. `tools/bundle.py` 인자 없음 → 일곱 장, `<id>` → 그 인물만, `all` → 예전처럼 여섯 인물 한 장(`single/all.html`). `tools/site.py`는 일곱 장 모두에 문서 틀을 씌운다.
+    - 확인: 로컬 웹서버에서 첫 페이지 → 바울 2부 자동 시작 → ESC → 다윗 → 다윗 페이지 → 뒤로 가기, 예전 `#peter` 링크, 인물 페이지 `inlinecheck`(욥, 베드로).
+    - 한계: 아티팩트(claude.ai)에서는 다른 페이지로 넘어갈 수 없어 인물 페이지 하나씩만 쓸 수 있다. 웹사이트가 기준이다.
   - **다음 작업: 사용자가 보낸 참고 사진 의견** (2026-10-14, 인트로 작업 중에 미리 보냄. 아직 시작 안 함. 참고는 다른 성경 게임 리뷰 영상의 캡처 — 그림을 따라 하지 않고 느낌만 본다. 큰 작업이 많으니 하나씩 규모와 시간을 알리고 시작한다):
     1. 지도: 지금 내가 어디에 있는지, 성경 어느 부분인지 보여 주는 양피지 지도(갈릴리 바다, 데가볼리, 사마리아 같은 지명).
     2. 길: 나무와 풀 사이로 난 흙길, 바위 언덕 사이의 흙길을 걸어다니는 느낌. 계절에 따라 달라도 그런 뉘앙스.
@@ -202,7 +212,7 @@ src/index.html        공용 엔진 (화면, 소리, 대사, 선택, 엔딩, 시
 src/kit.js            3D 공용 도구 (지형, 하늘, 물, 사람, 가축 떼, 불, 배, 장막, 제단 …)
 src/chars/*.js        인물별 장면: V(본문 표시), P(풀어 쓴 말), CHOICES, presets, world(), story()
 tools/build.py        V 블록에 개역한글 원문을 넣어 dist/ 생성 + 풀어 쓴 말 누락·없는 구절 참조 검사
-tools/bundle.py       dist/를 single/index.html 한 장으로 묶음 (게시용)
+tools/bundle.py       dist/를 한 장짜리 HTML로 묶음 (게시용): single/index.html(첫 페이지) + single/<id>.html(인물 페이지)
 tools/check.sh        문법 검사
 tools/inlinecheck.py  휴대폰과 비슷한 조건(옆 파일 없이 본문만)에서 첫 장면 로딩 확인
 tools/kv.py           구절 출력: python3 tools/kv.py LUK 5 1-11
@@ -220,10 +230,10 @@ tools/chars/make.sh   캐릭터 전체 빌드: build_chars.py(옷, Blender) → 
 ```
 npm install                              # 로컬 확인용 three
 python3 tools/build.py                   # → dist/
-python3 tools/bundle.py                  # → single/index.html
+python3 tools/bundle.py                  # → single/index.html(첫 페이지) + single/<id>.html(인물 페이지 여섯)
+python3 tools/site.py                    # → _site/ (웹사이트. main에 push하면 Actions가 위 세 줄을 돌려 게시)
 tools/check.sh                           # 문법 검사
-python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwright)
-# 게시: single/index.html을 아티팩트 URL에 publish
+python3 tools/inlinecheck.py single/peter.html peter   # 로딩 확인 (playwright)
 ```
 
 인물 파일 작성 규칙은 이렇다.
@@ -357,7 +367,7 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
   - 3장의 원칙을 그대로 따른다. 특히 본문에 없는 사건은 넣지 않는다.
   - 오바댜, 나훔, 요엘, 스바냐, 말라기처럼 본문에 그 사람의 삶이 거의 없는 경우는 이야기를 지어내지 않는다. 짧게 만들거나 다른 인물과 묶을지 사용자와 정한다.
   - 여자 인물(룻, 에스더)은 `char_f.glb`와 여자 옷차림을 쓴다. 신분이나 시대에 맞는 옷이 없으면 `tools/chars/build_chars.py`에 옷을 더한다.
-  - 인물이 늘면 한 장짜리 HTML이 16MB를 넘지 않도록 인물별 아티팩트로 나눈다(6장 2번).
+  - 인물이 늘면 한 장짜리 HTML이 16MB를 넘지 않도록 인물별 아티팩트로 나눈다(6장 2번). → 2026-10-16 웹사이트를 인물별 페이지로 나눔(2장). 새 인물은 `tools/bundle.py` ALL과 `tools/site.py` PAGES에 더한다.
 - 순서는 사용자와 정한다.
 
 ## 10. 동물과 역동적인 장면 (계획)
@@ -409,6 +419,6 @@ python3 tools/inlinecheck.py single/index.html peter   # 로딩 확인 (playwrig
 - 그 밖의 예: 다윗 싸움터(1단계와 이어서), 숫양과 덤불(10장), 욥의 재앙들, 야곱의 얍복 나루.
 
 ### 작업 환경 메모 (이번 대화에서 확인)
-- 캐릭터·동물 다시 만들기: `pip install bpy 'playwright==1.56.0' --break-system-packages && npm install` 후 `tools/chars/make.sh`. 이어서 `python3 tools/build.py && python3 tools/bundle.py && tools/check.sh`, `python3 tools/inlinecheck.py single/index.html <인물> <스크린샷.png>`.
+- 캐릭터·동물 다시 만들기: `pip install bpy 'playwright==1.56.0' --break-system-packages && npm install` 후 `tools/chars/make.sh`. 이어서 `python3 tools/build.py && python3 tools/bundle.py && tools/check.sh`, `python3 tools/inlinecheck.py single/<인물>.html <인물> <스크린샷.png>`.
 - 장면 하나를 골라 찍어 볼 때: 묶은 HTML의 `return await C.world(kit, …)`를 고쳐 `window.__w`(world api), `window.__k`(kit)를 내놓게 한 사본을 playwright로 열고 `place()`·`setEnv()`를 부른다(저장소에는 넣지 않았다). headless는 프레임이 느려 게임 시계(tween, 걷기)가 실제 시간보다 몇 배 늦으니 기다리는 시간을 넉넉히 둔다. `kit.reset()`은 걷는 인물(walker)을 모두 숨기므로 `place()`에서 다시 보이게 해야 한다.
-- 게임 게시는 같은 파일(`single/index.html`)을 위 링크에 publish한다. 새 대화에서는 링크를 `url`로 넘기면 된다(먼저 읽어야 하므로 크기가 크면 사용량이 든다).
+- 게임 게시는 웹사이트(main에 push)가 기준이다. 아티팩트로 올릴 때는 인물 페이지(`single/<id>.html`)를 그 인물 링크에 publish한다. 새 대화에서는 링크를 `url`로 넘기면 된다(먼저 읽어야 하므로 크기가 크면 사용량이 든다).

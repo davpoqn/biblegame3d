@@ -1,5 +1,5 @@
 # main에 push하면 게임을 빌드해서 GitHub Pages에 올린다 → https://davpoqn.github.io/biblegame3d/
-# 사이트는 tools/bundle.py가 만든 한 장짜리 HTML(여섯 인물)이다. 인물별 링크는 주소 끝에 #peter, #paul 처럼 붙인다.
+# 사이트는 tools/bundle.py가 만든 한 장짜리 HTML 일곱 장이다: index.html(첫 페이지)과 인물 페이지(peter.html, paul.html …).
 name: 웹사이트 게시
 
 on:
